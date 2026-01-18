@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, Heart, Trash2, Plus, Minus, ArrowLeft } from 'lucide-react';
+import { ShoppingBag, Trash2, Plus, Minus, ArrowLeft } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
+import { useWishlist } from '@/hooks/useWishlist';
+import { WishlistIcon } from '@/app/components/WishlistIcon';
 import styles from './Cart.module.css';
 
 interface CartItem {
@@ -23,34 +25,36 @@ export default function CartPage() {
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [totalAmount, setTotalAmount] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
-    // Ideally, we'd know retailer ID from context or URL, but simplifies for now by fetching user's latest active cart or enforcing retailer selection 
-    // Since backend requires retailer_id to fetch specific cart, let's assume we store focused retailer in localStorage or context.
-    // For this generic implementation, we might need a way to detect retailer.
-    // However, looking at backend, we need retailer_id.
-    // We'll try to get it from local storage if previously saved in RetailerHome.
     const [retailerId, setRetailerId] = useState<string | null>(null);
 
+    // Use shared wishlist hook
+    const { loadWishlist, toggleWishlist, isWishlisted } = useWishlist();
+
     useEffect(() => {
-        // Mock: In a real app, use Context for retailerId
         const storedId = localStorage.getItem('current_retailer_id');
         if (storedId) {
             setRetailerId(storedId);
-            fetchCart(storedId);
+            fetchData(storedId);
+            loadWishlist(); // Load wishlist data
         } else {
-            // If no retailer selected, redirect or show message
             setIsLoading(false);
         }
-    }, []);
+    }, [loadWishlist]);
 
-    const fetchCart = async (rId: string) => {
+    const fetchData = async (rId: string) => {
         setIsLoading(true);
         try {
-            const data = await apiService.getCart(rId);
-            // Adapt to backend response structure
-            setCartItems(data.items || []);
-            setTotalAmount(parseFloat(data.total_amount));
+            const cartData = await apiService.getCart(rId);
+            setCartItems((cartData.items || []).map((item: any) => ({
+                ...item,
+                product_id: item.product, // Map backend 'product' (id) to frontend 'product_id'
+                product_name: item.product_name,
+                product_price: item.product_price,
+                stock_quantity: item.stock_quantity
+            })));
+            setTotalAmount(parseFloat(cartData.total_amount));
         } catch (error) {
-            console.error("Failed to fetch cart", error);
+            console.error("Failed to fetch data", error);
         } finally {
             setIsLoading(false);
         }
@@ -60,10 +64,11 @@ export default function CartPage() {
         if (newQty < 1) return;
         try {
             await apiService.updateCartItem(itemId, newQty);
-            // Optimistic update or refetch
             setCartItems(prev => prev.map(item => item.id === itemId ? { ...item, quantity: newQty } : item));
-            // Recalculate total locally or refetch
-            if (retailerId) fetchCart(retailerId);
+            if (retailerId) {
+                const data = await apiService.getCart(retailerId);
+                setTotalAmount(parseFloat(data.total_amount));
+            }
         } catch (e) {
             console.error(e);
         }
@@ -73,7 +78,10 @@ export default function CartPage() {
         try {
             await apiService.removeCartItem(itemId);
             setCartItems(prev => prev.filter(item => item.id !== itemId));
-            if (retailerId) fetchCart(retailerId);
+            if (retailerId) {
+                const data = await apiService.getCart(retailerId);
+                setTotalAmount(parseFloat(data.total_amount));
+            }
         } catch (e) {
             console.error(e);
         }
@@ -108,32 +116,39 @@ export default function CartPage() {
                     <ArrowLeft size={20} />
                 </Button>
                 <h1>My Cart</h1>
-                <div className="h-5" /> {/* Spacer */}
+                <div className="h-5" />
             </header>
 
             <div className={styles.cartList}>
-                {cartItems.map(item => (
-                    <div key={item.id} className={styles.cartItem}>
-                        <div className={styles.itemImage}>
-                            <ShoppingBag size={24} className="text-gray-300" />
-                        </div>
-                        <div className={styles.itemInfo}>
-                            <h3>{item.product_name}</h3>
-                            <p className={styles.price}>₹{item.product_price}</p>
+                {cartItems.map(item => {
+                    return (
+                        <div key={item.id} className={styles.cartItem}>
+                            <div className={styles.itemImage}>
+                                <ShoppingBag size={24} className="text-gray-300" />
+                            </div>
+                            <div className={styles.itemInfo}>
+                                <h3>{item.product_name}</h3>
+                                <p className={styles.price}>₹{item.product_price}</p>
 
-                            <div className={styles.controls}>
-                                <div className={styles.qtyControls}>
-                                    <button onClick={() => updateQuantity(item.id, item.quantity - 1)} disabled={item.quantity <= 1}><Minus size={16} /></button>
-                                    <span>{item.quantity}</span>
-                                    <button onClick={() => updateQuantity(item.id, item.quantity + 1)}><Plus size={16} /></button>
+                                <div className={styles.controls}>
+                                    <div className={styles.qtyControls}>
+                                        <button onClick={() => updateQuantity(item.id, item.quantity - 1)} disabled={item.quantity <= 1}><Minus size={16} /></button>
+                                        <span>{item.quantity}</span>
+                                        <button onClick={() => updateQuantity(item.id, item.quantity + 1)}><Plus size={16} /></button>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button className={styles.wishlistBtn} onClick={() => toggleWishlist(item.product_id)}>
+                                            <WishlistIcon isWishlisted={isWishlisted(item.product_id)} />
+                                        </button>
+                                        <button className={styles.removeBtn} onClick={() => removeItem(item.id)}>
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
                                 </div>
-                                <button className={styles.removeBtn} onClick={() => removeItem(item.id)}>
-                                    <Trash2 size={18} />
-                                </button>
                             </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             <div className={styles.footer}>
@@ -148,4 +163,3 @@ export default function CartPage() {
         </div>
     );
 }
-

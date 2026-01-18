@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Star, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
+import { useWishlist } from '@/hooks/useWishlist';
+import { WishlistIcon } from '@/app/components/WishlistIcon';
 import styles from './Products.module.css';
 
 interface Product {
@@ -26,22 +28,21 @@ export default function AllProductsPage() {
 
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [wishlistIds, setWishlistIds] = useState<Set<number>>(new Set());
+
+    // Use the custom hook
+    const { wishlistIds, loadWishlist, toggleWishlist, isWishlisted } = useWishlist();
 
     useEffect(() => {
         if (retailerId) {
             loadData();
+            loadWishlist();
         }
-    }, [retailerId]);
+    }, [retailerId, loadWishlist]);
 
     const loadData = async () => {
         setIsLoading(true);
         try {
-            const [prodData, wishlistData] = await Promise.all([
-                apiService.getRetailerProducts(retailerId),
-                apiService.getWishlist().catch(() => ({ results: [] }))
-            ]);
-
+            const prodData = await apiService.getRetailerProducts(retailerId);
             const rawProducts = Array.isArray(prodData) ? prodData : prodData.results || [];
 
             const processedProducts = rawProducts.map((p: any) => ({
@@ -54,38 +55,10 @@ export default function AllProductsPage() {
             }));
 
             setProducts(processedProducts);
-
-            const ids = new Set<number>((wishlistData.results || wishlistData).map((item: any) => item.product));
-            setWishlistIds(ids);
-
         } catch (error) {
             console.error("Failed to load products", error);
         } finally {
             setIsLoading(false);
-        }
-    };
-
-    const toggleWishlist = async (e: React.MouseEvent, productId: number) => {
-        e.preventDefault();
-        e.stopPropagation();
-        try {
-            if (wishlistIds.has(productId)) {
-                await apiService.removeFromWishlist(productId);
-                setWishlistIds(prev => {
-                    const next = new Set(prev);
-                    next.delete(productId);
-                    return next;
-                });
-            } else {
-                await apiService.addToWishlist(productId);
-                setWishlistIds(prev => {
-                    const next = new Set(prev);
-                    next.add(productId);
-                    return next;
-                });
-            }
-        } catch (error) {
-            console.error("Wishlist toggle failed", error);
         }
     };
 
@@ -106,16 +79,19 @@ export default function AllProductsPage() {
                         ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
                         : 0;
 
-                    const isWishlisted = wishlistIds.has(product.id);
-
                     return (
                         <div key={product.id} className={styles.productCard} onClick={() => router.push(`/retailer/${retailerId}/product/${product.id}`)}>
                             <div className={styles.productImage}>
                                 {discount > 0 && (
                                     <div className={styles.discountBadge}>{discount}% OFF</div>
                                 )}
-                                <div className={styles.wishlistIcon} onClick={(e) => toggleWishlist(e, product.id)}>
-                                    <Star size={18} className={isWishlisted ? "fill-red-500 text-red-500" : ""} />
+                                <div className={styles.wishlistIcon} onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    // Wrap in Number() to be safe, though hook handles it
+                                    toggleWishlist(product.id);
+                                }}>
+                                    <WishlistIcon isWishlisted={isWishlisted(product.id)} />
                                 </div>
 
                                 {product.image ? (

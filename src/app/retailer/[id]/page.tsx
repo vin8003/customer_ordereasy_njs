@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { ShoppingBag, Search, MapPin, ChevronRight, Copy, Share2, Star } from 'lucide-react';
+import { ShoppingBag, Search, MapPin, ChevronRight, Copy, Star } from 'lucide-react';
 import { apiService } from '@/services/api';
-import { Input } from '@/app/components/ui/Input';
+import { useWishlist } from '@/hooks/useWishlist';
+import { WishlistIcon } from '@/app/components/WishlistIcon';
 import styles from './RetailerHome.module.css';
 
 interface Category {
@@ -21,7 +22,7 @@ interface Product {
     description?: string;
     price: number;
     mrp: number;
-    image: string; // Changed from image_url to image based on API
+    image: string;
     category_name?: string;
     stock_quantity: number;
     unit?: string;
@@ -35,28 +36,30 @@ export default function RetailerHomePage() {
     const [retailer, setRetailer] = useState<any>(null);
     const [categories, setCategories] = useState<Category[]>([]);
     const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-    const [wishlistIds, setWishlistIds] = useState<Set<number>>(new Set());
     const [isLoading, setIsLoading] = useState(true);
     const [referralCode, setReferralCode] = useState('');
+
+    // Use shared wishlist hook
+    const { wishlistIds, loadWishlist, toggleWishlist, isWishlisted } = useWishlist();
 
     useEffect(() => {
         if (retailerId) {
             loadData();
+            loadWishlist(); // Load wishlist
         }
-    }, [retailerId]);
+    }, [retailerId, loadWishlist]);
 
     const loadData = async () => {
         setIsLoading(true);
         try {
-            const [retailerData, catData, featData, userProfile, wishlistData] = await Promise.all([
+            const [retailerData, catData, featData, userProfile] = await Promise.all([
                 apiService.getRetailerDetails(retailerId),
                 apiService.getRetailerCategories(retailerId),
                 apiService.getFeaturedProducts(retailerId),
                 apiService.fetchUserProfile().catch((e) => {
                     console.error("FETCH USER PROFILE FAILED:", e);
                     return { referral_code: '' };
-                }),
-                apiService.getWishlist().catch(() => ({ results: [] }))
+                })
             ]);
 
             console.log("RETAILER DATA:", retailerData);
@@ -64,19 +67,12 @@ export default function RetailerHomePage() {
 
             setRetailer(retailerData);
 
-            // Store for Checkout context
             if (typeof window !== 'undefined') {
                 localStorage.setItem('current_retailer_id', retailerId);
             }
 
-            // Handle pagination result structure if needed
             setCategories(Array.isArray(catData) ? catData : catData.results || []);
 
-            // Map keys if necessary, strictly using what we found in Flutter model
-            // However, JS API response usually matches. 
-            // Note: Api response might use 'discounted_price' etc so let's be careful or map it.
-            // For now assuming the API service or backend returns standard keys or we map them here.
-            // But let's trust the data comes as expected for now, or just handle `image`.
             const products = (Array.isArray(featData) ? featData : featData.results || []).map((p: any) => ({
                 ...p,
                 price: p.discounted_price || p.price,
@@ -88,44 +84,13 @@ export default function RetailerHomePage() {
             setFeaturedProducts(products);
 
             if (userProfile && userProfile.referral_code) {
-                console.log("SETTING REFERRAL CODE:", userProfile.referral_code);
                 setReferralCode(userProfile.referral_code);
-            } else {
-                console.warn("NO REFERRAL CODE FOUND IN PROFILE", userProfile);
             }
-
-            // Wishlist
-            const ids = new Set<number>((wishlistData.results || wishlistData).map((item: any) => item.product));
-            setWishlistIds(ids);
 
         } catch (e) {
             console.error("Failed to load retailer data", e);
         } finally {
             setIsLoading(false);
-        }
-    };
-
-    const toggleWishlist = async (e: React.MouseEvent, productId: number) => {
-        e.preventDefault();
-        e.stopPropagation();
-        try {
-            if (wishlistIds.has(productId)) {
-                await apiService.removeFromWishlist(productId);
-                setWishlistIds(prev => {
-                    const next = new Set(prev);
-                    next.delete(productId);
-                    return next;
-                });
-            } else {
-                await apiService.addToWishlist(productId);
-                setWishlistIds(prev => {
-                    const next = new Set(prev);
-                    next.add(productId);
-                    return next;
-                });
-            }
-        } catch (error) {
-            console.error("Wishlist toggle failed", error);
         }
     };
 
@@ -195,8 +160,6 @@ export default function RetailerHomePage() {
                                 ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
                                 : 0;
 
-                            const isWishlisted = wishlistIds.has(product.id);
-
                             return (
                                 <div key={product.id} className={styles.productCard} onClick={() => router.push(`/retailer/${retailerId}/product/${product.id}`)}>
                                     <div className={styles.productImage}>
@@ -211,8 +174,12 @@ export default function RetailerHomePage() {
                                             </div>
                                         )}
 
-                                        <div className={styles.wishlistIcon} onClick={(e) => toggleWishlist(e, product.id)}>
-                                            <Star size={18} className={isWishlisted ? "fill-yellow-400 text-yellow-400" : "text-gray-400"} />
+                                        <div className={styles.wishlistIcon} onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            toggleWishlist(product.id);
+                                        }}>
+                                            <WishlistIcon isWishlisted={isWishlisted(product.id)} />
                                         </div>
                                     </div>
 

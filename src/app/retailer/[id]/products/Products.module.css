@@ -102,7 +102,11 @@
     justify-content: center;
     cursor: pointer;
     z-index: 2;
-    color: #cbd5e1;
+    transition: transform 0.2s;
+}
+
+.wishlistIcon:active {
+    transform: scale(0.9);
 }
 
 .productInfo {

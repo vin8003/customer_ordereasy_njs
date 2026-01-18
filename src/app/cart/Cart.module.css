@@ -116,9 +116,22 @@
     padding: 8px;
     color: var(--error-color);
     background: #fee2e2;
-    border-radius: var(--radius-sm);
+    margin-bottom: 20px;
+}
+
+.wishlistBtn {
+    padding: 8px;
+    background: transparent;
     border: none;
     cursor: pointer;
+    transition: transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wishlistBtn:active {
+    transform: scale(0.9);
 }
 
 .footer {
