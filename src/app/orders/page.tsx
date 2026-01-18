@@ -65,7 +65,11 @@ export default function OrdersPage() {
                 )}
 
                 {orders.map(order => (
-                    <div key={order.id} className={styles.card}>
+                    <div
+                        key={order.id}
+                        className={`${styles.card} cursor-pointer active:scale-[0.98] transition-all`}
+                        onClick={() => router.push(`/orders/detail?id=${order.id}`)}
+                    >
                         <div className={styles.cardHeader}>
                             <div>
                                 <h3 className="font-bold text-gray-800">Order #{order.order_number}</h3>
@@ -90,10 +94,11 @@ export default function OrdersPage() {
                             </div>
                         </div>
 
-                        {/* Optional link to details if implemented */}
-                        {/* <div className="mt-4 pt-3 border-t border-gray-100 flex justify-center">
-                            <span className="text-xs font-bold text-gray-400 flex items-center">View Details <ChevronRight size={12}/></span>
-                        </div> */}
+                        <div className="mt-4 pt-3 border-t border-gray-100 flex justify-center">
+                            <span className="text-xs font-bold text-primary flex items-center gap-1">
+                                View Details <ChevronRight size={14} />
+                            </span>
+                        </div>
                     </div>
                 ))}
             </div>

@@ -44,6 +44,33 @@
     letter-spacing: 0.5px;
 }
 
+.toggleGroup {
+    display: flex;
+    gap: 0.5rem;
+    background: #f3f4f6;
+    padding: 4px;
+    border-radius: var(--radius-md);
+}
+
+.toggleBtn {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+    color: #6b7280;
+}
+
+.toggleBtn.active {
+    background: #fff;
+    color: var(--primary-color);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
 .addressList,
 .paymentOptions {
     display: flex;
@@ -88,15 +115,20 @@
     color: var(--text-primary);
 }
 
-.footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: #fff;
-    padding: 1rem;
-    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
-    z-index: 50;
+.textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.textarea:focus {
+    border-color: var(--primary-color);
 }
 
 .rewardCard {
@@ -150,4 +182,15 @@
 .discount {
     color: #16a34a;
     font-weight: 600;
+}
+
+.footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    padding: 1rem;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+    z-index: 50;
 }

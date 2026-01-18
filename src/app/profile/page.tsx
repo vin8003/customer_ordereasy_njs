@@ -83,23 +83,37 @@ export default function ProfilePage() {
 
                 <div className={styles.section}>
                     <h2 className={styles.sectionTitle}>Rewards</h2>
-                    {loyaltyPoints.length > 0 && (
-                        <div className={styles.pointsSummary}>
-                            {loyaltyPoints.slice(0, 2).map((lp: any, idx: number) => (
-                                <div key={idx} className={styles.pointRow}>
-                                    <span className={styles.shopNameSmall}>{lp.retailer_name}</span>
-                                    <span className={styles.pointsSmall}>{lp.points} pts</span>
+                    <div className={styles.pointsSummary}>
+                        {(() => {
+                            const currentRetailerId = typeof window !== 'undefined' ? localStorage.getItem('current_retailer_id') : null;
+                            const currentRetailerPoints = currentRetailerId
+                                ? loyaltyPoints.find(lp => lp.retailer_id.toString() === currentRetailerId)
+                                : null;
+
+                            const totalPoints = loyaltyPoints.reduce((sum, lp) => sum + parseFloat(lp.points || 0), 0);
+
+                            if (currentRetailerPoints) {
+                                return (
+                                    <div className={styles.highlightPoints}>
+                                        <p className={styles.pointsLabel}>Cashback at {currentRetailerPoints.retailer_name}</p>
+                                        <p className={styles.pointsValue}>₹{currentRetailerPoints.points}</p>
+                                    </div>
+                                );
+                            }
+
+                            return (
+                                <div className={styles.highlightPoints}>
+                                    <p className={styles.pointsLabel}>Total Cashback Balance</p>
+                                    <p className={styles.pointsValue}>₹{totalPoints.toFixed(2)}</p>
                                 </div>
-                            ))}
-                            {loyaltyPoints.length > 2 && (
-                                <p className={styles.morePoints}>+ {loyaltyPoints.length - 2} more shops</p>
-                            )}
-                        </div>
-                    )}
+                            );
+                        })()}
+                    </div>
+
                     <Link href="/rewards" className={styles.menuItem}>
                         <div className="flex items-center gap-3">
                             <Gift size={20} className="text-pink-500" />
-                            <span>Full Rewards & Referrals</span>
+                            <span>View All Rewards & Referrals</span>
                         </div>
                         <ChevronRight size={16} className="text-gray-400" />
                     </Link>

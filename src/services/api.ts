@@ -65,10 +65,12 @@ const setCache = (key: string, data: any) => {
     CACHE[key] = { data, timestamp: Date.now() };
 };
 
-const fetchWithDedupe = async (key: string, fetchFn: () => Promise<any>) => {
+const fetchWithDedupe = async (key: string, fetchFn: () => Promise<any>, force: boolean = false) => {
     // 1. Check Memory Cache
-    const cached = getCached(key);
-    if (cached) return cached;
+    if (!force) {
+        const cached = getCached(key);
+        if (cached) return cached;
+    }
 
     // 2. Check In-Flight Requests (Deduplication)
     if (PENDING_REQUESTS[key]) {
@@ -302,6 +304,9 @@ export const apiService = {
         delete CACHE['orders_current'];
         // Also clear cart
         Object.keys(CACHE).forEach(k => { if (k.startsWith('cart_')) delete CACHE[k]; });
+        // Clear loyalty cache
+        delete CACHE['loyalty_all'];
+        if (data.retailer_id) delete CACHE[`loyalty_${data.retailer_id}`];
         return response.data;
     },
 
@@ -355,20 +360,42 @@ export const apiService = {
         });
     },
 
-    getCustomerLoyalty: async (retailerId: string | number) => {
+    getCustomerLoyalty: async (retailerId: string | number, force: boolean = false) => {
         const key = `loyalty_${retailerId}`;
         return fetchWithDedupe(key, async () => {
             const response = await api.get('customer/loyalty/', { params: { retailer_id: retailerId } });
             return response.data;
-        });
+        }, force);
     },
 
-    getAllCustomerLoyalty: async () => {
+    getAllCustomerLoyalty: async (force: boolean = false) => {
         const key = 'loyalty_all';
         return fetchWithDedupe(key, async () => {
             const response = await api.get('customer/loyalty/all/');
             return response.data;
-        });
+        }, force);
+    },
+
+    confirmOrderModification: async (orderId: number | string, action: 'accept' | 'reject') => {
+        const response = await api.post(`orders/${orderId}/confirm_modification/`, { action });
+        delete CACHE[`order_${orderId}`];
+        delete CACHE['orders_history'];
+        delete CACHE['orders_current'];
+        // Clear all loyalty cache to be sure
+        delete CACHE['loyalty_all'];
+        Object.keys(CACHE).forEach(k => { if (k.startsWith('loyalty_')) delete CACHE[k]; });
+        return response.data;
+    },
+
+    cancelOrder: async (orderId: number | string, reason: string = '') => {
+        const response = await api.post(`orders/${orderId}/cancel/`, { reason });
+        delete CACHE[`order_${orderId}`];
+        delete CACHE['orders_history'];
+        delete CACHE['orders_current'];
+        // Clear all loyalty cache to be sure
+        delete CACHE['loyalty_all'];
+        Object.keys(CACHE).forEach(k => { if (k.startsWith('loyalty_')) delete CACHE[k]; });
+        return response.data;
     }
 };
 

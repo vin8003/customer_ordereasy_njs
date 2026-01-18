@@ -86,6 +86,14 @@ export default function RewardsPage() {
                         <span>My Cashback Points</span>
                     </div>
 
+                    {loyaltyPoints.length > 0 && (
+                        <div className={styles.totalBalanceBox}>
+                            <div className={styles.totalLabel}>Total Balance</div>
+                            <div className={styles.totalValue}>₹{loyaltyPoints.reduce((sum, lp) => sum + parseFloat(lp.points || 0), 0).toFixed(2)}</div>
+                            <div className={styles.totalHint}>Redeemable at respective shops</div>
+                        </div>
+                    )}
+
                     {loyaltyPoints.length === 0 ? (
                         <div className={styles.emptyState}>
                             No cashback points earned yet. Start shopping to earn rewards!

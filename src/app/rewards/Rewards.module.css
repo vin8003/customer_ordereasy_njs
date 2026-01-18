@@ -265,3 +265,32 @@
     color: #0369a1;
     text-transform: uppercase;
 }
+
+.totalBalanceBox {
+    background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+    padding: 24px;
+    border-radius: 16px;
+    text-align: center;
+    color: white;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.2);
+}
+
+.totalLabel {
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.totalValue {
+    font-size: 32px;
+    font-weight: 800;
+    margin: 8px 0;
+}
+
+.totalHint {
+    font-size: 10px;
+    opacity: 0.7;
+}
