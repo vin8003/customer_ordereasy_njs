@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ShoppingBag, Trash2, ArrowLeft, ShoppingCart, Heart } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
+import { ProductImage } from '@/app/components/ProductImage';
 import styles from './Wishlist.module.css';
 
 interface WishlistItem {
@@ -86,11 +87,11 @@ export default function WishlistPage() {
                 {wishlistItems.map(item => (
                     <div key={item.id} className={styles.itemCard}>
                         <div className={styles.imagePlaceholder}>
-                            {item.product_image ? (
-                                <img src={item.product_image} alt={item.product_name} className="w-full h-full object-cover rounded" />
-                            ) : (
-                                <ShoppingBag size={24} className="text-gray-300" />
-                            )}
+                            <ProductImage
+                                src={item.product_image || ''}
+                                alt={item.product_name}
+                                className="w-full h-full"
+                            />
                         </div>
                         <div className={styles.info}>
                             <h3>{item.product_name}</h3>

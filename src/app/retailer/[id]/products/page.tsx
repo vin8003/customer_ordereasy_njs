@@ -7,6 +7,7 @@ import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { useWishlist } from '@/hooks/useWishlist';
 import { WishlistIcon } from '@/app/components/WishlistIcon';
+import { ProductImage } from '@/app/components/ProductImage';
 import styles from './Products.module.css';
 
 interface Product {
@@ -94,13 +95,11 @@ export default function AllProductsPage() {
                                     <WishlistIcon isWishlisted={isWishlisted(product.id)} />
                                 </div>
 
-                                {product.image ? (
-                                    <img src={product.image} alt={product.name} />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-gray-50">
-                                        <ShoppingBag size={24} className="text-gray-200" />
-                                    </div>
-                                )}
+                                <ProductImage
+                                    src={product.image || ''}
+                                    alt={product.name}
+                                    className="w-full h-full"
+                                />
                             </div>
 
                             <div className={styles.productInfo}>

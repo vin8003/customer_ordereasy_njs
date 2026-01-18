@@ -7,6 +7,7 @@ import { ShoppingBag, Search, MapPin, ChevronRight, Copy, Star } from 'lucide-re
 import { apiService } from '@/services/api';
 import { useWishlist } from '@/hooks/useWishlist';
 import { WishlistIcon } from '@/app/components/WishlistIcon';
+import { ProductImage } from '@/app/components/ProductImage';
 import styles from './RetailerHome.module.css';
 
 interface Category {
@@ -166,13 +167,11 @@ export default function RetailerHomePage() {
                                         {discount > 0 && (
                                             <div className={styles.discountBadge}>{discount}% OFF</div>
                                         )}
-                                        {product.image ? (
-                                            <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center p-4">
-                                                <ShoppingBag size={40} className="text-gray-200" />
-                                            </div>
-                                        )}
+                                        <ProductImage
+                                            src={product.image || ''}
+                                            alt={product.name}
+                                            className="w-full h-full"
+                                        />
 
                                         <div className={styles.wishlistIcon} onClick={(e) => {
                                             e.preventDefault();

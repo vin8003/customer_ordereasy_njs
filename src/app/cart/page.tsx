@@ -8,6 +8,7 @@ import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { useWishlist } from '@/hooks/useWishlist';
 import { WishlistIcon } from '@/app/components/WishlistIcon';
+import { ProductImage } from '@/app/components/ProductImage';
 import styles from './Cart.module.css';
 
 interface CartItem {
@@ -124,7 +125,11 @@ export default function CartPage() {
                     return (
                         <div key={item.id} className={styles.cartItem}>
                             <div className={styles.itemImage}>
-                                <ShoppingBag size={24} className="text-gray-300" />
+                                <ProductImage
+                                    src={item.product_image || ''}
+                                    alt={item.product_name}
+                                    className="w-full h-full"
+                                />
                             </div>
                             <div className={styles.itemInfo}>
                                 <h3>{item.product_name}</h3>
