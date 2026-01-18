@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ShoppingBag, Search, MapPin, ChevronRight, Copy, Star } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { useWishlist } from '@/hooks/useWishlist';
@@ -29,9 +29,10 @@ interface Product {
     unit?: string;
 }
 
-export default function RetailerHomePage() {
-    const { id } = useParams();
+function RetailerHome() {
+    const searchParams = useSearchParams();
     const router = useRouter();
+    const id = searchParams.get('id');
     const retailerId = id as string;
 
     const [retailer, setRetailer] = useState<any>(null);
@@ -133,14 +134,14 @@ export default function RetailerHomePage() {
                 <section className={styles.section}>
                     <div className={styles.sectionHeader}>
                         <h2>Explore by Category</h2>
-                        <Link href={`/retailer/${retailerId}/categories`} className={styles.seeAll}>
+                        <Link href={`/retailer/categories?retailerId=${retailerId}`} className={styles.seeAll}>
                             See All <ChevronRight size={14} />
                         </Link>
                     </div>
 
                     <div className={styles.categoriesScroll}>
                         {categories.slice(0, 12).map(cat => (
-                            <Link href={`/retailer/${retailerId}/category/${cat.id}`} key={cat.id} className={styles.categoryItem}>
+                            <Link href={`/retailer/category?retailerId=${retailerId}&categoryId=${cat.id}`} key={cat.id} className={styles.categoryItem}>
                                 <div className={styles.catIcon}>
                                     <ShoppingBag size={24} />
                                 </div>
@@ -162,7 +163,7 @@ export default function RetailerHomePage() {
                                 : 0;
 
                             return (
-                                <div key={product.id} className={styles.productCard} onClick={() => router.push(`/retailer/${retailerId}/product/${product.id}`)}>
+                                <div key={product.id} className={styles.productCard} onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}>
                                     <div className={styles.productImage}>
                                         {discount > 0 && (
                                             <div className={styles.discountBadge}>{discount}% OFF</div>
@@ -236,11 +237,19 @@ export default function RetailerHomePage() {
                 </section>
 
                 <div className={styles.viewAllBtnWrapper}>
-                    <button className={styles.viewAllBtn} onClick={() => router.push(`/retailer/${retailerId}/products`)}>
+                    <button className={styles.viewAllBtn} onClick={() => router.push(`/retailer/products?retailerId=${retailerId}`)}>
                         View All Products
                     </button>
                 </div>
             </main>
         </div>
+    );
+}
+
+export default function RetailerHomePage() {
+    return (
+        <Suspense fallback={<div className="flex justify-center p-8">Loading...</div>}>
+            <RetailerHome />
+        </Suspense>
     );
 }

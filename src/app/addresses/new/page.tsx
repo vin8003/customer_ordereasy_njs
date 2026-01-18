@@ -64,29 +64,24 @@ export default function NewAddressPage() {
                 </div>
 
                 <div className={styles.field}>
-                    <label>Address Line 1</label>
-                    <Input name="address_line1" value={formData.address_line1} onChange={handleChange} required />
+                    <Input label="Address Line 1" name="address_line1" value={formData.address_line1} onChange={handleChange} required />
                 </div>
 
                 <div className={styles.field}>
-                    <label>Address Line 2 (Optional)</label>
-                    <Input name="address_line2" value={formData.address_line2} onChange={handleChange} />
+                    <Input label="Address Line 2 (Optional)" name="address_line2" value={formData.address_line2} onChange={handleChange} />
                 </div>
 
                 <div className="flex gap-4">
                     <div className={styles.field}>
-                        <label>City</label>
-                        <Input name="city" value={formData.city} onChange={handleChange} required />
+                        <Input label="City" name="city" value={formData.city} onChange={handleChange} required />
                     </div>
                     <div className={styles.field}>
-                        <label>State</label>
-                        <Input name="state" value={formData.state} onChange={handleChange} required />
+                        <Input label="State" name="state" value={formData.state} onChange={handleChange} required />
                     </div>
                 </div>
 
                 <div className={styles.field}>
-                    <label>Pincode</label>
-                    <Input name="pincode" value={formData.pincode} onChange={handleChange} required />
+                    <Input label="Pincode" name="pincode" value={formData.pincode} onChange={handleChange} required />
                 </div>
 
                 <Button type="submit" isLoading={isLoading} fullWidth>

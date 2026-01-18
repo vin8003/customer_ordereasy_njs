@@ -11,10 +11,18 @@ export default function ProfilePage() {
     const router = useRouter();
     const [profile, setProfile] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [loyaltyPoints, setLoyaltyPoints] = useState<any[]>([]);
 
     useEffect(() => {
-        apiService.fetchUserProfile()
-            .then(data => setProfile(data))
+        setLoading(true);
+        Promise.all([
+            apiService.fetchUserProfile(),
+            apiService.getAllCustomerLoyalty()
+        ])
+            .then(([profileData, loyaltyData]) => {
+                setProfile(profileData);
+                setLoyaltyPoints(loyaltyData);
+            })
             .catch(err => console.error(err))
             .finally(() => setLoading(false));
     }, []);
@@ -75,10 +83,23 @@ export default function ProfilePage() {
 
                 <div className={styles.section}>
                     <h2 className={styles.sectionTitle}>Rewards</h2>
+                    {loyaltyPoints.length > 0 && (
+                        <div className={styles.pointsSummary}>
+                            {loyaltyPoints.slice(0, 2).map((lp: any, idx: number) => (
+                                <div key={idx} className={styles.pointRow}>
+                                    <span className={styles.shopNameSmall}>{lp.retailer_name}</span>
+                                    <span className={styles.pointsSmall}>{lp.points} pts</span>
+                                </div>
+                            ))}
+                            {loyaltyPoints.length > 2 && (
+                                <p className={styles.morePoints}>+ {loyaltyPoints.length - 2} more shops</p>
+                            )}
+                        </div>
+                    )}
                     <Link href="/rewards" className={styles.menuItem}>
                         <div className="flex items-center gap-3">
                             <Gift size={20} className="text-pink-500" />
-                            <span>Rewards & Referrals</span>
+                            <span>Full Rewards & Referrals</span>
                         </div>
                         <ChevronRight size={16} className="text-gray-400" />
                     </Link>

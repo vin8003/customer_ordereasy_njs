@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
@@ -22,10 +22,11 @@ interface Product {
     unit?: string;
 }
 
-export default function AllProductsPage() {
-    const params = useParams();
+function AllProducts() {
+    const searchParams = useSearchParams();
     const router = useRouter();
-    const retailerId = params.id as string;
+    const retailerId = searchParams.get('retailerId') as string;
+    const categoryId = searchParams.get('categoryId'); // Optional category filter
 
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -81,7 +82,7 @@ export default function AllProductsPage() {
                         : 0;
 
                     return (
-                        <div key={product.id} className={styles.productCard} onClick={() => router.push(`/retailer/${retailerId}/product/${product.id}`)}>
+                        <div key={product.id} className={styles.productCard} onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}>
                             <div className={styles.productImage}>
                                 {discount > 0 && (
                                     <div className={styles.discountBadge}>{discount}% OFF</div>
@@ -127,5 +128,13 @@ export default function AllProductsPage() {
                 })}
             </div>
         </div>
+    );
+}
+
+export default function AllProductsPage() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading Products...</div>}>
+            <AllProducts />
+        </Suspense>
     );
 }

@@ -11,13 +11,13 @@ export default function BottomNav() {
     const [homeLink, setHomeLink] = useState('/retailers');
 
     // Pages where we don't want to show the bottom nav
-    const hiddenRoutes = ['/login', '/signup', '/'];
+    const hiddenRoutes = ['/login', '/signup', '/', '/checkout', '/checkout/success'];
 
     useEffect(() => {
         // Determine 'Home' link based on context
         const savedRetailerId = localStorage.getItem('current_retailer_id');
         if (savedRetailerId) {
-            setHomeLink(`/retailer/${savedRetailerId}`);
+            setHomeLink(`/retailer?id=${savedRetailerId}`);
         }
     }, [pathname]);
 

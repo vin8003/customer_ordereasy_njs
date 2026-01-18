@@ -1,18 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { Input } from '@/app/components/ui/Input';
 import MapPicker from '@/app/components/MapPicker';
-import styles from '../../Addresses.module.css';
+import styles from '../Addresses.module.css';
 
-export default function EditAddressPage() {
+function EditAddressForm() {
     const router = useRouter();
-    const params = useParams();
-    const addressId = params.id as string;
+    const searchParams = useSearchParams();
+    const addressId = searchParams.get('id');
 
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -76,7 +76,7 @@ export default function EditAddressPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsSaving(true);
+        if (!addressId) return;
         try {
             await apiService.updateAddress(parseInt(addressId), formData);
             router.back();
@@ -111,8 +111,7 @@ export default function EditAddressPage() {
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Label (e.g. My Home)</label>
-                    <Input name="title" value={formData.title} onChange={handleChange} placeholder="Home" required />
+                    <Input label="Label (e.g. My Home)" name="title" value={formData.title} onChange={handleChange} placeholder="Home" required />
                 </div>
 
                 <div>
@@ -130,29 +129,24 @@ export default function EditAddressPage() {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Address Line 1</label>
-                    <Input name="address_line1" value={formData.address_line1} onChange={handleChange} placeholder="House No, Building" required />
+                    <Input label="Address Line 1" name="address_line1" value={formData.address_line1} onChange={handleChange} placeholder="House No, Building" required />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Address Line 2</label>
-                    <Input name="address_line2" value={formData.address_line2} onChange={handleChange} placeholder="Street, Area" />
+                    <Input label="Address Line 2" name="address_line2" value={formData.address_line2} onChange={handleChange} placeholder="Street, Area" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
-                        <Input name="city" value={formData.city} onChange={handleChange} required />
+                        <Input label="City" name="city" value={formData.city} onChange={handleChange} required />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
-                        <Input name="state" value={formData.state} onChange={handleChange} required />
+                        <Input label="State" name="state" value={formData.state} onChange={handleChange} required />
                     </div>
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Pincode</label>
-                    <Input name="pincode" value={formData.pincode} onChange={handleChange} placeholder="000000" required maxLength={6} />
+                    <Input label="Pincode" name="pincode" value={formData.pincode} onChange={handleChange} placeholder="000000" required maxLength={6} />
                 </div>
 
                 <Button type="submit" isLoading={isSaving} fullWidth className="mt-4">
@@ -160,5 +154,13 @@ export default function EditAddressPage() {
                 </Button>
             </form>
         </div>
+    );
+}
+
+export default function EditAddressPage() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading...</div>}>
+            <EditAddressForm />
+        </Suspense>
     );
 }

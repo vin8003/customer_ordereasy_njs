@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
@@ -15,10 +15,10 @@ interface Category {
     item_count?: number;
 }
 
-export default function CategoriesPage() {
-    const params = useParams();
+function Categories() {
+    const searchParams = useSearchParams();
     const router = useRouter();
-    const retailerId = params.id as string;
+    const retailerId = searchParams.get('retailerId') as string;
 
     const [categories, setCategories] = useState<Category[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -55,7 +55,7 @@ export default function CategoriesPage() {
 
             <div className={styles.grid}>
                 {categories.map((cat) => (
-                    <Link href={`/retailer/${retailerId}/category/${cat.id}`} key={cat.id} className={styles.card}>
+                    <Link href={`/retailer/category?retailerId=${retailerId}&categoryId=${cat.id}`} key={cat.id} className={styles.card}>
                         <div className={styles.iconWrapper}>
                             <ShoppingBag size={24} className="text-blue-500" />
                         </div>
@@ -64,5 +64,13 @@ export default function CategoriesPage() {
                 ))}
             </div>
         </div>
+    );
+}
+
+export default function CategoriesPage() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading Categories...</div>}>
+            <Categories />
+        </Suspense>
     );
 }

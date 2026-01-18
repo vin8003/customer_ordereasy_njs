@@ -67,7 +67,7 @@ export default function AddressesPage() {
                             <div className={styles.cardHeader}>
                                 <span className={styles.tag}>{addr.address_type}</span>
                                 <div className={styles.actions}>
-                                    <button onClick={() => router.push(`/addresses/${addr.id}/edit`)} className="text-blue-500 p-2">
+                                    <button onClick={() => router.push(`/addresses/edit?id=${addr.id}`)} className="text-blue-500 p-2">
                                         <Edit size={16} />
                                     </button>
                                     <button onClick={() => handleDelete(addr.id)} className="text-red-500 p-2">

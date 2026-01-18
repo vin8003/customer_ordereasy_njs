@@ -96,4 +96,58 @@
     background: #fff;
     padding: 1rem;
     box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+    z-index: 50;
+}
+
+.rewardCard {
+    padding: 0.5rem 0;
+}
+
+.rewardContent {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.checkbox {
+    width: 1.25rem;
+    height: 1.25rem;
+    cursor: pointer;
+}
+
+.rewardLabel {
+    cursor: pointer;
+}
+
+.rewardPointsText {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.availablePoints {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.discountApplied {
+    font-size: 0.85rem;
+    color: #16a34a;
+    font-weight: 600;
+    margin-left: 2rem;
+}
+
+.summaryRow {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+}
+
+.discount {
+    color: #16a34a;
+    font-weight: 600;
 }

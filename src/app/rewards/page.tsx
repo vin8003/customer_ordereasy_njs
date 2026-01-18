@@ -12,6 +12,7 @@ export default function RewardsPage() {
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<any>(null);
     const [retailers, setRetailers] = useState<any[]>([]);
+    const [loyaltyPoints, setLoyaltyPoints] = useState<any[]>([]);
 
     // Apply Form State
     const [selectedRetailer, setSelectedRetailer] = useState('');
@@ -25,12 +26,14 @@ export default function RewardsPage() {
     const loadData = async () => {
         setLoading(true);
         try {
-            const [statsData, retailersData] = await Promise.all([
+            const [statsData, retailersData, loyaltyData] = await Promise.all([
                 apiService.getReferralStats(),
-                apiService.getRetailers() // Fetch retailers for dropdown
+                apiService.getRetailers(), // Fetch retailers for dropdown
+                apiService.getAllCustomerLoyalty()
             ]);
             setStats(statsData);
             setRetailers(retailersData.results || retailersData);
+            setLoyaltyPoints(loyaltyData);
         } catch (error) {
             console.error("Failed to load rewards data", error);
         } finally {
@@ -76,6 +79,35 @@ export default function RewardsPage() {
             </header>
 
             <div className={styles.content}>
+                {/* Section 0: My Points */}
+                <div className={styles.card}>
+                    <div className={styles.cardTitle}>
+                        <CheckCircle size={20} className="text-blue-500" />
+                        <span>My Cashback Points</span>
+                    </div>
+
+                    {loyaltyPoints.length === 0 ? (
+                        <div className={styles.emptyState}>
+                            No cashback points earned yet. Start shopping to earn rewards!
+                        </div>
+                    ) : (
+                        <div className={styles.loyaltyList}>
+                            {loyaltyPoints.map((lp: any, index: number) => (
+                                <div key={index} className={styles.loyaltyItem}>
+                                    <div className={styles.lpInfo}>
+                                        <span className={styles.lpRetailer}>{lp.retailer_name}</span>
+                                        <span className={styles.lpConversion}>1 Point = ₹1</span>
+                                    </div>
+                                    <div className={styles.lpPoints}>
+                                        <span className={styles.lpValue}>{lp.points}</span>
+                                        <span className={styles.lpLabel}>Points</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
                 {/* Section 1: Your Code */}
                 <div className={styles.card}>
                     <div className={styles.cardTitle}>

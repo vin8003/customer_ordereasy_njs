@@ -46,7 +46,7 @@ export default function RetailersPage() {
     };
 
     const handleRetailerSelect = (id: number) => {
-        router.push(`/retailer/${id}`);
+        router.push(`/retailer?id=${id}`);
     };
 
     if (isLoading) {

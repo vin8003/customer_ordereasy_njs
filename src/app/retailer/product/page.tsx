@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ShoppingBag, Heart, Share2, Plus, Minus, ShoppingCart } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
@@ -18,11 +18,11 @@ interface Product {
     image_url?: string;
 }
 
-export default function ProductDetailPage() {
-    const params = useParams();
+function ProductDetail() {
+    const searchParams = useSearchParams();
     const router = useRouter();
-    const retailerId = params.id as string;
-    const productId = params.productId as string; // 'productId' from folder name
+    const retailerId = searchParams.get('retailerId') as string;
+    const productId = searchParams.get('productId') as string;
 
     const [product, setProduct] = useState<Product | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -152,5 +152,13 @@ export default function ProductDetailPage() {
                 </Button>
             </div>
         </div>
+    );
+}
+
+export default function ProductDetailPage() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading details...</div>}>
+            <ProductDetail />
+        </Suspense>
     );
 }

@@ -24,6 +24,12 @@ export default function CheckoutPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [cartTotal, setCartTotal] = useState(0);
 
+    // Rewards
+    const [useRewardPoints, setUseRewardPoints] = useState(false);
+    const [rewardConfig, setRewardConfig] = useState<any>(null);
+    const [userRewardPoints, setUserRewardPoints] = useState(0);
+    const [discountFromPoints, setDiscountFromPoints] = useState(0);
+
     // Ideally pass retailer_id from cart or context
     // For now assuming we are checking out the current active cart
     // We need to fetch cart to display summary or at least total
@@ -31,7 +37,12 @@ export default function CheckoutPage() {
     useEffect(() => {
         loadAddresses();
         loadCartSummary();
+        loadRewardData();
     }, []);
+
+    useEffect(() => {
+        calculateDiscount();
+    }, [useRewardPoints, rewardConfig, userRewardPoints, cartTotal]);
 
     const loadAddresses = async () => {
         try {
@@ -61,6 +72,44 @@ export default function CheckoutPage() {
         }
     };
 
+    const loadRewardData = async () => {
+        const storedId = localStorage.getItem('current_retailer_id');
+        if (!storedId) return;
+
+        try {
+            const [config, loyalty] = await Promise.all([
+                apiService.fetchRewardConfiguration(storedId),
+                apiService.getCustomerLoyalty(storedId)
+            ]);
+            setRewardConfig(config);
+            setUserRewardPoints(parseFloat(loyalty.points || 0));
+        } catch (e) {
+            console.error("Error fetching reward data:", e);
+        }
+    };
+
+    const calculateDiscount = () => {
+        if (!useRewardPoints || !rewardConfig || userRewardPoints <= 0) {
+            setDiscountFromPoints(0);
+            return;
+        }
+
+        const total = cartTotal;
+
+        const maxByPercent = (total * parseFloat(rewardConfig.max_reward_usage_percent)) / 100;
+        const maxByFlat = parseFloat(rewardConfig.max_reward_usage_flat);
+        const maxByBalance = userRewardPoints * parseFloat(rewardConfig.conversion_rate);
+
+        const redeemable = Math.min(
+            total,
+            maxByPercent,
+            maxByFlat,
+            maxByBalance
+        );
+
+        setDiscountFromPoints(redeemable);
+    };
+
     const handlePlaceOrder = async () => {
         if (!selectedAddressId) {
             alert("Please select a delivery address.");
@@ -78,10 +127,8 @@ export default function CheckoutPage() {
             await apiService.placeOrder({
                 retailer_id: storedId,
                 address_id: selectedAddressId,
-                payment_method: paymentMethod
-                // Backend might infer cart items or we need to pass them?
-                // Usually 'place_order' view takes items from server-side cart or expects them in payload.
-                // Looking at standard implementations, it often takes current cart.
+                payment_method: paymentMethod,
+                use_reward_points: useRewardPoints
             });
 
             // Success
@@ -158,20 +205,53 @@ export default function CheckoutPage() {
                         </div>
                     </div>
                 </section>
+                {/* Rewards Section */}
+                {rewardConfig && userRewardPoints > 0 && (
+                    <section className={styles.section}>
+                        <h2 className={styles.sectionTitle}>Rewards</h2>
+                        <div className={styles.rewardCard}>
+                            <div className={styles.rewardContent}>
+                                <input
+                                    type="checkbox"
+                                    id="useRewards"
+                                    checked={useRewardPoints}
+                                    onChange={(e) => setUseRewardPoints(e.target.checked)}
+                                    className={styles.checkbox}
+                                />
+                                <label htmlFor="useRewards" className={styles.rewardLabel}>
+                                    <p className={styles.rewardPointsText}>Use Reward Points</p>
+                                    <p className={styles.availablePoints}>Available: {userRewardPoints} pts (₹{userRewardPoints * parseFloat(rewardConfig.conversion_rate)})</p>
+                                </label>
+                            </div>
+                            {useRewardPoints && discountFromPoints > 0 && (
+                                <p className={styles.discountApplied}>-₹{discountFromPoints.toFixed(2)} savings applied</p>
+                            )}
+                        </div>
+                    </section>
+                )}
 
-                {/* Summary */}
                 <section className={styles.section}>
                     <h2 className={styles.sectionTitle}>Order Summary</h2>
-                    <div className="flex justify-between items-center py-2 border-t border-dashed border-gray-200">
+                    <div className={styles.summaryRow}>
+                        <span>Subtotal</span>
+                        <span>₹{cartTotal.toFixed(2)}</span>
+                    </div>
+                    {discountFromPoints > 0 && (
+                        <div className={`${styles.summaryRow} ${styles.discount}`}>
+                            <span>Points Discount</span>
+                            <span>-₹{discountFromPoints.toFixed(2)}</span>
+                        </div>
+                    )}
+                    <div className="flex justify-between items-center py-2 border-t border-dashed border-gray-200 mt-2">
                         <span className="font-bold text-lg">Total Amount</span>
-                        <span className="font-bold text-xl text-primary">₹{cartTotal.toFixed(2)}</span>
+                        <span className="font-bold text-xl text-primary">₹{(cartTotal - discountFromPoints).toFixed(2)}</span>
                     </div>
                 </section>
             </main>
 
             <div className={styles.footer}>
                 <Button fullWidth onClick={handlePlaceOrder} isLoading={isLoading}>
-                    Place Order (₹{cartTotal.toFixed(2)})
+                    Place Order (₹{(cartTotal - discountFromPoints).toFixed(2)})
                 </Button>
             </div>
         </div>

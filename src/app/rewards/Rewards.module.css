@@ -137,7 +137,7 @@
 .input:focus {
     outline: none;
     border-color: #2563eb;
-    ring: 2px solid rgba(37, 99, 235, 0.1);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
 .applyButton {
@@ -213,4 +213,55 @@
     padding: 20px;
     color: #94a3b8;
     font-size: 13px;
+}
+
+.loyaltyList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.loyaltyItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f0f9ff;
+    border-radius: 12px;
+    border: 1px solid #e0f2fe;
+}
+
+.lpInfo {
+    display: flex;
+    flex-direction: column;
+}
+
+.lpRetailer {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0c4a6e;
+}
+
+.lpConversion {
+    font-size: 11px;
+    color: #0369a1;
+}
+
+.lpPoints {
+    text-align: right;
+}
+
+.lpValue {
+    display: block;
+    font-size: 20px;
+    font-weight: 800;
+    color: #0284c7;
+    line-height: 1;
+}
+
+.lpLabel {
+    font-size: 10px;
+    font-weight: 600;
+    color: #0369a1;
+    text-transform: uppercase;
 }

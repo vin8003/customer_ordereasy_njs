@@ -105,7 +105,7 @@ export default function CartPage() {
             <div className={styles.emptyState}>
                 <ShoppingBag size={48} />
                 <p>Your cart is empty.</p>
-                <Button onClick={() => router.push(`/retailer/${retailerId}`)}>Start Shopping</Button>
+                <Button onClick={() => router.push(`/retailer?id=${retailerId}`)}>Start Shopping</Button>
             </div>
         );
     }

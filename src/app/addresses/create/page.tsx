@@ -71,8 +71,7 @@ export default function CreateAddressPage() {
                     <MapPicker onLocationSelect={handleLocationSelect} />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Label (e.g. My Home)</label>
-                    <Input name="title" value={formData.title} onChange={handleChange} placeholder="Home" required />
+                    <Input label="Label (e.g. My Home)" name="title" value={formData.title} onChange={handleChange} placeholder="Home" required />
                 </div>
 
                 <div>
@@ -90,29 +89,24 @@ export default function CreateAddressPage() {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Address Line 1</label>
-                    <Input name="address_line1" value={formData.address_line1} onChange={handleChange} placeholder="House No, Building" required />
+                    <Input label="Address Line 1" name="address_line1" value={formData.address_line1} onChange={handleChange} placeholder="House No, Building" required />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Address Line 2</label>
-                    <Input name="address_line2" value={formData.address_line2} onChange={handleChange} placeholder="Street, Area" />
+                    <Input label="Address Line 2" name="address_line2" value={formData.address_line2} onChange={handleChange} placeholder="Street, Area" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
-                        <Input name="city" value={formData.city} onChange={handleChange} required />
+                        <Input label="City" name="city" value={formData.city} onChange={handleChange} required />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
-                        <Input name="state" value={formData.state} onChange={handleChange} required />
+                        <Input label="State" name="state" value={formData.state} onChange={handleChange} required />
                     </div>
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Pincode</label>
-                    <Input name="pincode" value={formData.pincode} onChange={handleChange} placeholder="000000" required maxLength={6} />
+                    <Input label="Pincode" name="pincode" value={formData.pincode} onChange={handleChange} placeholder="000000" required maxLength={6} />
                 </div>
 
                 <Button type="submit" isLoading={isLoading} fullWidth className="mt-4">

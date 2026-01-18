@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ShoppingBag, Filter } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
@@ -18,11 +18,11 @@ interface Product {
     unit?: string;
 }
 
-export default function CategoryProductsPage() {
-    const params = useParams();
+function CategoryProducts() {
+    const searchParams = useSearchParams();
     const router = useRouter();
-    const retailerId = params.id as string;
-    const categoryId = params.categoryId as string;
+    const retailerId = searchParams.get('retailerId') as string;
+    const categoryId = searchParams.get('categoryId') as string;
 
     const [products, setProducts] = useState<Product[]>([]);
     const [categoryName, setCategoryName] = useState('Products');
@@ -137,7 +137,7 @@ export default function CategoryProductsPage() {
                             <div
                                 key={product.id}
                                 className={styles.card}
-                                onClick={() => router.push(`/retailer/${retailerId}/product/${product.id}`)}
+                                onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
                                 role="button"
                                 tabIndex={0}
                             >
@@ -173,5 +173,13 @@ export default function CategoryProductsPage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function CategoryProductsPage() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center">Loading Products...</div>}>
+            <CategoryProducts />
+        </Suspense>
     );
 }

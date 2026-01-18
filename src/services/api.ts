@@ -118,6 +118,7 @@ export const apiService = {
         data.user_type = 'customer';
 
         const response = await api.post('auth/customer/signup/', data);
+        return response.data;
     },
 
     isAuthenticated: () => {
@@ -341,6 +342,31 @@ export const apiService = {
         const key = `order_${id}`;
         return fetchWithDedupe(key, async () => {
             const response = await api.get(`orders/${id}/`);
+            return response.data;
+        });
+    },
+
+    // Rewards
+    fetchRewardConfiguration: async (retailerId: string | number) => {
+        const key = `reward_config_${retailerId}`;
+        return fetchWithDedupe(key, async () => {
+            const response = await api.get('customer/reward-configuration/', { params: { retailer_id: retailerId } });
+            return response.data;
+        });
+    },
+
+    getCustomerLoyalty: async (retailerId: string | number) => {
+        const key = `loyalty_${retailerId}`;
+        return fetchWithDedupe(key, async () => {
+            const response = await api.get('customer/loyalty/', { params: { retailer_id: retailerId } });
+            return response.data;
+        });
+    },
+
+    getAllCustomerLoyalty: async () => {
+        const key = 'loyalty_all';
+        return fetchWithDedupe(key, async () => {
+            const response = await api.get('customer/loyalty/all/');
             return response.data;
         });
     }

@@ -60,24 +60,24 @@ export default function EditProfilePage() {
 
             <form className={styles.form} onSubmit={handleSubmit}>
                 <div className={styles.field}>
-                    <label>First Name</label>
                     <Input
+                        label="First Name"
                         name="first_name"
                         value={formData.first_name}
                         onChange={handleChange}
                     />
                 </div>
                 <div className={styles.field}>
-                    <label>Last Name</label>
                     <Input
+                        label="Last Name"
                         name="last_name"
                         value={formData.last_name}
                         onChange={handleChange}
                     />
                 </div>
                 <div className={styles.field}>
-                    <label>Email</label>
                     <Input
+                        label="Email"
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
