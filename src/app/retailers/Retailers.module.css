@@ -1,0 +1,147 @@
+.container {
+    min-height: 100vh;
+    padding: 1rem;
+    background-color: var(--background-color);
+}
+
+.header {
+    padding: 1rem 0 2rem;
+    text-align: center;
+}
+
+.header h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.header p {
+    color: var(--text-secondary);
+}
+
+.loadingContainer,
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
+    color: var(--text-secondary);
+    gap: 1rem;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.errorContainer {
+    text-align: center;
+    color: var(--error-color);
+    padding: 2rem;
+    background: #fff;
+    border-radius: var(--radius-lg);
+    margin-bottom: 1rem;
+}
+
+.retailerList {
+    display: grid;
+    gap: 1rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.retailerCard {
+    background: #fff;
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border: 1px solid var(--border-color);
+}
+
+.retailerCard:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary-color);
+}
+
+.cardContent {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.retailerIcon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.retailerInfo {
+    flex: 1;
+}
+
+.retailerInfo h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.type {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: capitalize;
+    margin-bottom: 0.75rem;
+}
+
+.metaRow {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.metaItem {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.starIcon {
+    fill: #fbbf24;
+    color: #fbbf24;
+}
+
+.tags {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.tag {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 100px;
+    background: var(--surface-color);
+    color: var(--text-secondary);
+    font-weight: 500;
+}
