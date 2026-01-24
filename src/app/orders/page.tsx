@@ -23,12 +23,20 @@ export default function OrdersPage() {
 
     useEffect(() => {
         loadOrders();
+
+        const handleFcmUpdate = () => {
+            console.log('Orders page refreshing due to FCM update');
+            loadOrders(true);
+        };
+
+        window.addEventListener('fcm_order_update', handleFcmUpdate);
+        return () => window.removeEventListener('fcm_order_update', handleFcmUpdate);
     }, []);
 
-    const loadOrders = async () => {
-        setIsLoading(true);
+    const loadOrders = async (force: boolean = false) => {
+        setIsLoading(force ? false : true); // Show loading only for initial load, not for foreground refreshes
         try {
-            const data = await apiService.getOrders();
+            const data = await apiService.getOrders(force);
             setOrders(Array.isArray(data) ? data : data.results || []);
         } catch (error) {
             console.error(error);

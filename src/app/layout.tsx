@@ -18,6 +18,8 @@ export const metadata: Metadata = {
   description: "Your daily needs, delivered.",
 };
 
+import NotificationWrapper from "@/app/components/NotificationWrapper";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -26,7 +28,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased pb-24 overflow-x-hidden`}>
-        {children}
+        <NotificationWrapper>
+          {children}
+        </NotificationWrapper>
         <BottomNav />
       </body>
     </html>

@@ -39,13 +39,21 @@ function ChatContent() {
         fetchMessages();
         markRead();
 
-        // Poll every 5 seconds
-        intervalRef.current = setInterval(() => {
-            fetchMessages(true);
-        }, 5000);
+        // Listen for FCM updates instead of polling
+        const handleFcmUpdate = (event: any) => {
+            const payload = event.detail;
+            const updatedOrderId = payload.data?.order_id || payload.data?.id;
+
+            if (Number(updatedOrderId) === safeOrderId) {
+                fetchMessages(true);
+                markRead(); // Also mark as read when new message arrives
+            }
+        };
+
+        window.addEventListener('fcm_chat_message', handleFcmUpdate);
 
         return () => {
-            if (intervalRef.current) clearInterval(intervalRef.current);
+            window.removeEventListener('fcm_chat_message', handleFcmUpdate);
         };
     }, [safeOrderId]);
 

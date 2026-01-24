@@ -57,12 +57,29 @@ function OrderDetails() {
         if (orderId) {
             loadOrderDetails();
         }
+
+        const handleFcmUpdate = (event: any) => {
+            const payload = event.detail;
+            const updatedOrderId = payload.data?.order_id || payload.data?.id;
+
+            if (Number(updatedOrderId) === Number(orderId)) {
+                loadOrderDetails(true);
+            }
+        };
+
+        window.addEventListener('fcm_order_update', handleFcmUpdate);
+        return () => {
+            window.removeEventListener('fcm_order_update', handleFcmUpdate);
+        };
     }, [orderId]);
 
-    const loadOrderDetails = async () => {
-        setIsLoading(true);
+    const loadOrderDetails = async (force: boolean = false) => {
+        setIsLoading(force && !order ? true : !order); // Only show overlay loading if we don't have order data or explicitly loading first time
+        // Actually, let's keep it simple:
+        if (!order) setIsLoading(true);
+
         try {
-            const data = await apiService.getOrderDetail(Number(orderId));
+            const data = await apiService.getOrderDetail(Number(orderId), force);
             setOrder(data);
         } catch (error) {
             console.error(error);
@@ -79,7 +96,7 @@ function OrderDetails() {
         setIsActionLoading(true);
         try {
             await apiService.cancelOrder(order.id);
-            loadOrderDetails();
+            loadOrderDetails(true);
         } catch (error) {
             console.error(error);
             alert("Failed to cancel order. Please try again.");
@@ -93,7 +110,7 @@ function OrderDetails() {
         setIsActionLoading(true);
         try {
             await apiService.confirmOrderModification(order.id, action);
-            loadOrderDetails();
+            loadOrderDetails(true);
         } catch (error) {
             console.error(error);
             alert("Failed to process request. Please try again.");
