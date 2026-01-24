@@ -6,22 +6,38 @@ import { ArrowLeft } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { Input } from '@/app/components/ui/Input';
+import MapPicker from '@/app/components/MapPicker';
 import styles from './AddressForm.module.css';
 
 export default function NewAddressPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [formData, setFormData] = useState({
+        title: '',
         address_line1: '',
         address_line2: '',
         city: '',
         state: '',
         pincode: '',
-        address_type: 'Home'
+        address_type: 'home',
+        latitude: 0,
+        longitude: 0
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleLocationSelect = (lat: number, lng: number, address: string, pincode: string, city: string, state: string) => {
+        setFormData(prev => ({
+            ...prev,
+            latitude: Number(lat.toFixed(8)),
+            longitude: Number(lng.toFixed(8)),
+            address_line1: address,
+            pincode: pincode || prev.pincode,
+            city: city || prev.city,
+            state: state || prev.state
+        }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -49,26 +65,35 @@ export default function NewAddressPage() {
             </header>
 
             <form className={styles.form} onSubmit={handleSubmit}>
+                <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                    <MapPicker onLocationSelect={handleLocationSelect} />
+                </div>
+
                 <div className={styles.field}>
-                    <label>Address Type</label>
+                    <Input label="Label (e.g. My Home)" name="title" value={formData.title} onChange={handleChange} required placeholder="Home" />
+                </div>
+
+                <div className={styles.field}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Address Type</label>
                     <select
                         name="address_type"
                         value={formData.address_type}
                         onChange={handleChange}
-                        className={styles.select}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                        <option value="Home">Home</option>
-                        <option value="Work">Work</option>
-                        <option value="Other">Other</option>
+                        <option value="home">Home</option>
+                        <option value="office">Office</option>
+                        <option value="other">Other</option>
                     </select>
                 </div>
 
                 <div className={styles.field}>
-                    <Input label="Address Line 1" name="address_line1" value={formData.address_line1} onChange={handleChange} required />
+                    <Input label="Address Line 1" name="address_line1" value={formData.address_line1} onChange={handleChange} required placeholder="House No, Building" />
                 </div>
 
                 <div className={styles.field}>
-                    <Input label="Address Line 2 (Optional)" name="address_line2" value={formData.address_line2} onChange={handleChange} />
+                    <Input label="Address Line 2 (Optional)" name="address_line2" value={formData.address_line2} onChange={handleChange} placeholder="Street, Area" />
                 </div>
 
                 <div className="flex gap-4">
@@ -81,7 +106,7 @@ export default function NewAddressPage() {
                 </div>
 
                 <div className={styles.field}>
-                    <Input label="Pincode" name="pincode" value={formData.pincode} onChange={handleChange} required />
+                    <Input label="Pincode" name="pincode" value={formData.pincode} onChange={handleChange} required maxLength={6} placeholder="000000" />
                 </div>
 
                 <Button type="submit" isLoading={isLoading} fullWidth>

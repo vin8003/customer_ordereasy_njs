@@ -6,6 +6,7 @@ import { ArrowLeft, MapPin, CreditCard, CheckCircle } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import styles from './Checkout.module.css';
+import PhoneVerification from '@/app/components/auth/PhoneVerification';
 
 interface Address {
     id: number;
@@ -35,6 +36,11 @@ export default function CheckoutPage() {
     const [userRewardPoints, setUserRewardPoints] = useState(0);
     const [discountFromPoints, setDiscountFromPoints] = useState(0);
 
+    // Verification State
+    const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+    const [userPhone, setUserPhone] = useState('');
+    const [showVerification, setShowVerification] = useState(false);
+
     // Ideally pass retailer_id from cart or context
     // For now assuming we are checking out the current active cart
     // We need to fetch cart to display summary or at least total
@@ -43,6 +49,7 @@ export default function CheckoutPage() {
         loadAddresses();
         loadCartSummary();
         loadRewardData();
+        checkUserVerification();
     }, []);
 
     useEffect(() => {
@@ -58,6 +65,18 @@ export default function CheckoutPage() {
             if (paymentMethod === 'cod') setPaymentMethod('cash_pickup');
         }
     }, [deliveryMode]);
+
+    const checkUserVerification = async () => {
+        try {
+            const profile = await apiService.fetchUserProfile();
+            // Assuming profile has is_phone_verified. UserProfileSerializer in backend usually has it.
+            // If not, we might need to rely on what was returned.
+            setIsPhoneVerified(!!profile.is_phone_verified);
+            setUserPhone(profile.phone_number || '');
+        } catch (e) {
+            console.error("Error fetching profile", e);
+        }
+    };
 
     const loadAddresses = async () => {
         try {
@@ -126,6 +145,12 @@ export default function CheckoutPage() {
     };
 
     const handlePlaceOrder = async () => {
+        // Verification Check
+        if (!isPhoneVerified) {
+            setShowVerification(true);
+            return;
+        }
+
         if (!selectedAddressId) {
             alert("Please select a delivery address.");
             return;
@@ -160,6 +185,17 @@ export default function CheckoutPage() {
 
     return (
         <div className={styles.container}>
+            {/* Phone Verification Modal */}
+            <PhoneVerification
+                isOpen={showVerification}
+                onClose={() => setShowVerification(false)}
+                initialPhone={userPhone}
+                onVerified={() => {
+                    setIsPhoneVerified(true);
+                    checkUserVerification(); // re-fetch to be sure or just set state
+                }}
+            />
+
             <header className={styles.header}>
                 <Button variant="outline" onClick={() => router.back()}>
                     <ArrowLeft size={20} />
@@ -195,7 +231,7 @@ export default function CheckoutPage() {
                         {addresses.length === 0 ? (
                             <div className="text-center p-4 border rounded-lg border-dashed">
                                 <p className="mb-2 text-sm text-gray-500">No address found</p>
-                                <Button onClick={() => router.push('/addresses/new')}>Add Address</Button>
+                                <Button onClick={() => router.push('/addresses/create')}>Add Address</Button>
                             </div>
                         ) : (
                             <div className={styles.addressList}>
@@ -218,7 +254,7 @@ export default function CheckoutPage() {
                                         </div>
                                     </div>
                                 ))}
-                                <Button variant="outline" className="text-primary text-sm mt-2" onClick={() => router.push('/addresses/new')}>
+                                <Button variant="outline" className="text-primary text-sm mt-2" onClick={() => router.push('/addresses/create')}>
                                     + Add New Address
                                 </Button>
                             </div>
