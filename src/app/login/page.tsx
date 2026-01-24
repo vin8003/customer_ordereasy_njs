@@ -28,8 +28,7 @@ export default function LoginPage() {
             // Assuming response follows the structure seen in Flutter app:
             // { tokens: { access: '...', refresh: '...' }, ... }
             if (response && response.tokens) {
-                setAuthToken(response.tokens.access);
-                // Store refresh token if needed, or handle in api service
+                setAuthToken(response.tokens.access, response.tokens.refresh);
                 router.push('/'); // Redirect to Home
             } else {
                 setError('Login failed: Invalid response format');

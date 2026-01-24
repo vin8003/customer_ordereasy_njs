@@ -48,7 +48,7 @@ export default function SignupPage() {
             });
 
             if (response && response.tokens) {
-                setAuthToken(response.tokens.access);
+                setAuthToken(response.tokens.access, response.tokens.refresh);
                 router.push('/'); // Redirect to Home or Verification based on flow
             } else {
                 // Handle case where tokens might not be returned immediately (verification needed)

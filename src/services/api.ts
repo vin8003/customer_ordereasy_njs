@@ -9,16 +9,18 @@ const api = axios.create({
     },
 });
 
-export const setAuthToken = (token: string) => {
+export const setAuthToken = (token: string, refreshToken?: string) => {
     if (token) {
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         if (typeof window !== 'undefined') {
             localStorage.setItem('access_token', token);
+            if (refreshToken) localStorage.setItem('refresh_token', refreshToken);
         }
     } else {
         delete api.defaults.headers.common['Authorization'];
         if (typeof window !== 'undefined') {
             localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
         }
     }
 };
@@ -36,14 +38,52 @@ api.interceptors.request.use((config) => {
     return Promise.reject(error);
 });
 
-// Add interceptor to response to handle 401 errors
+// Add interceptor to response to handle 401 errors and refreshing
 api.interceptors.response.use((response) => {
     return response;
-}, (error) => {
-    if (error.response && error.response.status === 401) {
+}, async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+        // Avoid infinite loop if refresh itself fails
+        if (originalRequest.url?.includes('auth/token/refresh/')) {
+            if (typeof window !== 'undefined') {
+                setAuthToken('');
+                if (!window.location.pathname.includes('/login')) {
+                    window.location.href = '/login';
+                }
+            }
+            return Promise.reject(error);
+        }
+
+        originalRequest._retry = true;
+
         if (typeof window !== 'undefined') {
-            localStorage.removeItem('access_token');
-            // Force reload or redirect could happen here, or let the UI react to the missing token
+            const refreshToken = localStorage.getItem('refresh_token');
+            if (refreshToken) {
+                try {
+                    const response = await axios.post(`${API_BASE_URL}auth/token/refresh/`, {
+                        refresh: refreshToken
+                    });
+
+                    const { access, refresh } = response.data;
+                    setAuthToken(access, refresh);
+                    originalRequest.headers['Authorization'] = `Bearer ${access}`;
+
+                    return api(originalRequest);
+                } catch (refreshError) {
+                    setAuthToken('');
+                    if (!window.location.pathname.includes('/login')) {
+                        window.location.href = '/login';
+                    }
+                    return Promise.reject(refreshError);
+                }
+            } else {
+                setAuthToken('');
+                if (!window.location.pathname.includes('/login')) {
+                    window.location.href = '/login';
+                }
+            }
         }
     }
     return Promise.reject(error);
@@ -149,6 +189,12 @@ export const apiService = {
             phone_number: formattedPhone,
             firebase_token: token
         });
+
+        // If backend returned tokens (meaning login/verification successful), set them
+        if (response.data && response.data.tokens) {
+            setAuthToken(response.data.tokens.access, response.data.tokens.refresh);
+        }
+
         // Invalidate profile cache so next fetch gets updated verification status
         delete CACHE['user_profile'];
         return response.data;
@@ -419,6 +465,22 @@ export const apiService = {
         // Clear all loyalty cache to be sure
         delete CACHE['loyalty_all'];
         Object.keys(CACHE).forEach(k => { if (k.startsWith('loyalty_')) delete CACHE[k]; });
+        return response.data;
+    },
+
+    // Chat
+    getOrderChat: async (orderId: number | string) => {
+        const response = await api.get(`orders/${orderId}/chat/`);
+        return response.data;
+    },
+
+    sendOrderMessage: async (orderId: number | string, message: string) => {
+        const response = await api.post(`orders/${orderId}/chat/send/`, { message });
+        return response.data;
+    },
+
+    markOrderChatRead: async (orderId: number | string) => {
+        const response = await api.post(`orders/${orderId}/chat/read/`);
         return response.data;
     }
 };

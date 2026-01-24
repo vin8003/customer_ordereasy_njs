@@ -125,11 +125,20 @@ function OrderDetails() {
                     <ArrowLeft size={20} />
                 </Button>
                 <h1>Order Details</h1>
-                {savedRetailerId ? (
-                    <Button variant="outline" className="text-xs px-2 h-8" onClick={() => router.push(`/retailer?id=${savedRetailerId}`)}>
-                        Shop
+                <div className="flex gap-2 items-center">
+                    <Button
+                        variant="outline"
+                        className="text-xs px-3 h-8 flex items-center gap-1"
+                        onClick={() => router.push(`/orders/chat?id=${order.id}`)}
+                    >
+                        <span className="font-semibold">Chat</span>
                     </Button>
-                ) : <div className="w-10" />}
+                    {savedRetailerId && (
+                        <Button variant="outline" className="text-xs px-2 h-8" onClick={() => router.push(`/retailer?id=${savedRetailerId}`)}>
+                            Shop
+                        </Button>
+                    )}
+                </div>
             </header>
 
             <main className={styles.main}>
