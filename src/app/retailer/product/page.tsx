@@ -19,6 +19,7 @@ interface Product {
     minimum_order_quantity: number;
     maximum_order_quantity: number | null;
     unit?: string;
+    product_group?: string;
 }
 
 function ProductDetail() {
@@ -144,6 +145,12 @@ function ProductDetail() {
                 <p className={styles.description}>
                     {product.description || "No description available for this product."}
                 </p>
+
+                {product.product_group && (
+                    <div className="mt-2 text-sm text-gray-600">
+                        <span className="font-semibold">Group:</span> {product.product_group}
+                    </div>
+                )}
 
                 {/* Show MOQ info if applicable */}
                 {product.minimum_order_quantity > 1 && (
