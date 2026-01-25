@@ -372,7 +372,7 @@ export default function CheckoutPage() {
                     {deliveryMode === 'delivery' && retailerSettings && retailerSettings.freeDeliveryThreshold > 0 && cartTotal < retailerSettings.freeDeliveryThreshold && (
                         <div className="bg-blue-50 text-blue-800 text-sm p-2 rounded mb-2 border border-blue-200 flex justify-between items-center">
                             <span>Add items worth ₹{(retailerSettings.freeDeliveryThreshold - cartTotal).toFixed(0)} more for FREE Delivery!</span>
-                            <Button size="sm" variant="ghost" className="text-blue-700 h-auto py-0 px-2 text-xs hover:bg-blue-100" onClick={() => router.back()}>
+                            <Button variant="ghost" className="text-blue-700 h-auto py-0 px-2 text-xs hover:bg-blue-100" onClick={() => router.back()}>
                                 Add Items
                             </Button>
                         </div>
