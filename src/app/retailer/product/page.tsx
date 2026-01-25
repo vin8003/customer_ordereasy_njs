@@ -18,6 +18,7 @@ interface Product {
     image_url?: string;
     minimum_order_quantity: number;
     maximum_order_quantity: number | null;
+    unit?: string;
 }
 
 function ProductDetail() {
