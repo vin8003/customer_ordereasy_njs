@@ -90,13 +90,18 @@ export default function ProfilePage() {
                                 ? loyaltyPoints.find(lp => lp.retailer_id.toString() === currentRetailerId)
                                 : null;
 
-                            const totalPoints = loyaltyPoints.reduce((sum, lp) => sum + parseFloat(lp.points || 0), 0);
+                            const totalCurrencyValue = loyaltyPoints.reduce((sum, lp) => {
+                                return sum + (lp.value_in_currency ? parseFloat(lp.value_in_currency) : parseFloat(lp.points || 0));
+                            }, 0);
 
                             if (currentRetailerPoints) {
+                                const value = currentRetailerPoints.value_in_currency
+                                    ? Number(currentRetailerPoints.value_in_currency).toFixed(2)
+                                    : currentRetailerPoints.points;
                                 return (
                                     <div className={styles.highlightPoints}>
                                         <p className={styles.pointsLabel}>Cashback at {currentRetailerPoints.retailer_name}</p>
-                                        <p className={styles.pointsValue}>₹{currentRetailerPoints.points}</p>
+                                        <p className={styles.pointsValue}>₹{value}</p>
                                     </div>
                                 );
                             }
@@ -104,7 +109,7 @@ export default function ProfilePage() {
                             return (
                                 <div className={styles.highlightPoints}>
                                     <p className={styles.pointsLabel}>Total Cashback Balance</p>
-                                    <p className={styles.pointsValue}>₹{totalPoints.toFixed(2)}</p>
+                                    <p className={styles.pointsValue}>₹{totalCurrencyValue.toFixed(2)}</p>
                                 </div>
                             );
                         })()}
