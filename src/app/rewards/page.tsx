@@ -89,7 +89,7 @@ export default function RewardsPage() {
                     {loyaltyPoints.length > 0 && (
                         <div className={styles.totalBalanceBox}>
                             <div className={styles.totalLabel}>Total Balance</div>
-                            <div className={styles.totalValue}>₹{loyaltyPoints.reduce((sum, lp) => sum + parseFloat(lp.points || 0), 0).toFixed(2)}</div>
+                            <div className={styles.totalValue}>₹{loyaltyPoints.reduce((sum, lp) => sum + (lp.value_in_currency || parseFloat(lp.points || 0)), 0).toFixed(2)}</div>
                             <div className={styles.totalHint}>Redeemable at respective shops</div>
                         </div>
                     )}
@@ -104,11 +104,13 @@ export default function RewardsPage() {
                                 <div key={index} className={styles.loyaltyItem}>
                                     <div className={styles.lpInfo}>
                                         <span className={styles.lpRetailer}>{lp.retailer_name}</span>
-                                        <span className={styles.lpConversion}>1 Point = ₹1</span>
+                                        <span className={styles.lpConversion}>1 Point = ₹{lp.conversion_rate || 1}</span>
                                     </div>
                                     <div className={styles.lpPoints}>
                                         <span className={styles.lpValue}>{lp.points}</span>
-                                        <span className={styles.lpLabel}>Points</span>
+                                        <span className="text-xs text-green-600 font-bold">
+                                            (₹{lp.value_in_currency ? Number(lp.value_in_currency).toFixed(2) : lp.points})
+                                        </span>
                                     </div>
                                 </div>
                             ))}

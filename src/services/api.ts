@@ -151,6 +151,19 @@ export const apiService = {
         return response.data;
     },
 
+    registerDeviceToken: async (token: string) => {
+        try {
+            await api.post('auth/device/register/', {
+                registration_id: token,
+                type: 'web',
+                name: 'customer_web'
+            });
+            console.log('FCM Token registered successfully');
+        } catch (error) {
+            console.error('Failed to register FCM token:', error);
+        }
+    },
+
     signup: async (data: any) => {
         // Ensure phone number has +91 prefix
         if (data.phone_number && !data.phone_number.startsWith('+91')) {
@@ -398,28 +411,28 @@ export const apiService = {
         });
     },
 
-    getOrders: async () => {
+    getOrders: async (force: boolean = false) => {
         const key = 'orders_history';
         return fetchWithDedupe(key, async () => {
             const response = await api.get('orders/history/');
             return response.data;
-        });
+        }, force);
     },
 
-    getCurrentOrders: async () => {
+    getCurrentOrders: async (force: boolean = false) => {
         const key = 'orders_current';
         return fetchWithDedupe(key, async () => {
             const response = await api.get('orders/current/');
             return response.data;
-        });
+        }, force);
     },
 
-    getOrderDetail: async (id: number) => {
+    getOrderDetail: async (id: number, force: boolean = false) => {
         const key = `order_${id}`;
         return fetchWithDedupe(key, async () => {
             const response = await api.get(`orders/${id}/`);
             return response.data;
-        });
+        }, force);
     },
 
     // Rewards
@@ -482,6 +495,14 @@ export const apiService = {
 
     markOrderChatRead: async (orderId: number | string) => {
         const response = await api.post(`orders/${orderId}/chat/read/`);
+        return response.data;
+    },
+
+    // Feedback
+    createOrderFeedback: async (orderId: number | string, data: any) => {
+        const response = await api.post(`orders/${orderId}/feedback/`, data);
+        delete CACHE[`order_${orderId}`];
+        delete CACHE['orders_history'];
         return response.data;
     }
 };

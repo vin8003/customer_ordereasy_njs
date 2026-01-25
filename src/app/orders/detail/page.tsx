@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, MapPin, Phone, Package, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, Package, Clock, CheckCircle, XCircle, AlertCircle, Star } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { ProductImage } from '@/app/components/ProductImage';
@@ -35,6 +35,7 @@ interface OrderDetail {
     delivery_address_text: string;
     items: OrderItem[];
     created_at: string;
+    has_customer_feedback?: boolean;
 }
 
 function OrderDetails() {
@@ -47,6 +48,12 @@ function OrderDetails() {
     const [isActionLoading, setIsActionLoading] = useState(false);
     const [savedRetailerId, setSavedRetailerId] = useState<string | null>(null);
 
+    // Rating State
+    const [showRatingModal, setShowRatingModal] = useState(false);
+    const [rating, setRating] = useState(0);
+    const [comment, setComment] = useState('');
+    const [isRatingSubmitting, setIsRatingSubmitting] = useState(false);
+
     useEffect(() => {
         if (typeof window !== 'undefined') {
             setSavedRetailerId(localStorage.getItem('current_retailer_id'));
@@ -57,12 +64,29 @@ function OrderDetails() {
         if (orderId) {
             loadOrderDetails();
         }
+
+        const handleFcmUpdate = (event: any) => {
+            const payload = event.detail;
+            const updatedOrderId = payload.data?.order_id || payload.data?.id;
+
+            if (Number(updatedOrderId) === Number(orderId)) {
+                loadOrderDetails(true);
+            }
+        };
+
+        window.addEventListener('fcm_order_update', handleFcmUpdate);
+        return () => {
+            window.removeEventListener('fcm_order_update', handleFcmUpdate);
+        };
     }, [orderId]);
 
-    const loadOrderDetails = async () => {
-        setIsLoading(true);
+    const loadOrderDetails = async (force: boolean = false) => {
+        setIsLoading(force && !order ? true : !order); // Only show overlay loading if we don't have order data or explicitly loading first time
+        // Actually, let's keep it simple:
+        if (!order) setIsLoading(true);
+
         try {
-            const data = await apiService.getOrderDetail(Number(orderId));
+            const data = await apiService.getOrderDetail(Number(orderId), force);
             setOrder(data);
         } catch (error) {
             console.error(error);
@@ -79,7 +103,7 @@ function OrderDetails() {
         setIsActionLoading(true);
         try {
             await apiService.cancelOrder(order.id);
-            loadOrderDetails();
+            loadOrderDetails(true);
         } catch (error) {
             console.error(error);
             alert("Failed to cancel order. Please try again.");
@@ -93,12 +117,35 @@ function OrderDetails() {
         setIsActionLoading(true);
         try {
             await apiService.confirmOrderModification(order.id, action);
-            loadOrderDetails();
+            loadOrderDetails(true);
         } catch (error) {
             console.error(error);
             alert("Failed to process request. Please try again.");
         } finally {
             setIsActionLoading(false);
+        }
+    };
+
+    const handleRateOrder = async () => {
+        if (!order || rating === 0) return;
+
+        setIsRatingSubmitting(true);
+        try {
+            await apiService.createOrderFeedback(order.id, {
+                overall_rating: rating,
+                product_quality_rating: rating,
+                delivery_rating: rating,
+                service_rating: rating,
+                comment: comment
+            });
+            setShowRatingModal(false);
+            // Refresh order details to show "You rated this order" state
+            loadOrderDetails(true);
+        } catch (error) {
+            console.error('Rating failed:', error);
+            alert("Failed to submit rating. Please try again.");
+        } finally {
+            setIsRatingSubmitting(false);
         }
     };
 
@@ -276,6 +323,86 @@ function OrderDetails() {
                         <p className="text-[10px] text-center text-gray-400 mt-2 italic">
                             Orders can only be cancelled before they are packed or out for delivery.
                         </p>
+                    </div>
+                )}
+
+                {/* Rating Button */}
+                {order.status.toLowerCase() === 'delivered' && (
+                    <div className="px-4 mt-6 mb-8">
+                        {!order.has_customer_feedback ? (
+                            <Button
+                                variant="primary"
+                                fullWidth
+                                className="bg-blue-600 hover:bg-blue-700"
+                                onClick={() => setShowRatingModal(true)}
+                            >
+                                <Star className="mr-2" size={18} fill="currentColor" />
+                                Rate Store
+                            </Button>
+                        ) : (
+                            <div className="flex items-center justify-center p-3 bg-green-50 text-green-700 rounded-lg border border-green-200">
+                                <CheckCircle size={18} className="mr-2" />
+                                <span className="font-semibold">You rated this order</span>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Rating Modal */}
+                {showRatingModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                        <div className="bg-white rounded-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
+                            <div className="p-4 border-b">
+                                <h3 className="text-lg font-bold text-center">Rate Your Order</h3>
+                            </div>
+
+                            <div className="p-6">
+                                <p className="text-center text-gray-600 mb-6">How was your experience with {order.retailer_name}?</p>
+
+                                <div className="flex justify-center gap-2 mb-6">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <button
+                                            key={star}
+                                            type="button"
+                                            onClick={() => setRating(star)}
+                                            className="focus:outline-none transition-transform active:scale-95"
+                                        >
+                                            <Star
+                                                size={32}
+                                                className={`${rating >= star ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+                                            />
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <textarea
+                                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none text-sm"
+                                    placeholder="Add a comment (optional)..."
+                                    rows={3}
+                                    value={comment}
+                                    onChange={(e) => setComment(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="p-4 border-t bg-gray-50 flex gap-3">
+                                <Button
+                                    variant="outline"
+                                    className="flex-1"
+                                    onClick={() => setShowRatingModal(false)}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    variant="primary"
+                                    className="flex-1"
+                                    disabled={rating === 0 || isRatingSubmitting}
+                                    onClick={handleRateOrder}
+                                    isLoading={isRatingSubmitting}
+                                >
+                                    Submit
+                                </Button>
+                            </div>
+                        </div>
                     </div>
                 )}
             </main>
