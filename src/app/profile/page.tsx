@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { User, Mail, Phone, Settings, LogOut, Package, MapPin, ChevronRight, Gift } from 'lucide-react';
+import { User, Mail, Phone, Settings, LogOut, Package, MapPin, ChevronRight, Gift, HelpCircle } from 'lucide-react';
 import { apiService } from '@/services/api';
 import styles from './Profile.module.css';
 
@@ -119,6 +119,14 @@ export default function ProfilePage() {
                         <div className="flex items-center gap-3">
                             <Gift size={20} className="text-pink-500" />
                             <span>View All Rewards & Referrals</span>
+                        </div>
+                        <ChevronRight size={16} className="text-gray-400" />
+                    </Link>
+
+                    <Link href="/support" className={styles.menuItem}>
+                        <div className="flex items-center gap-3">
+                            <HelpCircle size={20} className="text-blue-500" />
+                            <span>Help & Support</span>
                         </div>
                         <ChevronRight size={16} className="text-gray-400" />
                     </Link>
