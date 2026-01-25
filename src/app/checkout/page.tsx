@@ -151,7 +151,7 @@ export default function CheckoutPage() {
             return;
         }
 
-        if (!selectedAddressId) {
+        if (deliveryMode === 'delivery' && !selectedAddressId) {
             alert("Please select a delivery address.");
             return;
         }

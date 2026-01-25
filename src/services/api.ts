@@ -495,6 +495,14 @@ export const apiService = {
     markOrderChatRead: async (orderId: number | string) => {
         const response = await api.post(`orders/${orderId}/chat/read/`);
         return response.data;
+    },
+
+    // Feedback
+    createOrderFeedback: async (orderId: number | string, data: any) => {
+        const response = await api.post(`orders/${orderId}/feedback/`, data);
+        delete CACHE[`order_${orderId}`];
+        delete CACHE['orders_history'];
+        return response.data;
     }
 };
 
