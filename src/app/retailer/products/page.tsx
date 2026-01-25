@@ -20,6 +20,8 @@ interface Product {
     category_name?: string;
     stock_quantity: number;
     unit?: string;
+    minimum_order_quantity: number;
+    maximum_order_quantity: number | null;
 }
 
 function AllProducts() {
@@ -53,7 +55,9 @@ function AllProducts() {
                 mrp: p.original_price || p.price,
                 image: p.image || p.image_url || '',
                 stock_quantity: p.quantity || 0,
-                unit: p.unit || 'Unit'
+                unit: p.unit || 'Unit',
+                minimum_order_quantity: p.minimum_order_quantity || 1,
+                maximum_order_quantity: p.maximum_order_quantity
             }));
 
             setProducts(processedProducts);
@@ -114,10 +118,20 @@ function AllProducts() {
                                         {discount > 0 && <span className={styles.mrp}>₹{product.mrp}</span>}
                                         <span className={styles.price}>₹{product.price}</span>
                                     </div>
-                                    <button className={styles.addButton} onClick={(e) => {
+                                    <button className={styles.addButton} onClick={async (e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
-                                        apiService.addToCart(product.id, 1);
+                                        if (product.stock_quantity < 1) {
+                                            alert("Out of Stock");
+                                            return;
+                                        }
+                                        try {
+                                            await apiService.addToCart(product.id, 1);
+                                            alert("Added to cart!");
+                                        } catch (err: any) {
+                                            console.error("Add to cart failed", err);
+                                            alert(err.response?.data?.error || "Failed to add to cart");
+                                        }
                                     }}>
                                         ADD
                                     </button>
