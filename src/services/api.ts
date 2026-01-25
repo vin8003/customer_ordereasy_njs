@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.ordereasy.win/api/';
-// const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/';
+const API_BASE_URL = process.env.NODE_ENV === 'production'
+    ? 'https://api.ordereasy.win/api/'
+    : (process.env.NEXT_PUBLIC_API_URL || 'https://api.ordereasy.win/api/');
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -522,13 +523,47 @@ export const apiService = {
         return response.data;
     },
 
-    // Feedback
     createOrderFeedback: async (orderId: number | string, data: any) => {
         const response = await api.post(`orders/${orderId}/feedback/`, data);
         delete CACHE[`order_${orderId}`];
         delete CACHE['orders_history'];
         return response.data;
     }
+};
+
+export const getErrorMessage = (error: any): string => {
+    if (!error) return "An unknown error occurred";
+    if (typeof error === 'string') return error;
+
+    // Axios error
+    if (error.response && error.response.data) {
+        const data = error.response.data;
+
+        // 1. { "error": "message" }
+        if (data.error && typeof data.error === 'string') return data.error;
+
+        // 2. { "detail": "message" }
+        if (data.detail && typeof data.detail === 'string') return data.detail;
+
+        // 3. { "field": ["error"] } or { "non_field_errors": ["error"] }
+        // We join all error messages
+        const messages: string[] = [];
+        Object.keys(data).forEach(key => {
+            const value = data[key];
+            if (Array.isArray(value)) {
+                // If key is non_field_errors, just show validation msg. Else show "Field: msg"
+                const prefix = (key === 'non_field_errors' || key === 'error') ? '' : `${key}: `;
+                messages.push(`${prefix}${value.join(', ')}`);
+            } else if (typeof value === 'string') {
+                messages.push(value);
+            }
+        });
+
+        if (messages.length > 0) return messages.join('\n');
+    }
+
+    // Fallback to error message
+    return error.message || "An unknown error occurred";
 };
 
 export default api;

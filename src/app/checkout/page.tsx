@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, MapPin, CreditCard, CheckCircle } from 'lucide-react';
-import { apiService } from '@/services/api';
+import { apiService, getErrorMessage } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import styles from './Checkout.module.css';
 import PhoneVerification from '@/app/components/auth/PhoneVerification';
@@ -222,7 +222,7 @@ export default function CheckoutPage() {
             router.push(`/orders/detail?id=${response.id}`);
         } catch (error) {
             console.error(error);
-            alert("Failed to place order. Please try again.");
+            alert(getErrorMessage(error));
         } finally {
             setIsLoading(false);
         }

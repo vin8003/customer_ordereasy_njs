@@ -16,6 +16,9 @@ interface Product {
     stock_quantity: number;
     image?: string;
     image_url?: string;
+    minimum_order_quantity: number;
+    maximum_order_quantity: number | null;
+    unit?: string;
 }
 
 function ProductDetail() {
@@ -39,7 +42,13 @@ function ProductDetail() {
         setIsLoading(true);
         try {
             const data = await apiService.getProductDetail(retailerId, productId);
-            setProduct(data);
+            setProduct({
+                ...data,
+                minimum_order_quantity: data.minimum_order_quantity || 1,
+                maximum_order_quantity: data.maximum_order_quantity
+            });
+            // Set initial quantity to minimum order quantity
+            setQuantity(data.minimum_order_quantity || 1);
             // Check wishlist status if possible, or just default to false
         } catch (error) {
             console.error("Failed to load product", error);
@@ -53,8 +62,9 @@ function ProductDetail() {
         try {
             await apiService.addToCart(product.id, quantity);
             alert("Added to cart!");
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
+            alert(err.response?.data?.error || "Failed to add to cart");
         }
     };
 
@@ -78,6 +88,10 @@ function ProductDetail() {
     const discount = product.mrp > product.price
         ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
         : 0;
+
+    const isMinReached = quantity <= 1; // Allow down to 1
+    const isMaxBlocked = quantity >= product.stock_quantity; // Only block on stock
+
 
     return (
         <div className={styles.container}>
@@ -131,6 +145,13 @@ function ProductDetail() {
                     {product.description || "No description available for this product."}
                 </p>
 
+                {/* Show MOQ info if applicable */}
+                {product.minimum_order_quantity > 1 && (
+                    <div className="mt-4 p-3 bg-blue-50 text-blue-700 rounded-md text-sm">
+                        Minimum order quantity: {product.minimum_order_quantity} {product.unit || 'units'}
+                    </div>
+                )}
+
                 <div className={styles.divider} />
 
                 {/* Optional: Similar Products or Reviews could go here */}
@@ -138,11 +159,19 @@ function ProductDetail() {
 
             <div className={styles.footer}>
                 <div className={styles.qtyControl}>
-                    <button onClick={() => setQuantity(Math.max(1, quantity - 1))} disabled={quantity <= 1}>
+                    <button
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        disabled={isMinReached}
+                        className={isMinReached ? 'opacity-50 cursor-not-allowed' : ''}
+                    >
                         <Minus size={18} />
                     </button>
                     <span>{quantity}</span>
-                    <button onClick={() => setQuantity(Math.min(product.stock_quantity, quantity + 1))} disabled={quantity >= product.stock_quantity}>
+                    <button
+                        onClick={() => setQuantity(Math.min(product.stock_quantity, quantity + 1))}
+                        disabled={isMaxBlocked}
+                        className={isMaxBlocked ? 'opacity-50 cursor-not-allowed' : ''}
+                    >
                         <Plus size={18} />
                     </button>
                 </div>
