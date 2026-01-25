@@ -27,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased pb-24 overflow-x-hidden`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased pb-32 overflow-x-hidden`}>
         <NotificationWrapper>
           {children}
         </NotificationWrapper>
