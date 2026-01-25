@@ -250,6 +250,30 @@ export const apiService = {
         });
     },
 
+    getBestSellingProducts: async (retailerId: string) => {
+        const key = `best_selling_${retailerId}`;
+        return fetchWithDedupe(key, async () => {
+            const response = await api.get(`products/retailer/${retailerId}/best-selling/`);
+            return response.data;
+        });
+    },
+
+    getBuyAgainProducts: async (retailerId: string) => {
+        const key = `buy_again_${retailerId}`;
+        return fetchWithDedupe(key, async () => {
+            const response = await api.get(`products/retailer/${retailerId}/buy-again/`);
+            return response.data;
+        });
+    },
+
+    getRecommendedProducts: async (retailerId: string) => {
+        const key = `recommended_${retailerId}`;
+        return fetchWithDedupe(key, async () => {
+            const response = await api.get(`products/retailer/${retailerId}/recommended/`);
+            return response.data;
+        });
+    },
+
     getRetailerProducts: async (retailerId: string, params?: any) => {
         const key = `products_${retailerId}_${JSON.stringify(params || {})}`;
         return fetchWithDedupe(key, async () => {

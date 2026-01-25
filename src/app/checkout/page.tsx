@@ -28,7 +28,14 @@ export default function CheckoutPage() {
     // Order Details
     const [deliveryMode, setDeliveryMode] = useState<'delivery' | 'pickup'>('delivery');
     const [specialInstructions, setSpecialInstructions] = useState('');
-    const [deliveryFee, setDeliveryFee] = useState(50);
+    const [deliveryFee, setDeliveryFee] = useState(0); // Initialize with 0, will be set dynamically
+
+    // Retailer Settings
+    const [retailerSettings, setRetailerSettings] = useState<{
+        deliveryCharge: number;
+        freeDeliveryThreshold: number;
+        minimumOrderAmount: number;
+    } | null>(null);
 
     // Rewards
     const [useRewardPoints, setUseRewardPoints] = useState(false);
@@ -46,10 +53,7 @@ export default function CheckoutPage() {
     // We need to fetch cart to display summary or at least total
 
     useEffect(() => {
-        loadAddresses();
-        loadCartSummary();
-        loadRewardData();
-        checkUserVerification();
+        loadData();
     }, []);
 
     useEffect(() => {
@@ -57,14 +61,55 @@ export default function CheckoutPage() {
     }, [useRewardPoints, rewardConfig, userRewardPoints, cartTotal, deliveryFee]);
 
     useEffect(() => {
-        if (deliveryMode === 'delivery') {
-            setDeliveryFee(50);
-            if (paymentMethod === 'cash_pickup') setPaymentMethod('cod');
-        } else {
-            setDeliveryFee(0);
-            if (paymentMethod === 'cod') setPaymentMethod('cash_pickup');
+        calculateDeliveryFee();
+    }, [deliveryMode, retailerSettings, cartTotal]);
+
+    const loadData = async () => {
+        await Promise.all([
+            loadAddresses(),
+            loadCartSummary(),
+            loadRewardData(),
+            checkUserVerification(),
+            loadRetailerSettings()
+        ]);
+    };
+
+    const loadRetailerSettings = async () => {
+        const storedId = localStorage.getItem('current_retailer_id');
+        if (storedId) {
+            try {
+                const data = await apiService.getRetailerDetails(storedId);
+                setRetailerSettings({
+                    deliveryCharge: parseFloat(data.delivery_charge || '0'),
+                    freeDeliveryThreshold: parseFloat(data.free_delivery_threshold || '0'),
+                    minimumOrderAmount: parseFloat(data.minimum_order_amount || '0')
+                });
+            } catch (e) {
+                console.error("Failed to load retailer settings", e);
+            }
         }
-    }, [deliveryMode]);
+    }
+
+    const calculateDeliveryFee = () => {
+        if (deliveryMode !== 'delivery' || !retailerSettings) {
+            setDeliveryFee(0);
+            if (deliveryMode === 'pickup') {
+                if (paymentMethod === 'cod') setPaymentMethod('cash_pickup');
+            }
+            return;
+        }
+
+        if (paymentMethod === 'cash_pickup') setPaymentMethod('cod');
+
+        let fee = retailerSettings.deliveryCharge;
+
+        // Check free delivery threshold
+        if (retailerSettings.freeDeliveryThreshold > 0 && cartTotal >= retailerSettings.freeDeliveryThreshold) {
+            fee = 0;
+        }
+
+        setDeliveryFee(fee);
+    };
 
     const checkUserVerification = async () => {
         try {
@@ -324,6 +369,14 @@ export default function CheckoutPage() {
                         <span>Subtotal</span>
                         <span>₹{cartTotal.toFixed(2)}</span>
                     </div>
+                    {deliveryMode === 'delivery' && retailerSettings && retailerSettings.freeDeliveryThreshold > 0 && cartTotal < retailerSettings.freeDeliveryThreshold && (
+                        <div className="bg-blue-50 text-blue-800 text-sm p-2 rounded mb-2 border border-blue-200 flex justify-between items-center">
+                            <span>Add items worth ₹{(retailerSettings.freeDeliveryThreshold - cartTotal).toFixed(0)} more for FREE Delivery!</span>
+                            <Button size="sm" variant="ghost" className="text-blue-700 h-auto py-0 px-2 text-xs hover:bg-blue-100" onClick={() => router.back()}>
+                                Add Items
+                            </Button>
+                        </div>
+                    )}
                     {deliveryFee > 0 && (
                         <div className={styles.summaryRow}>
                             <span>Delivery Fee</span>

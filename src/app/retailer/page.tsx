@@ -8,6 +8,7 @@ import { apiService } from '@/services/api';
 import { useWishlist } from '@/hooks/useWishlist';
 import { WishlistIcon } from '@/app/components/WishlistIcon';
 import { ProductImage } from '@/app/components/ProductImage';
+import { ProductCard } from '@/app/components/ProductCard';
 import styles from './RetailerHome.module.css';
 
 interface Category {
@@ -38,6 +39,9 @@ function RetailerHome() {
     const [retailer, setRetailer] = useState<any>(null);
     const [categories, setCategories] = useState<Category[]>([]);
     const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+    const [bestSellingProducts, setBestSellingProducts] = useState<Product[]>([]);
+    const [buyAgainProducts, setBuyAgainProducts] = useState<Product[]>([]);
+    const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [referralCode, setReferralCode] = useState('');
 
@@ -54,10 +58,22 @@ function RetailerHome() {
     const loadData = async () => {
         setIsLoading(true);
         try {
-            const [retailerData, catData, featData, userProfile] = await Promise.all([
+            const [retailerData, catData, featData, bestData, againData, recData, userProfile] = await Promise.all([
                 apiService.getRetailerDetails(retailerId),
                 apiService.getRetailerCategories(retailerId),
                 apiService.getFeaturedProducts(retailerId),
+                apiService.getBestSellingProducts(retailerId).catch((e) => {
+                    console.error("Best selling error:", e);
+                    return [];
+                }),
+                apiService.isAuthenticated() ? apiService.getBuyAgainProducts(retailerId).catch((e) => {
+                    console.error("Buy again error:", e);
+                    return [];
+                }) : Promise.resolve([]),
+                apiService.isAuthenticated() ? apiService.getRecommendedProducts(retailerId).catch((e) => {
+                    console.error("Recommended error:", e);
+                    return [];
+                }) : Promise.resolve([]),
                 apiService.fetchUserProfile().catch((e) => {
                     console.error("FETCH USER PROFILE FAILED:", e);
                     return { referral_code: '' };
@@ -65,6 +81,8 @@ function RetailerHome() {
             ]);
 
             console.log("RETAILER DATA:", retailerData);
+            console.log("FEATURED DATA:", featData); // Debug log
+            console.log("BEST DATA:", bestData); // Debug log
             console.log("USER PROFILE:", userProfile);
 
             setRetailer(retailerData);
@@ -75,7 +93,7 @@ function RetailerHome() {
 
             setCategories(Array.isArray(catData) ? catData : catData.results || []);
 
-            const products = (Array.isArray(featData) ? featData : featData.results || []).map((p: any) => ({
+            const processProducts = (data: any) => (Array.isArray(data) ? data : data.results || []).map((p: any) => ({
                 ...p,
                 price: p.discounted_price || p.price,
                 mrp: p.original_price || p.price,
@@ -83,7 +101,11 @@ function RetailerHome() {
                 stock_quantity: p.quantity || 0,
                 unit: p.unit || 'Unit'
             }));
-            setFeaturedProducts(products);
+
+            setFeaturedProducts(processProducts(featData));
+            setBestSellingProducts(processProducts(bestData)); // Removed .data || []
+            setBuyAgainProducts(processProducts(againData));   // Removed .data || []
+            setRecommendedProducts(processProducts(recData));  // Removed .data || []
 
             if (userProfile && userProfile.referral_code) {
                 setReferralCode(userProfile.referral_code);
@@ -152,61 +174,121 @@ function RetailerHome() {
                 </section>
 
                 {/* Featured Products */}
-                <section className={styles.section}>
-                    <div className={styles.sectionHeader}>
-                        <h2>Featured Products</h2>
-                    </div>
-                    <div className={styles.productsScroll}>
-                        {featuredProducts.map(product => {
-                            const discount = product.mrp > product.price
-                                ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
-                                : 0;
+                {featuredProducts.length > 0 && (
+                    <section className={styles.section}>
+                        <div className={styles.sectionHeader}>
+                            <h2>Featured Products</h2>
+                        </div>
+                        <div className={styles.productsScroll}>
+                            {featuredProducts.map(product => (
+                                <ProductCard
+                                    key={product.id}
+                                    product={product}
+                                    isWishlisted={isWishlisted(product.id)}
+                                    onToggleWishlist={(e: React.MouseEvent) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        toggleWishlist(product.id);
+                                    }}
+                                    onAdd={(e: React.MouseEvent) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        apiService.addToCart(product.id, 1);
+                                    }}
+                                    onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
+                                />
+                            ))}
+                        </div>
+                    </section>
+                )}
 
-                            return (
-                                <div key={product.id} className={styles.productCard} onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}>
-                                    <div className={styles.productImage}>
-                                        {discount > 0 && (
-                                            <div className={styles.discountBadge}>{discount}% OFF</div>
-                                        )}
-                                        <ProductImage
-                                            src={product.image || ''}
-                                            alt={product.name}
-                                            className="w-full h-full"
-                                        />
+                {/* Best Selling Products */}
+                {bestSellingProducts.length > 0 && (
+                    <section className={styles.section}>
+                        <div className={styles.sectionHeader}>
+                            <h2>Best Selling</h2>
+                        </div>
+                        <div className={styles.productsScroll}>
+                            {bestSellingProducts.map(product => (
+                                <ProductCard
+                                    key={`best-${product.id}`}
+                                    product={product}
+                                    isWishlisted={isWishlisted(product.id)}
+                                    onToggleWishlist={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        toggleWishlist(product.id);
+                                    }}
+                                    onAdd={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        apiService.addToCart(product.id, 1);
+                                    }}
+                                    onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
+                                />
+                            ))}
+                        </div>
+                    </section>
+                )}
 
-                                        <div className={styles.wishlistIcon} onClick={(e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            toggleWishlist(product.id);
-                                        }}>
-                                            <WishlistIcon isWishlisted={isWishlisted(product.id)} />
-                                        </div>
-                                    </div>
+                {/* Buy Again (Only if user logged in) */}
+                {buyAgainProducts.length > 0 && (
+                    <section className={styles.section}>
+                        <div className={styles.sectionHeader}>
+                            <h2>Buy Again</h2>
+                            <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full">Based on your orders</span>
+                        </div>
+                        <div className={styles.productsScroll}>
+                            {buyAgainProducts.map(product => (
+                                <ProductCard
+                                    key={`again-${product.id}`}
+                                    product={product}
+                                    isWishlisted={isWishlisted(product.id)}
+                                    onToggleWishlist={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        toggleWishlist(product.id);
+                                    }}
+                                    onAdd={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        apiService.addToCart(product.id, 1);
+                                    }}
+                                    onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
+                                />
+                            ))}
+                        </div>
+                    </section>
+                )}
 
-                                    <div className={styles.productInfo}>
-                                        <div>
-                                            <div className={styles.unit}>{product.unit}</div>
-                                            <h3 className={styles.productName}>{product.name}</h3>
-                                        </div>
-                                        <div className={styles.priceRow}>
-                                            <div className={styles.prices}>
-                                                {discount > 0 && <span className={styles.mrp}>₹{product.mrp}</span>}
-                                                <span className={styles.price}>₹{product.price}</span>
-                                            </div>
-                                            <button className={styles.addButton} onClick={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                apiService.addToCart(product.id, 1);
-                                            }}>
-                                                ADD
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </section>
+                {/* Recommended Products */}
+                {recommendedProducts.length > 0 && (
+                    <section className={styles.section}>
+                        <div className={styles.sectionHeader}>
+                            <h2>Recommended for You</h2>
+                        </div>
+                        <div className={styles.productsScroll}>
+                            {recommendedProducts.map(product => (
+                                <ProductCard
+                                    key={`rec-${product.id}`}
+                                    product={product}
+                                    isWishlisted={isWishlisted(product.id)}
+                                    onToggleWishlist={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        toggleWishlist(product.id);
+                                    }}
+                                    onAdd={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        apiService.addToCart(product.id, 1);
+                                    }}
+                                    onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
+                                />
+                            ))}
+                        </div>
+                    </section>
+                )}
 
                 {/* Referral Banner */}
                 <section className={styles.referralBanner}>

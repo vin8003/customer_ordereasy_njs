@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Copy, Gift, Users, CheckCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Users } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
+import { ReferralCard } from '@/app/components/ReferralCard';
 import styles from './Rewards.module.css';
 
 export default function RewardsPage() {
@@ -44,6 +45,7 @@ export default function RewardsPage() {
     const handleCopyCode = () => {
         if (stats?.referral_code) {
             navigator.clipboard.writeText(stats.referral_code);
+            // Optionally could use a toast here
             alert("Referral code copied!");
         }
     };
@@ -79,7 +81,16 @@ export default function RewardsPage() {
             </header>
 
             <div className={styles.content}>
-                {/* Section 0: My Points */}
+
+                {/* Visual Hierarchy: Refer & Earn first as it's the main engaging action */}
+                <ReferralCard
+                    referralCode={stats?.referral_code}
+                    totalReferrals={stats?.total_referrals || 0}
+                    successfulReferrals={stats?.successful_referrals || 0}
+                    onCopy={handleCopyCode}
+                />
+
+                {/* Section: My Points */}
                 <div className={styles.card}>
                     <div className={styles.cardTitle}>
                         <CheckCircle size={20} className="text-blue-500" />
@@ -118,32 +129,7 @@ export default function RewardsPage() {
                     )}
                 </div>
 
-                {/* Section 1: Your Code */}
-                <div className={styles.card}>
-                    <div className={styles.cardTitle}>
-                        <Gift size={20} className="text-pink-500" />
-                        <span>Refer & Earn</span>
-                    </div>
-
-                    <div className={styles.codeBox} onClick={handleCopyCode}>
-                        <div className={styles.codeLabel}>Your Referral Code</div>
-                        <div className={styles.codeValue}>{stats?.referral_code || '---'}</div>
-                        <div className={styles.copyHint}>Tap to copy</div>
-                    </div>
-
-                    <div className={styles.statsGrid}>
-                        <div className={styles.statItem}>
-                            <div className={styles.statValue}>{stats?.total_referrals || 0}</div>
-                            <div className={styles.statLabel}>Friends Referred</div>
-                        </div>
-                        <div className={styles.statItem}>
-                            <div className={styles.statValue}>{stats?.successful_referrals || 0}</div>
-                            <div className={styles.statLabel}>Successful</div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Section 2: Apply Code */}
+                {/* Section: Apply Code */}
                 <div className={styles.card}>
                     <div className={styles.cardTitle}>
                         <CheckCircle size={20} className="text-green-500" />
@@ -186,7 +172,7 @@ export default function RewardsPage() {
                     </div>
                 </div>
 
-                {/* Section 3: History */}
+                {/* Section: History */}
                 <div className={styles.card}>
                     <div className={styles.cardTitle}>
                         <Users size={20} className="text-blue-500" />
