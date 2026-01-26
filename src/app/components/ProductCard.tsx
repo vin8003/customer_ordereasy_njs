@@ -12,6 +12,7 @@ interface Product {
     mrp: number;
     image: string;
     unit?: string;
+    active_offer_text?: string;
 }
 
 interface ProductCardProps {
@@ -37,7 +38,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div className={styles.card} onClick={onClick}>
             <div className={styles.imageWrapper}>
                 <div className={styles.badges}>
-                    {discount > 0 ? (
+                    {product.active_offer_text ? (
+                        <div className="bg-red-500 text-white text-[10px] sm:text-xs font-bold px-1.5 py-0.5 rounded-sm shadow-sm z-10 w-fit">
+                            {product.active_offer_text}
+                        </div>
+                    ) : discount > 0 ? (
                         <div className={styles.discountBadge}>{discount}% OFF</div>
                     ) : <div></div>} {/* Spacer to keep wishlist icon on right */}
 

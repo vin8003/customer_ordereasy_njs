@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, Trash2, Plus, Minus, ArrowLeft } from 'lucide-react';
+import { ShoppingBag, Trash2, Plus, Minus, ArrowLeft, Tag, Award } from 'lucide-react';
 import { apiService, getErrorMessage } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { useWishlist } from '@/hooks/useWishlist';
@@ -132,6 +132,10 @@ export default function CartPage() {
     // Use shared wishlist hook
     const { loadWishlist, toggleWishlist, isWishlisted } = useWishlist();
 
+    const [savings, setSavings] = useState(0);
+    const [appliedOffers, setAppliedOffers] = useState<any[]>([]);
+    const [potentialPoints, setPotentialPoints] = useState(0);
+
     useEffect(() => {
         const storedId = localStorage.getItem('current_retailer_id');
         if (storedId) {
@@ -156,7 +160,17 @@ export default function CartPage() {
                 minimum_order_quantity: item.minimum_order_quantity || 1,
                 maximum_order_quantity: item.maximum_order_quantity
             })));
-            setTotalAmount(parseFloat(cartData.total_amount));
+            setTotalAmount(parseFloat(cartData.discounted_total || cartData.total_amount));
+            // You might want to save applied_offers or total_savings to state if you want to display them
+            if (cartData.total_savings > 0) {
+                // Logic to show savings, maybe update a separate state variable
+                setSavings(cartData.total_savings);
+                setAppliedOffers(cartData.applied_offers || []);
+            } else {
+                setSavings(0);
+                setAppliedOffers([]);
+            }
+            setPotentialPoints(cartData.potential_points || 0);
         } catch (error) {
             console.error("Failed to fetch data", error);
         } finally {
@@ -181,7 +195,10 @@ export default function CartPage() {
             setCartItems(prev => prev.map(item => item.id === itemId ? { ...item, quantity: newQty } : item));
             if (retailerId) {
                 const data = await apiService.getCart(retailerId);
-                setTotalAmount(parseFloat(data.total_amount));
+                setTotalAmount(parseFloat(data.discounted_total || data.total_amount));
+                setSavings(parseFloat(data.total_savings || 0));
+                setAppliedOffers(data.applied_offers || []);
+                setPotentialPoints(data.potential_points || 0);
             }
         } catch (e) {
             console.error(e);
@@ -194,7 +211,10 @@ export default function CartPage() {
             setCartItems(prev => prev.filter(item => item.id !== itemId));
             if (retailerId) {
                 const data = await apiService.getCart(retailerId);
-                setTotalAmount(parseFloat(data.total_amount));
+                setTotalAmount(parseFloat(data.discounted_total || data.total_amount));
+                setSavings(parseFloat(data.total_savings || 0));
+                setAppliedOffers(data.applied_offers || []);
+                setPotentialPoints(data.potential_points || 0);
             }
         } catch (e) {
             console.error(e);
@@ -248,8 +268,45 @@ export default function CartPage() {
 
             <div className={styles.footer}>
                 <div className={styles.totalRow}>
-                    <span>Total Amount</span>
-                    <span className={styles.totalValue}>₹{totalAmount.toFixed(2)}</span>
+                    <span>Subtotal</span>
+                    <span className={styles.totalValue}>₹{(totalAmount + Number(savings)).toFixed(2)}</span>
+                </div>
+                {Number(savings) > 0 && (
+                    <div className="flex justify-between items-center text-green-600 font-medium py-2">
+                        <span>Savings</span>
+                        <span>-₹{Number(savings).toFixed(2)}</span>
+                    </div>
+                )}
+                {appliedOffers.length > 0 && (
+                    <div className="space-y-1 py-2 text-sm border-b border-gray-100">
+                        {appliedOffers.map((offer, idx) => (
+                            <div key={idx} className="flex justify-between items-center text-gray-600">
+                                <span className="flex items-center gap-1.5">
+                                    <Tag size={14} className="text-green-600" />
+                                    <span>{offer.name}</span>
+                                </span>
+                                {offer.benefit_type === 'credit_points' ? (
+                                    <span className="text-amber-600 font-medium text-xs">+{Number(offer.savings)} pts</span>
+                                ) : (
+                                    <span className="text-green-600 font-medium">-₹{Number(offer.savings).toFixed(2)}</span>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+                {/* Potential Cashback Points Summary */}
+                {Number(potentialPoints) > 0 && (
+                    <div className="flex justify-between items-center py-2 mt-1 text-amber-700 bg-amber-50/50 rounded px-2 -mx-2">
+                        <span className="flex items-center gap-1.5 font-medium text-sm">
+                            <Award size={16} />
+                            Points to Earn
+                        </span>
+                        <span className="font-bold">+{potentialPoints}</span>
+                    </div>
+                )}
+                <div className={styles.totalRow}>
+                    <span className="font-bold">Total Amount</span>
+                    <span className={`${styles.totalValue} font-bold`}>₹{totalAmount.toFixed(2)}</span>
                 </div>
                 <Button
                     fullWidth

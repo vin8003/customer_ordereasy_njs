@@ -24,6 +24,8 @@ export default function CheckoutPage() {
     const [paymentMethod, setPaymentMethod] = useState('cod');
     const [isLoading, setIsLoading] = useState(false);
     const [cartTotal, setCartTotal] = useState(0);
+    const [offerSavings, setOfferSavings] = useState(0);
+    const [hasActiveOffers, setHasActiveOffers] = useState(false);
 
     // Order Details
     const [deliveryMode, setDeliveryMode] = useState<'delivery' | 'pickup'>('delivery');
@@ -144,7 +146,16 @@ export default function CheckoutPage() {
         if (storedId) {
             try {
                 const data = await apiService.getCart(storedId);
-                setCartTotal(parseFloat(data.total_amount));
+                // Use discounted_total if available, else total_amount
+                // However, logic below (calculateDiscount) uses cartTotal to calculate potential points usage.
+                // We should track Subtotal and Discount separately to be accurate.
+                const subTotal = parseFloat(data.subtotal || data.total_amount);
+                const discTotal = parseFloat(data.discounted_total || data.total_amount);
+                const offerSavings = parseFloat(data.total_savings || '0');
+
+                setCartTotal(discTotal);
+                setOfferSavings(offerSavings);
+                setHasActiveOffers(offerSavings > 0);
             } catch (e) {
                 console.error(e);
             }
@@ -367,8 +378,14 @@ export default function CheckoutPage() {
                     <h2 className={styles.sectionTitle}>Order Summary</h2>
                     <div className={styles.summaryRow}>
                         <span>Subtotal</span>
-                        <span>₹{cartTotal.toFixed(2)}</span>
+                        <span>₹{(cartTotal + offerSavings).toFixed(2)}</span>
                     </div>
+                    {hasActiveOffers && (
+                        <div className={`${styles.summaryRow} text-green-600`}>
+                            <span>Offer Discount</span>
+                            <span>-₹{offerSavings.toFixed(2)}</span>
+                        </div>
+                    )}
                     {deliveryMode === 'delivery' && retailerSettings && retailerSettings.freeDeliveryThreshold > 0 && cartTotal < retailerSettings.freeDeliveryThreshold && (
                         <div className="bg-blue-50 text-blue-800 text-sm p-2 rounded mb-2 border border-blue-200 flex justify-between items-center">
                             <span>Add items worth ₹{(retailerSettings.freeDeliveryThreshold - cartTotal).toFixed(0)} more for FREE Delivery!</span>
