@@ -1,7 +1,7 @@
 .container {
     min-height: 100vh;
     background-color: var(--background-color);
-    padding-bottom: 150px;
+    padding-bottom: 250px;
 }
 
 .header {
@@ -136,13 +136,16 @@
 
 .footer {
     position: fixed;
-    bottom: 80px;
+    bottom: calc(70px + env(safe-area-inset-bottom));
+    /* Clear BottomNav (approx 60-70px) */
     left: 0;
     right: 0;
     background: #fff;
     padding: 1.5rem;
     box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
     border-top: 1px solid var(--border-color);
+    z-index: 40;
+    /* Just below BottomNav if they overlap, but above content */
 }
 
 .totalRow {
