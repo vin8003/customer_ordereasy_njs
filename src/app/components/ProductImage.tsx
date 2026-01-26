@@ -35,8 +35,8 @@ export const ProductImage: React.FC<ProductImageProps> = ({
                 alt={alt}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                style={{ objectFit: 'cover' }}
-                className="object-cover"
+                style={{ objectFit: 'contain' }}
+                className={`object-contain ${className}`}
                 onError={() => setError(true)}
                 priority={priority}
             />
