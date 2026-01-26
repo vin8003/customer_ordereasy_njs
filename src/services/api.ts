@@ -275,10 +275,18 @@ export const apiService = {
         });
     },
 
-    getRetailerProducts: async (retailerId: string, params?: any) => {
+    getRetailerProducts: async (retailerId: string | number, params?: any) => {
         const key = `products_${retailerId}_${JSON.stringify(params || {})}`;
         return fetchWithDedupe(key, async () => {
             const response = await api.get(`products/retailer/${retailerId}/`, { params });
+            return response.data;
+        });
+    },
+
+    searchProducts: async (retailerId: string | number, query: string) => {
+        const key = `search_${retailerId}_${query}`;
+        return fetchWithDedupe(key, async () => {
+            const response = await api.get(`products/retailer/${retailerId}/search/`, { params: { search: query } });
             return response.data;
         });
     },

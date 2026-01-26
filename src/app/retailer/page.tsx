@@ -44,6 +44,44 @@ function RetailerHome() {
     const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [referralCode, setReferralCode] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [suggestions, setSuggestions] = useState<Product[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (searchQuery.trim().length >= 2) {
+                fetchSuggestions();
+            } else {
+                setSuggestions([]);
+                setShowSuggestions(false);
+            }
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    const fetchSuggestions = async () => {
+        setIsSearching(true);
+        try {
+            const data = await apiService.searchProducts(retailerId, searchQuery);
+            setSuggestions(Array.isArray(data) ? data : data.results || []);
+            setShowSuggestions(true);
+        } catch (error) {
+            console.error("Suggestions fetch failed", error);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (searchQuery.trim()) {
+            setShowSuggestions(false);
+            router.push(`/retailer/products?retailerId=${retailerId}&search=${encodeURIComponent(searchQuery.trim())}`);
+        }
+    };
 
     // Use shared wishlist hook
     const { wishlistIds, loadWishlist, toggleWishlist, isWishlisted } = useWishlist();
@@ -141,14 +179,47 @@ function RetailerHome() {
                     </button>
                 </div>
 
-                <div className={styles.searchBar}>
+                <form className={styles.searchBar} onSubmit={handleSearch}>
                     <Search className={styles.searchIcon} size={20} />
                     <input
                         type="text"
                         placeholder="Search for products..."
                         className={styles.searchInput}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onFocus={() => searchQuery.trim().length >= 2 && setShowSuggestions(true)}
+                        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                     />
-                </div>
+
+                    {showSuggestions && (
+                        <div className={styles.suggestionsContainer}>
+                            {isSearching ? (
+                                <div className={styles.noSuggestions}>Searching...</div>
+                            ) : suggestions.length > 0 ? (
+                                suggestions.map((product) => (
+                                    <div
+                                        key={product.id}
+                                        className={styles.suggestionItem}
+                                        onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
+                                    >
+                                        <div className={styles.suggestionImage}>
+                                            <ProductImage src={product.image} alt={product.name} />
+                                        </div>
+                                        <div className={styles.suggestionInfo}>
+                                            <div className={styles.suggestionName}>{product.name}</div>
+                                            <div className={styles.suggestionMeta}>
+                                                <span className={styles.suggestionPrice}>₹{product.price}</span>
+                                                {product.unit && <span>• {product.unit}</span>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className={styles.noSuggestions}>No products found for "{searchQuery}"</div>
+                            )}
+                        </div>
+                    )}
+                </form>
             </header>
 
             <main className={styles.main}>
@@ -318,11 +389,6 @@ function RetailerHome() {
                     )}
                 </section>
 
-                <div className={styles.viewAllBtnWrapper}>
-                    <button className={styles.viewAllBtn} onClick={() => router.push(`/retailer/products?retailerId=${retailerId}`)}>
-                        View All Products
-                    </button>
-                </div>
             </main>
         </div>
     );

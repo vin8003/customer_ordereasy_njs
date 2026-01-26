@@ -6,14 +6,18 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ShoppingBag, Filter } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
+import { ProductCard } from '@/app/components/ProductCard';
+import { useWishlist } from '@/hooks/useWishlist';
 import styles from './CategoryProducts.module.css';
 
 interface Product {
     id: number;
     name: string;
+    description?: string;
     price: number;
     mrp: number;
     image: string;
+    category_name?: string;
     stock_quantity: number;
     unit?: string;
 }
@@ -27,26 +31,23 @@ function CategoryProducts() {
     const [products, setProducts] = useState<Product[]>([]);
     const [categoryName, setCategoryName] = useState('Products');
     const [isLoading, setIsLoading] = useState(true);
-    const [wishlistIds, setWishlistIds] = useState<Set<number>>(new Set());
+
+    const { wishlistIds, loadWishlist, toggleWishlist, isWishlisted } = useWishlist();
 
     useEffect(() => {
         if (retailerId && categoryId) {
             loadProducts();
+            loadWishlist();
         }
-    }, [retailerId, categoryId]);
+    }, [retailerId, categoryId, loadWishlist]);
 
     const loadProducts = async () => {
         setIsLoading(true);
         try {
-            const [prodData, wishlistData] = await Promise.all([
-                apiService.getRetailerProducts(retailerId, { category: categoryId }),
-                apiService.getWishlist().catch(() => ({ results: [] }))
-            ]);
-
+            const prodData = await apiService.getRetailerProducts(retailerId, { category: categoryId });
             const rawProducts = Array.isArray(prodData) ? prodData : prodData.results || [];
 
-            // Map keys
-            const mappedProducts = rawProducts.map((p: any) => ({
+            const processedProducts = rawProducts.map((p: any) => ({
                 ...p,
                 price: p.discounted_price || p.price,
                 mrp: p.original_price || p.price,
@@ -55,54 +56,16 @@ function CategoryProducts() {
                 unit: p.unit || 'Unit'
             }));
 
-            setProducts(mappedProducts);
+            setProducts(processedProducts);
 
-            // Wishlist
-            const ids = new Set<number>((wishlistData.results || wishlistData).map((item: any) => item.product));
-            setWishlistIds(ids);
-
-            // Ideally fetch category name from backend or pass it
-            // For now, if we have products, maybe infer or just keep generic
-            // Or fetch category detail if endpoint exists. 
+            // Try to set category name from first product if possible
+            if (processedProducts.length > 0 && processedProducts[0].category_name) {
+                setCategoryName(processedProducts[0].category_name);
+            }
         } catch (error) {
             console.error("Failed to load products", error);
         } finally {
             setIsLoading(false);
-        }
-    };
-
-    const addToCart = async (e: React.MouseEvent, productId: number) => {
-        e.preventDefault();
-        e.stopPropagation();
-        try {
-            await apiService.addToCart(productId, 1);
-            // Optional: Toast notification
-        } catch (err) {
-            console.error(err);
-        }
-    };
-
-    const toggleWishlist = async (e: React.MouseEvent, productId: number) => {
-        e.preventDefault();
-        e.stopPropagation();
-        try {
-            if (wishlistIds.has(productId)) {
-                await apiService.removeFromWishlist(productId);
-                setWishlistIds(prev => {
-                    const next = new Set(prev);
-                    next.delete(productId);
-                    return next;
-                });
-            } else {
-                await apiService.addToWishlist(productId);
-                setWishlistIds(prev => {
-                    const next = new Set(prev);
-                    next.add(productId);
-                    return next;
-                });
-            }
-        } catch (error) {
-            console.error("Wishlist toggle failed", error);
         }
     };
 
@@ -127,49 +90,29 @@ function CategoryProducts() {
                 </div>
             ) : (
                 <div className={styles.grid}>
-                    {products.map((product) => {
-                        const discount = product.mrp > product.price
-                            ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
-                            : 0;
-                        const isWishlisted = wishlistIds.has(product.id);
-
-                        return (
-                            <div
-                                key={product.id}
-                                className={styles.card}
-                                onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
-                                role="button"
-                                tabIndex={0}
-                            >
-                                <div className={styles.imageWrapper}>
-                                    {discount > 0 && (
-                                        <div className={styles.discountBadge}>{discount}% OFF</div>
-                                    )}
-                                    {product.image ? (
-                                        <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <ShoppingBag size={32} className="text-gray-300" />
-                                    )}
-                                    <div className={styles.wishlistIcon} onClick={(e) => toggleWishlist(e, product.id)}>
-                                        <span className={isWishlisted ? "text-yellow-400 fill-current" : "text-gray-300"}>★</span>
-                                    </div>
-                                </div>
-                                <div className={styles.info}>
-                                    <div className="text-xs text-gray-400 mb-1">{product.unit}</div>
-                                    <h3 className={styles.name}>{product.name}</h3>
-                                    <div className={styles.priceRow}>
-                                        <div className="flex flex-col">
-                                            {discount > 0 && <span className={styles.mrp}>₹{product.mrp}</span>}
-                                            <span className={styles.price}>₹{product.price}</span>
-                                        </div>
-                                        <button className={styles.addBtn} onClick={(e) => addToCart(e, product.id)}>
-                                            ADD
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
+                    {products.map((product) => (
+                        <ProductCard
+                            key={product.id}
+                            product={product}
+                            isWishlisted={isWishlisted(product.id)}
+                            onToggleWishlist={(e: React.MouseEvent) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                toggleWishlist(product.id);
+                            }}
+                            onAdd={async (e: React.MouseEvent) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                try {
+                                    await apiService.addToCart(product.id, 1);
+                                    alert("Added to cart!");
+                                } catch (err) {
+                                    console.error("Failed to add to cart", err);
+                                }
+                            }}
+                            onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
+                        />
+                    ))}
                 </div>
             )}
         </div>

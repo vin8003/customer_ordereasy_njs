@@ -23,6 +23,109 @@
     flex: 1;
 }
 
+.filterActive {
+    color: var(--primary-color) !important;
+    background: rgba(99, 102, 241, 0.1) !important;
+}
+
+.filterSidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 280px;
+    background: white;
+    z-index: 1000;
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+    }
+
+    to {
+        transform: translateX(0);
+    }
+}
+
+.filterHeader {
+    padding: 20px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.filterHeader h3 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.filterContent {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.filterSection {
+    margin-bottom: 24px;
+}
+
+.filterSection h4 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #475569;
+}
+
+.priceInputs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.priceInputs input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.filterSelect {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+}
+
+.checkboxLabel {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.checkboxLabel input {
+    width: 18px;
+    height: 18px;
+}
+
+.resetBtn {
+    width: 100%;
+    margin-top: 20px;
+}
+
 .grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
