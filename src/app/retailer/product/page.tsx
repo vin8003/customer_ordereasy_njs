@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, ShoppingBag, Heart, Share2, Plus, Minus, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Heart, Share2, Plus, Minus, ShoppingCart, Tag } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import styles from './ProductDetail.module.css';
@@ -11,8 +11,8 @@ interface Product {
     id: number;
     name: string;
     description: string;
-    price: number;
-    mrp: number;
+    price: number; // Selling Price
+    mrp: number;   // Original Price / MRP
     stock_quantity: number;
     image?: string;
     image_url?: string;
@@ -20,6 +20,9 @@ interface Product {
     maximum_order_quantity: number | null;
     unit?: string;
     product_group?: string;
+    savings?: number;
+    discount_percentage?: number;
+    offers?: any[]; // flexible for now
 }
 
 function ProductDetail() {
@@ -43,14 +46,31 @@ function ProductDetail() {
         setIsLoading(true);
         try {
             const data = await apiService.getProductDetail(retailerId, productId);
+            console.log("Product Detail API Response:", data); // DEBUG log
+
+            // Strict mapping based on Serializer fields: 
+            // original_price -> MRP
+            // discounted_price -> Selling Price
+            const sellingPrice = Number(data.discounted_price) || Number(data.price);
+            const mrp = Number(data.original_price) || Number(data.price); // Fallback to price if original_price missing
+
             setProduct({
                 ...data,
+                price: sellingPrice,
+                mrp: mrp,
+                stock_quantity: data.quantity || 0,
                 minimum_order_quantity: data.minimum_order_quantity || 1,
-                maximum_order_quantity: data.maximum_order_quantity
+                maximum_order_quantity: data.maximum_order_quantity,
+                savings: Number(data.savings),
+                discount_percentage: Number(data.discount_percentage),
+                offers: data.offers || [] // Assuming offers might be in response, else empty
             });
-            // Set initial quantity to minimum order quantity
+
             setQuantity(data.minimum_order_quantity || 1);
-            // Check wishlist status if possible, or just default to false
+
+            if (data.id) {
+                // Check wishlist status logic here if needed
+            }
         } catch (error) {
             console.error("Failed to load product", error);
         } finally {
@@ -63,6 +83,7 @@ function ProductDetail() {
         try {
             await apiService.addToCart(product.id, quantity);
             alert("Added to cart!");
+            router.push('/cart');
         } catch (err: any) {
             console.error(err);
             alert(err.response?.data?.error || "Failed to add to cart");
@@ -83,15 +104,41 @@ function ProductDetail() {
         }
     };
 
+    const handleShare = async () => {
+        if (!product) return;
+        const shareData = {
+            title: product.name,
+            text: `Check out ${product.name} on OrderEasy!`,
+            url: window.location.href,
+        };
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                await navigator.clipboard.writeText(window.location.href);
+                alert("Product link copied to clipboard!");
+            }
+        } catch (err) {
+            console.error("Error sharing:", err);
+        }
+    };
+
     if (isLoading) return <div className="p-8 text-center text-gray-500">Loading details...</div>;
     if (!product) return <div className="p-8 text-center">Product not found.</div>;
 
-    const discount = product.mrp > product.price
-        ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
-        : 0;
+    // Use backend values if available, else calculate
+    const hasDiscount = product.mrp > product.price;
+    const discountPercent = product.discount_percentage
+        ? Math.round(product.discount_percentage)
+        : (hasDiscount ? Math.round(((product.mrp - product.price) / product.mrp) * 100) : 0);
 
-    const isMinReached = quantity <= 1; // Allow down to 1
-    const isMaxBlocked = quantity >= product.stock_quantity; // Only block on stock
+    const savingsAmount = product.savings
+        ? product.savings
+        : (hasDiscount ? (product.mrp - product.price) : 0);
+
+    const isMinReached = quantity <= 1;
+    const isMaxBlocked = quantity >= product.stock_quantity;
 
 
     return (
@@ -104,7 +151,7 @@ function ProductDetail() {
                     <Button variant="outline" onClick={toggleWishlist}>
                         <Heart size={20} className={isWishlisted ? "fill-red-500 text-red-500" : ""} />
                     </Button>
-                    <Button variant="outline">
+                    <Button variant="outline" onClick={handleShare}>
                         <Share2 size={20} />
                     </Button>
                 </div>
@@ -131,13 +178,30 @@ function ProductDetail() {
 
                 <div className={styles.priceBlock}>
                     <span className={styles.price}>₹{product.price}</span>
-                    {product.mrp > product.price && (
+                    {hasDiscount && (
                         <>
-                            <span className={styles.mrp}>₹{product.mrp}</span>
-                            <span className={styles.discount}>{discount}% OFF</span>
+                            <span className={styles.mrp}>MRP ₹{product.mrp}</span>
+                            {discountPercent > 0 && (
+                                <span className={styles.discount}>{discountPercent}% OFF</span>
+                            )}
+                            {Number(savingsAmount) > 0 && (
+                                <span className={styles.savedBadge}>Save ₹{savingsAmount}</span>
+                            )}
                         </>
                     )}
                 </div>
+
+                {/* Offers Section - ONLY render if real offers exist */}
+                {product.offers && product.offers.length > 0 && (
+                    <div className={styles.offerSection}>
+                        {product.offers.map((offer, idx) => (
+                            <div key={idx} className={styles.offerItem}>
+                                <Tag size={16} className={styles.offerIcon} />
+                                <span>{offer.description || offer.name || "Special Offer"}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 <div className={styles.divider} />
 
@@ -147,14 +211,14 @@ function ProductDetail() {
                 </p>
 
                 {product.product_group && (
-                    <div className="mt-2 text-sm text-gray-600">
-                        <span className="font-semibold">Group:</span> {product.product_group}
+                    <div className={styles.groupTag}>
+                        {product.product_group}
                     </div>
                 )}
 
                 {/* Show MOQ info if applicable */}
                 {product.minimum_order_quantity > 1 && (
-                    <div className="mt-4 p-3 bg-blue-50 text-blue-700 rounded-md text-sm">
+                    <div className={styles.moqBox}>
                         Minimum order quantity: {product.minimum_order_quantity} {product.unit || 'units'}
                     </div>
                 )}
@@ -183,9 +247,11 @@ function ProductDetail() {
                     </button>
                 </div>
 
-                <Button fullWidth onClick={handleAddToCart} disabled={product.stock_quantity === 0}>
-                    {product.stock_quantity === 0 ? "Out of Stock" : "Add to Cart"}
-                </Button>
+                <div className="flex-1">
+                    <Button fullWidth onClick={handleAddToCart} disabled={product.stock_quantity === 0}>
+                        {product.stock_quantity === 0 ? "Out of Stock" : "Add to Cart"}
+                    </Button>
+                </div>
             </div>
         </div>
     );
