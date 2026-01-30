@@ -2,13 +2,11 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, ShoppingBag, Filter, X } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { ProductCard } from '@/app/components/ProductCard';
 import { useWishlist } from '@/hooks/useWishlist';
-import { WishlistIcon } from '@/app/components/WishlistIcon';
-import { ProductImage } from '@/app/components/ProductImage';
 import styles from './Products.module.css';
 
 interface Product {
@@ -37,6 +35,11 @@ function AllProducts() {
     const [showFilters, setShowFilters] = useState(false);
     const [categories, setCategories] = useState<any[]>([]);
 
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+
     // Filter states
     const [minPrice, setMinPrice] = useState('');
     const [maxPrice, setMaxPrice] = useState('');
@@ -47,11 +50,22 @@ function AllProducts() {
 
     useEffect(() => {
         if (retailerId) {
-            loadData();
-            loadWishlist();
+            // Reset to page 1 when filters change (except when currentPage changes manually)
+            // But here we rely on the dependency array of useEffect checking currentPage
             fetchCategories();
         }
-    }, [retailerId, search, categoryId, minPrice, maxPrice, inStock, selectedCategoryId, loadWishlist]);
+    }, [retailerId]);
+
+    useEffect(() => {
+        if (retailerId) {
+            loadData(currentPage);
+        }
+    }, [retailerId, search, minPrice, maxPrice, inStock, selectedCategoryId, currentPage, loadWishlist]);
+
+    // Reset page to 1 if search/filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [search, minPrice, maxPrice, inStock, selectedCategoryId]);
 
     const fetchCategories = async () => {
         try {
@@ -62,7 +76,7 @@ function AllProducts() {
         }
     };
 
-    const loadData = async () => {
+    const loadData = async (page: number) => {
         setIsLoading(true);
         try {
             const params: any = {
@@ -70,12 +84,25 @@ function AllProducts() {
                 category: selectedCategoryId || undefined,
                 min_price: minPrice || undefined,
                 max_price: maxPrice || undefined,
-                in_stock: inStock ? 'true' : undefined
+                in_stock: inStock ? 'true' : undefined,
+                page: page
             };
 
             const prodData = await apiService.getRetailerProducts(retailerId, params);
 
-            const rawProducts = Array.isArray(prodData) ? prodData : prodData.results || [];
+            // Handle metadata if available, otherwise assume flat list (unlikely based on new backend knowledge but just in case)
+            let rawProducts = [];
+            if (prodData && prodData.results) {
+                rawProducts = prodData.results;
+                const count = prodData.count;
+                setTotalCount(count);
+                // Backend default page_size is likely 20
+                setTotalPages(Math.ceil(count / 20) || 1);
+            } else if (Array.isArray(prodData)) {
+                rawProducts = prodData;
+                setTotalCount(prodData.length);
+                setTotalPages(1);
+            }
 
             const processedProducts = rawProducts.map((p: any) => ({
                 ...p,
@@ -96,7 +123,15 @@ function AllProducts() {
         }
     };
 
-    if (isLoading) return <div className="p-8 text-center text-gray-500">Loading Products...</div>;
+    const handlePageChange = (newPage: number) => {
+        if (newPage >= 1 && newPage <= totalPages) {
+            setCurrentPage(newPage);
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
+    if (isLoading && products.length === 0) return <div className="p-8 text-center text-gray-500">Loading Products...</div>;
 
     return (
         <div className={styles.container}>
@@ -184,42 +219,69 @@ function AllProducts() {
             )}
 
             <div className={styles.grid}>
-                {products.length === 0 ? (
+                {products.length === 0 && !isLoading ? (
                     <div className="col-span-full py-12 text-center text-gray-400">
                         <ShoppingBag size={48} className="mx-auto mb-4 opacity-20" />
                         <p>No products found {search && `for "${search}"`}</p>
                     </div>
                 ) : (
-                    products.map(product => (
-                        <ProductCard
-                            key={product.id}
-                            product={{
-                                ...product,
-                                price: Number(product.price),
-                                mrp: Number(product.mrp)
-                            }}
-                            isWishlisted={isWishlisted(product.id)}
-                            onToggleWishlist={(e: React.MouseEvent) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                toggleWishlist(product.id);
-                            }}
-                            onAdd={async (e: React.MouseEvent) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                try {
-                                    await apiService.addToCart(product.id, 1);
-                                    alert("Added to cart!");
-                                } catch (err: any) {
-                                    console.error("Add to cart failed", err);
-                                    alert(err.response?.data?.error || "Failed to add to cart");
-                                }
-                            }}
-                            onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
-                        />
-                    ))
+                    <>
+                        {products.map(product => (
+                            <ProductCard
+                                key={product.id}
+                                product={{
+                                    ...product,
+                                    price: Number(product.price),
+                                    mrp: Number(product.mrp)
+                                }}
+                                isWishlisted={isWishlisted(product.id)}
+                                onToggleWishlist={(e: React.MouseEvent) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    toggleWishlist(product.id);
+                                }}
+                                onAdd={async (e: React.MouseEvent) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    try {
+                                        await apiService.addToCart(product.id, 1);
+                                        alert("Added to cart!");
+                                    } catch (err: any) {
+                                        console.error("Add to cart failed", err);
+                                        alert(err.response?.data?.error || "Failed to add to cart");
+                                    }
+                                }}
+                                onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
+                            />
+                        ))}
+                    </>
                 )}
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-4 py-8 pb-20">
+                    <Button
+                        variant="ghost"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage <= 1 || isLoading}
+                        className="p-2"
+                    >
+                        <ChevronLeft size={24} />
+                    </Button>
+                    <span className="text-gray-600 font-medium">
+                        Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                        variant="ghost"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage >= totalPages || isLoading}
+                        className="p-2"
+                    >
+                        <ChevronRight size={24} />
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }
