@@ -1,0 +1,90 @@
+Project Overview
+Project Name: Shopeasy Customer App
+
+Repository Name: customer_ordereasy_njs
+
+Framework: Next.js 14 (App Router)
+
+Language: TypeScript
+
+Styling: Tailwind CSS
+
+Purpose: This is the customer-facing web application for the "Shopeasy" platform. It allows users to browse retailers, manage carts, place orders, and track loyalty rewards.
+
+Key Features
+The application includes a comprehensive suite of e-commerce features tailored for a multi-retailer platform:
+
+Retailer Selection: Users can browse and select from available shops and categories.
+
+Product Browsing: Features an optimized grid view layout with search capabilities.
+
+Cart & Checkout: Full cycle management for adding items to the cart and placing orders.
+
+User Authentication: Supports Login/Signup functionality, specifically mentioning OTP (One-Time Password) verification.
+
+Address & Location: Integrated Google Maps for precise location picking and address management.
+
+Loyalty & Rewards: Includes a referral system and tracking for loyalty points.
+
+Technical Stack & Architecture
+Core Framework: Next.js 14 (Utilizing the modern App Router architecture).
+
+Styling: Tailwind CSS for utility-first, responsive design.
+
+Language: TypeScript (Ensures type safety and better developer experience).
+
+State/API Management: Likely uses React Hooks for local state and standard Fetch/Axios for API calls (implied by the services directory).
+
+External Integrations:
+
+Google Maps API: For location services.
+
+Custom Backend API: Connects to api.ordereasy.win.
+
+Project Structure
+The project follows the standard Next.js App Router structure inside the src directory:
+
+src/app: Contains the App Router pages, layouts, and route groups.
+
+src/components: Reusable UI components (buttons, inputs, product cards, etc.).
+
+src/services: API service configurations and HTTP client setups.
+
+public: Static assets like images and icons.
+
+Installation & Setup Guide
+1. Prerequisites
+Node.js: v18 or higher
+
+npm: v9 or higher
+
+2. Installation
+Bash
+# Clone the repository
+git clone https://github.com/vin8003/customer_ordereasy_njs.git
+
+# Navigate to the directory
+cd customer_ordereasy_njs
+
+# Install dependencies
+npm install
+3. Environment Configuration
+You must create a .env.local file in the root directory to configure the app.
+
+Bash
+# Create the file
+touch .env.local
+Required Environment Variables:
+
+Code snippet
+# Backend API Endpoint
+NEXT_PUBLIC_API_URL=https://api.ordereasy.win/api/
+
+# Google Maps API Key (Required for Location Picker)
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
+4. Running the Project
+Development: npm run dev (Runs on http://localhost:3000)
+
+Production Build: npm run build
+
+Start Production Server: npm start
