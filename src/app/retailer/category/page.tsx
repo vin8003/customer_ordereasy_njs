@@ -101,7 +101,7 @@ function CategoryProducts() {
                 // Prevent duplicates just in case
                 const newProducts = pageNum === 1 ? processedProducts : [...prev, ...processedProducts];
                 // Simple de-dupe by ID
-                return Array.from(new Map(newProducts.map((p: any) => [p.id, p])).values());
+                return Array.from(new Map(newProducts.map((p: Product) => [p.id, p])).values()) as Product[];
             });
 
             // Try to set category name from first product if possible
