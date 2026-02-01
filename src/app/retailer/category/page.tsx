@@ -35,17 +35,28 @@ function CategoryProducts() {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
 
-    const observer = useRef<IntersectionObserver | null>(null);
-    const lastProductElementRef = useCallback((node: HTMLDivElement) => {
-        if (isLoading || isMoreLoading) return;
-        if (observer.current) observer.current.disconnect();
-        observer.current = new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting && hasMore) {
-                setPage(prevPage => prevPage + 1);
+    const observerTarget = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            entries => {
+                if (entries[0].isIntersecting && hasMore && !isLoading && !isMoreLoading) {
+                    setPage(prevPage => prevPage + 1);
+                }
+            },
+            { threshold: 0.1 } // Trigger when even a small part is visible
+        );
+
+        if (observerTarget.current) {
+            observer.observe(observerTarget.current);
+        }
+
+        return () => {
+            if (observerTarget.current) {
+                observer.unobserve(observerTarget.current);
             }
-        });
-        if (node) observer.current.observe(node);
-    }, [isLoading, isMoreLoading, hasMore]);
+        };
+    }, [hasMore, isLoading, isMoreLoading]);
 
     const { wishlistIds, loadWishlist, toggleWishlist, isWishlisted } = useWishlist();
 
@@ -138,58 +149,29 @@ function CategoryProducts() {
                 </div>
             ) : (
                 <div className={styles.grid}>
-                    {products.map((product, index) => {
-                        if (products.length === index + 1) {
-                            return (
-                                <div ref={lastProductElementRef} key={product.id}>
-                                    <ProductCard
-                                        product={product}
-                                        isWishlisted={isWishlisted(product.id)}
-                                        onToggleWishlist={(e: React.MouseEvent) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            toggleWishlist(product.id);
-                                        }}
-                                        onAdd={async (e: React.MouseEvent) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            try {
-                                                await apiService.addToCart(product.id, 1);
-                                                alert("Added to cart!");
-                                            } catch (err) {
-                                                console.error("Failed to add to cart", err);
-                                            }
-                                        }}
-                                        onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
-                                    />
-                                </div>
-                            );
-                        } else {
-                            return (
-                                <ProductCard
-                                    key={product.id}
-                                    product={product}
-                                    isWishlisted={isWishlisted(product.id)}
-                                    onToggleWishlist={(e: React.MouseEvent) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        toggleWishlist(product.id);
-                                    }}
-                                    onAdd={async (e: React.MouseEvent) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        try {
-                                            await apiService.addToCart(product.id, 1);
-                                            alert("Added to cart!");
-                                        } catch (err) {
-                                            console.error("Failed to add to cart", err);
-                                        }
-                                    }}
-                                    onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
-                                />
-                            );
-                        }
-                    })}
+                    {products.map((product) => (
+                        <ProductCard
+                            key={product.id}
+                            product={product}
+                            isWishlisted={isWishlisted(product.id)}
+                            onToggleWishlist={(e: React.MouseEvent) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                toggleWishlist(product.id);
+                            }}
+                            onAdd={async (e: React.MouseEvent) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                try {
+                                    await apiService.addToCart(product.id, 1);
+                                    alert("Added to cart!");
+                                } catch (err) {
+                                    console.error("Failed to add to cart", err);
+                                }
+                            }}
+                            onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
+                        />
+                    ))}
                 </div>
             )}
 
@@ -198,6 +180,9 @@ function CategoryProducts() {
                     <Loader2 className="animate-spin text-gray-400" size={24} />
                 </div>
             )}
+
+            {/* Sentinel element for infinite scroll */}
+            <div ref={observerTarget} className="h-10 w-full" />
         </div>
     );
 }

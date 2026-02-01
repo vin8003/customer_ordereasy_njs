@@ -1,6 +1,7 @@
 .container {
     min-height: 100vh;
     background-color: #f9fafb;
+    padding-bottom: 200px;
 }
 
 .header {
