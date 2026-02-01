@@ -245,7 +245,7 @@ function RetailerHome() {
                                 </div>
                                 <span className={styles.catName}>{cat.name}</span>
                                 {cat.product_count !== undefined && (
-                                    <span className="text-[10px] text-gray-400 mt-1">{cat.product_count} items</span>
+                                    <span className={styles.catCount}>{cat.product_count} items</span>
                                 )}
                             </Link>
                         ))}

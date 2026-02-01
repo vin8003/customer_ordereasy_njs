@@ -98,7 +98,7 @@ const CartItemRow = ({ item, updateQuantity, removeItem, toggleWishlist, isWishl
                             onChange={(e) => setLocalQty(e.target.value)}
                             onBlur={handleBlur}
                             onKeyDown={handleKeyDown}
-                            className="w-14 h-8 text-center mx-1 font-semibold bg-white border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+                            className={styles.qtyInput}
                         />
                         <button
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}

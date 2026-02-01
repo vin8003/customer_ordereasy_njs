@@ -165,8 +165,8 @@ function CategoryProducts() {
                             >
                                 {cat.name}
                                 {cat.product_count > 0 && (
-                                    <span className={isActive ? styles.chipCount : "text-xs opacity-70 ml-1"}>
-                                        {cat.product_count}
+                                    <span className={isActive ? styles.chipCount : styles.chipCountInactive}>
+                                        {isActive ? cat.product_count : `(${cat.product_count})`}
                                     </span>
                                 )}
                             </button>

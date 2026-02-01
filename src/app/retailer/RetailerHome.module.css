@@ -236,7 +236,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 76px;
+    width: 88px;
+    /* Increased from 76px */
     flex-shrink: 0;
     text-decoration: none;
     transition: transform 0.2s;
@@ -272,6 +273,13 @@
     line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    margin-bottom: 2px;
+}
+
+.catCount {
+    font-size: 11px;
+    color: #94a3b8;
+    text-align: center;
 }
 
 /* Products - Horizontal Scroll */
@@ -283,6 +291,11 @@
     /* Reduced gap for compact feel */
     scrollbar-width: none;
     padding-bottom: 24px;
+}
+
+.productsScroll>* {
+    flex-shrink: 0;
+    width: 160px;
 }
 
 .productsScroll::-webkit-scrollbar {
