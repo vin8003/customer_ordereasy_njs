@@ -39,7 +39,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <div className={styles.imageWrapper}>
                 <div className={styles.badges}>
                     {product.active_offer_text ? (
-                        <div className="bg-red-500 text-white text-[10px] sm:text-xs font-bold px-1.5 py-0.5 rounded-sm shadow-sm z-10 w-fit">
+                        <div className={styles.offerBadge}>
                             {product.active_offer_text}
                         </div>
                     ) : discount > 0 ? (
@@ -55,7 +55,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                     <ProductImage
                         src={product.image || ''}
                         alt={product.name}
-                        className="w-full h-full object-contain"
+                        className={styles.productImage}
                     />
                 </div>
             </div>

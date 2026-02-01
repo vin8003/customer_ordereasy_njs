@@ -14,8 +14,9 @@ import styles from './RetailerHome.module.css';
 interface Category {
     id: number;
     name: string;
-    image?: string;
-    item_count?: number;
+    icon?: string;
+    product_count?: number;
+    parent?: number | null;
 }
 
 interface Product {
@@ -236,9 +237,16 @@ function RetailerHome() {
                         {categories.slice(0, 12).map(cat => (
                             <Link href={`/retailer/category?retailerId=${retailerId}&categoryId=${cat.id}`} key={cat.id} className={styles.categoryItem}>
                                 <div className={styles.catIcon}>
-                                    <ShoppingBag size={24} />
+                                    {cat.icon ? (
+                                        <img src={cat.icon} alt={cat.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <ShoppingBag size={24} />
+                                    )}
                                 </div>
                                 <span className={styles.catName}>{cat.name}</span>
+                                {cat.product_count !== undefined && (
+                                    <span className="text-[10px] text-gray-400 mt-1">{cat.product_count} items</span>
+                                )}
                             </Link>
                         ))}
                     </div>

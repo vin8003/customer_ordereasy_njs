@@ -1,91 +1,84 @@
 .card {
-    background: #ffffff;
-    border-radius: 12px;
-    border: 1px solid #f1f5f9;
-    overflow: hidden;
     position: relative;
     display: flex;
     flex-direction: column;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    width: 156px;
-    /* Fixed compact width */
-    flex-shrink: 0;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    /* Lighter shadow */
-    cursor: pointer;
+    background-color: var(--surface-color);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--surface-secondary);
+    overflow: hidden;
+    transition: box-shadow var(--transition-normal);
 }
 
 .card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    border-color: #cbd5e1;
+    box-shadow: var(--shadow-md);
 }
 
 .imageWrapper {
-    aspect-ratio: 1;
-    background: #f8fafc;
     position: relative;
-    padding: 8px;
-    /* Reduced padding */
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    aspect-ratio: 1;
+    background-color: var(--surface-secondary);
+    padding: 1rem;
 }
 
 .image {
     width: 100%;
     height: 100%;
-    object-fit: contain;
-    mix-blend-mode: multiply;
-    transition: transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.card:hover .image {
-    transform: scale(1.05);
+/* New class for the image element itself */
+.productImage {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
 .badges {
     position: absolute;
-    top: 6px;
-    left: 6px;
-    right: 6px;
+    top: 0.5rem;
+    left: 0.5rem;
+    right: 0.5rem;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    z-index: 2;
+    z-index: 10;
 }
 
 .discountBadge {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
+    background-color: var(--success-color);
     color: white;
-    font-size: 9px;
+    font-size: 0.625rem;
     font-weight: 700;
-    padding: 3px 6px;
-    border-radius: 4px;
-    box-shadow: 0 1px 2px rgba(220, 38, 38, 0.2);
-    letter-spacing: 0.3px;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+}
+
+/* New class for the offer badge */
+.offerBadge {
+    background-color: var(--error-color);
+    color: white;
+    font-size: 0.625rem;
+    /* ~10px */
+    font-weight: 700;
+    padding: 0.125rem 0.375rem;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+    z-index: 10;
+    width: fit-content;
 }
 
 .wishlistBtn {
-    width: 26px;
-    /* Smaller button */
-    height: 26px;
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(4px);
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    backdrop-filter: blur(4px);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    padding: 0;
-}
-
-.wishlistBtn:hover {
-    transform: scale(1.1);
-    background: white;
+    transition: transform var(--transition-fast);
 }
 
 .wishlistBtn:active {
@@ -93,94 +86,73 @@
 }
 
 .content {
-    padding: 10px;
-    /* Reduced padding */
+    padding: 8px;
     display: flex;
     flex-direction: column;
     flex: 1;
     gap: 4px;
-    /* Tighter gap */
+    /* Fluid width to fill grid cell */
+    /* Removed fixed 156px width */
+    flex-shrink: 0;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    cursor: pointer;
 }
 
 .unit {
-    font-size: 9px;
-    color: #94a3b8;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
 }
 
 .title {
-    font-size: 13px;
-    /* Smaller font */
-    font-weight: 600;
-    color: #0f172a;
-    /* Darker slate */
-    line-height: 1.3;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.25;
+
+    /* Line clamp */
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    line-clamp: 2;
-    -webkit-line-clamp: 2;
-    height: 34px;
-    /* Fixed height for 2 lines */
-    margin-bottom: 4px;
 }
 
 .footer {
     margin-top: auto;
     display: flex;
-    align-items: center;
-    /* Align center */
+    align-items: flex-end;
     justify-content: space-between;
-    gap: 4px;
 }
 
 .priceContainer {
     display: flex;
     flex-direction: column;
-    line-height: 1;
 }
 
 .mrp {
-    font-size: 10px;
-    color: #94a3b8;
+    font-size: 0.75rem;
+    color: var(--text-muted);
     text-decoration: line-through;
-    font-weight: 500;
 }
 
 .price {
-    font-size: 14px;
+    font-size: 1rem;
     font-weight: 700;
-    color: #0f172a;
-    letter-spacing: -0.3px;
+    color: var(--text-primary);
 }
 
 .addBtn {
-    background: #f0fdf4;
-    color: #16a34a;
-    border: 1px solid #dcfce7;
-    padding: 4px 12px;
-    border-radius: 8px;
-    font-size: 11px;
+    font-size: 0.75rem;
     font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s;
-    flex-shrink: 0;
-    height: 28px;
-    display: flex;
-    align-items: center;
+    color: var(--success-color);
+    background-color: rgba(16, 185, 129, 0.1);
+    border: 1px solid var(--success-color);
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
 }
 
 .addBtn:hover {
-    background: #16a34a;
+    background-color: var(--success-color);
     color: white;
-    border-color: #16a34a;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px -1px rgba(22, 163, 74, 0.2);
-}
-
-.addBtn:active {
-    transform: translateY(0);
 }

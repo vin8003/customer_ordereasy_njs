@@ -29,6 +29,7 @@ function CategoryProducts() {
     const categoryId = searchParams.get('categoryId') as string;
 
     const [products, setProducts] = useState<Product[]>([]);
+    const [subcategories, setSubcategories] = useState<any[]>([]); // Subcategories state
     const [categoryName, setCategoryName] = useState('Products');
     const [isLoading, setIsLoading] = useState(true);
     const [isMoreLoading, setIsMoreLoading] = useState(false);
@@ -59,6 +60,15 @@ function CategoryProducts() {
     }, [hasMore, isLoading, isMoreLoading]);
 
     const { wishlistIds, loadWishlist, toggleWishlist, isWishlisted } = useWishlist();
+
+    // Fetch subcategories
+    useEffect(() => {
+        if (retailerId && categoryId) {
+            apiService.getRetailerCategories(retailerId, { parent_id: categoryId })
+                .then(data => setSubcategories(Array.isArray(data) ? data : []))
+                .catch(err => console.error("Failed to fetch subcategories", err));
+        }
+    }, [retailerId, categoryId]);
 
     useEffect(() => {
         if (retailerId && categoryId) {
@@ -141,6 +151,29 @@ function CategoryProducts() {
                     <Filter size={18} />
                 </Button>
             </header>
+
+            {/* Subcategories (Chips) */}
+            {subcategories.length > 0 && (
+                <div className={styles.subcategoryList}>
+                    {subcategories.map(cat => {
+                        const isActive = String(cat.id) === categoryId;
+                        return (
+                            <button
+                                key={cat.id}
+                                className={`${styles.chip} ${isActive ? styles.chipActive : ''}`}
+                                onClick={() => router.push(`/retailer/category?retailerId=${retailerId}&categoryId=${cat.id}`)}
+                            >
+                                {cat.name}
+                                {cat.product_count > 0 && (
+                                    <span className={isActive ? styles.chipCount : "text-xs opacity-70 ml-1"}>
+                                        {cat.product_count}
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
 
             {products.length === 0 && !isLoading ? (
                 <div className="flex flex-col items-center justify-center h-64 text-gray-500">

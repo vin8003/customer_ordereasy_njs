@@ -235,10 +235,10 @@ export const apiService = {
     },
 
     // Products & Categories
-    getRetailerCategories: async (retailerId: string) => {
-        const key = `categories_${retailerId}`;
+    getRetailerCategories: async (retailerId: string, params?: any) => {
+        const key = `categories_${retailerId}_${JSON.stringify(params || {})}`;
         return fetchWithDedupe(key, async () => {
-            const response = await api.get(`products/retailer/${retailerId}/categories/`);
+            const response = await api.get(`products/retailer/${retailerId}/categories/`, { params });
             return response.data;
         });
     },
