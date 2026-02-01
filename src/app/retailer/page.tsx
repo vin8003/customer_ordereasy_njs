@@ -51,6 +51,7 @@ function RetailerHome() {
     const [suggestions, setSuggestions] = useState<Product[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [showSuggestions, setShowSuggestions] = useState(false);
+    const [currentOfferIndex, setCurrentOfferIndex] = useState(0);
 
     // Use shared wishlist and cart hooks
     const { wishlistIds, loadWishlist, toggleWishlist, isWishlisted } = useWishlist();
@@ -97,6 +98,16 @@ function RetailerHome() {
             loadCartCount(); // Load cart
         }
     }, [retailerId, loadWishlist, loadCartCount]);
+
+    useEffect(() => {
+        if (offers.length <= 1) return;
+
+        const interval = setInterval(() => {
+            setCurrentOfferIndex((prev) => (prev + 1) % offers.length);
+        }, 5000);
+
+        return () => clearInterval(interval);
+    }, [offers.length]);
 
     const loadData = async () => {
         setIsLoading(true);
@@ -243,27 +254,6 @@ function RetailerHome() {
             </header>
 
             <main className={styles.main}>
-                {/* Offer Banners */}
-                {offers.length > 0 && (
-                    <section className={styles.offerCarousel}>
-                        {offers.map((offer: any) => (
-                            <div
-                                key={offer.id}
-                                className={styles.offerBanner}
-                                onClick={() => router.push(`/retailer/products?retailerId=${retailerId}&offerId=${offer.id}&title=${encodeURIComponent(offer.name)}`)}
-                            >
-                                {offer.banner_image ? (
-                                    <img src={offer.banner_image} alt={offer.name} />
-                                ) : (
-                                    <div className={styles.offerFallback}>
-                                        <div className={styles.offerName}>{offer.name}</div>
-                                        <div className={styles.offerDesc}>{offer.description || 'Limited Time Offer!'}</div>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </section>
-                )}
 
                 {/* Categories */}
                 <section className={styles.section}>
@@ -406,6 +396,46 @@ function RetailerHome() {
                                     onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
                                 />
                             ))}
+                        </div>
+                    </section>
+                )}
+
+                {/* Offers for You (Auto-rotating Hero Slider) */}
+                {offers.length > 0 && (
+                    <section className={styles.section}>
+                        <div className={styles.sectionHeader}>
+                            <h2>Offers for You</h2>
+                        </div>
+                        <div className={styles.heroSlider}>
+                            <div
+                                className={styles.offerBannerSingle}
+                                onClick={() => router.push(`/retailer/products?retailerId=${retailerId}&offerId=${offers[currentOfferIndex].id}&title=${encodeURIComponent(offers[currentOfferIndex].name)}`)}
+                            >
+                                {offers[currentOfferIndex].banner_image ? (
+                                    <img
+                                        src={offers[currentOfferIndex].banner_image}
+                                        alt={offers[currentOfferIndex].name}
+                                        className={styles.bannerImage}
+                                    />
+                                ) : (
+                                    <div className={styles.offerFallback}>
+                                        <div className={styles.offerName}>{offers[currentOfferIndex].name}</div>
+                                        <div className={styles.offerDesc}>{offers[currentOfferIndex].description || 'Limited Time Offer!'}</div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {offers.length > 1 && (
+                                <div className={styles.sliderDots}>
+                                    {offers.map((_, idx) => (
+                                        <button
+                                            key={idx}
+                                            className={`${styles.dot} ${idx === currentOfferIndex ? styles.activeDot : ''}`}
+                                            onClick={() => setCurrentOfferIndex(idx)}
+                                        />
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </section>
                 )}
