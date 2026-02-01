@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ShoppingBag, Heart, Share2, Plus, Minus, ShoppingCart, Tag } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
+import { useWishlist } from '@/hooks/useWishlist';
+import { WishlistIcon } from '@/app/components/WishlistIcon';
 import styles from './ProductDetail.module.css';
 
 interface Product {
@@ -34,18 +36,20 @@ function ProductDetail() {
     const [product, setProduct] = useState<Product | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [quantity, setQuantity] = useState(1);
-    const [isWishlisted, setIsWishlisted] = useState(false);
+    const { isWishlisted, toggleWishlist, loadWishlist } = useWishlist();
 
     useEffect(() => {
         if (retailerId && productId) {
             loadProduct();
+            loadWishlist();
         }
-    }, [retailerId, productId]);
+    }, [retailerId, productId, loadWishlist]);
 
     const loadProduct = async () => {
         setIsLoading(true);
         try {
-            const data = await apiService.getProductDetail(retailerId, productId);
+            // Force refetch to bypass possible stale cache for wishlist status
+            const data = await apiService.getProductDetail(retailerId, productId, true);
             console.log("Product Detail API Response:", data); // DEBUG log
 
             // Strict mapping based on Serializer fields: 
@@ -67,10 +71,11 @@ function ProductDetail() {
             });
 
             setQuantity(data.minimum_order_quantity || 1);
-
-            if (data.id) {
-                // Check wishlist status logic here if needed
-            }
+            // No need to set local state, hook will handle it or we use data.is_wishlisted if we want
+            // but the hook is more consistent for toggling.
+            // Actually, for initial state, we might need to sync the hook if it's not global.
+            // Wait, useWishlist iterates over the whole wishlist. 
+            // In RetailerHome, loadWishlist is called.
         } catch (error) {
             console.error("Failed to load product", error);
         } finally {
@@ -90,18 +95,9 @@ function ProductDetail() {
         }
     };
 
-    const toggleWishlist = async () => {
+    const handleToggleWishlist = async () => {
         if (!product) return;
-        try {
-            if (isWishlisted) {
-                await apiService.removeFromWishlist(product.id);
-            } else {
-                await apiService.addToWishlist(product.id);
-            }
-            setIsWishlisted(!isWishlisted);
-        } catch (err) {
-            console.error(err);
-        }
+        toggleWishlist(product.id);
     };
 
     const handleShare = async () => {
@@ -148,8 +144,8 @@ function ProductDetail() {
                     <ArrowLeft size={20} />
                 </Button>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={toggleWishlist}>
-                        <Heart size={20} className={isWishlisted ? "fill-red-500 text-red-500" : ""} />
+                    <Button variant="outline" onClick={handleToggleWishlist}>
+                        <WishlistIcon isWishlisted={isWishlisted(product.id)} size={20} />
                     </Button>
                     <Button variant="outline" onClick={handleShare}>
                         <Share2 size={20} />

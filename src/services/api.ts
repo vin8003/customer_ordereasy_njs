@@ -291,12 +291,12 @@ export const apiService = {
         });
     },
 
-    getProductDetail: async (retailerId: string, productId: string) => {
+    getProductDetail: async (retailerId: string, productId: string, force: boolean = false) => {
         const key = `product_${retailerId}_${productId}`;
         return fetchWithDedupe(key, async () => {
             const response = await api.get(`products/retailer/${retailerId}/${productId}/`);
             return response.data;
-        });
+        }, force);
     },
 
     getRetailerOffers: async (retailerId: string | number) => {
