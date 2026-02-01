@@ -299,6 +299,14 @@ export const apiService = {
         });
     },
 
+    getRetailerOffers: async (retailerId: string | number) => {
+        const key = `offers_${retailerId}`;
+        return fetchWithDedupe(key, async () => {
+            const response = await api.get(`offers/public/retailer/${retailerId}/`);
+            return response.data;
+        });
+    },
+
     // Cart
     getCart: async (retailerId: string | number) => {
         // Cache Key includes retailerId

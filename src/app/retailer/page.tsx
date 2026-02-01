@@ -38,6 +38,7 @@ function RetailerHome() {
     const retailerId = id as string;
 
     const [retailer, setRetailer] = useState<any>(null);
+    const [offers, setOffers] = useState<any[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
     const [bestSellingProducts, setBestSellingProducts] = useState<Product[]>([]);
@@ -132,6 +133,10 @@ function RetailerHome() {
 
             setCategories(Array.isArray(catData) ? catData : catData.results || []);
 
+            // Process Offers
+            const offersData = await apiService.getRetailerOffers(retailerId);
+            setOffers(Array.isArray(offersData) ? offersData : offersData.results || []);
+
             const processProducts = (data: any) => (Array.isArray(data) ? data : data.results || []).map((p: any) => ({
                 ...p,
                 price: p.discounted_price || p.price,
@@ -224,6 +229,28 @@ function RetailerHome() {
             </header>
 
             <main className={styles.main}>
+                {/* Offer Banners */}
+                {offers.length > 0 && (
+                    <section className={styles.offerCarousel}>
+                        {offers.map((offer: any) => (
+                            <div
+                                key={offer.id}
+                                className={styles.offerBanner}
+                                onClick={() => router.push(`/retailer/products?retailerId=${retailerId}&offerId=${offer.id}&title=${encodeURIComponent(offer.name)}`)}
+                            >
+                                {offer.banner_image ? (
+                                    <img src={offer.banner_image} alt={offer.name} />
+                                ) : (
+                                    <div className={styles.offerFallback}>
+                                        <div className={styles.offerName}>{offer.name}</div>
+                                        <div className={styles.offerDesc}>{offer.description || 'Limited Time Offer!'}</div>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </section>
+                )}
+
                 {/* Categories */}
                 <section className={styles.section}>
                     <div className={styles.sectionHeader}>

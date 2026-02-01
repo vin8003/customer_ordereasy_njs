@@ -218,6 +218,64 @@
     background: rgba(99, 102, 241, 0.15);
 }
 
+/* Offer Carousel */
+.offerCarousel {
+    display: flex;
+    overflow-x: auto;
+    gap: 16px;
+    padding: 0 20px;
+    margin-bottom: 24px;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+}
+
+.offerCarousel::-webkit-scrollbar {
+    display: none;
+}
+
+.offerBanner {
+    flex-shrink: 0;
+    width: 300px;
+    height: 160px;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    scroll-snap-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    background-color: #f1f5f9;
+}
+
+.offerBanner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.offerFallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #4f46e5 100%);
+    color: white;
+    padding: 16px;
+    text-align: center;
+}
+
+.offerName {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 4px;
+}
+
+.offerDesc {
+    font-size: 13px;
+    opacity: 0.9;
+}
+
 /* Categories - Horizontal Scroll */
 .categoriesScroll {
     display: flex;

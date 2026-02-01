@@ -29,6 +29,8 @@ function AllProducts() {
     const retailerId = searchParams.get('retailerId') as string;
     const categoryId = searchParams.get('categoryId');
     const search = searchParams.get('search');
+    const offerId = searchParams.get('offerId');
+    const offerTitle = searchParams.get('title');
 
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -98,6 +100,7 @@ function AllProducts() {
                 min_price: minPrice || undefined,
                 max_price: maxPrice || undefined,
                 in_stock: inStock ? 'true' : undefined,
+                offer_id: offerId || undefined,
                 page: page
             };
 
@@ -152,7 +155,7 @@ function AllProducts() {
                 <Button variant="ghost" onClick={() => router.back()} className="p-0">
                     <ArrowLeft size={24} />
                 </Button>
-                <h1>{search ? `Search: ${search}` : 'Products'}</h1>
+                <h1>{offerTitle || (search ? `Search: ${search}` : 'Products')}</h1>
                 <Button
                     variant="ghost"
                     onClick={() => setShowFilters(!showFilters)}
