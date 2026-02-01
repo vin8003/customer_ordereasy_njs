@@ -52,6 +52,7 @@ function RetailerHome() {
     const [isSearching, setIsSearching] = useState(false);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [currentOfferIndex, setCurrentOfferIndex] = useState(0);
+    const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
     // Use shared wishlist and cart hooks
     const { wishlistIds, loadWishlist, toggleWishlist, isWishlisted } = useWishlist();
@@ -107,7 +108,30 @@ function RetailerHome() {
         }, 5000);
 
         return () => clearInterval(interval);
-    }, [offers.length]);
+    }, [offers.length, currentOfferIndex]);
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        setTouchStartX(e.touches[0].clientX);
+    };
+
+    const handleTouchEnd = (e: React.TouchEvent) => {
+        if (touchStartX === null) return;
+
+        const touchEndX = e.changedTouches[0].clientX;
+        const deltaX = touchStartX - touchEndX;
+        const minSwipeDistance = 50;
+
+        if (Math.abs(deltaX) > minSwipeDistance) {
+            if (deltaX > 0) {
+                // Swiped left -> Next
+                setCurrentOfferIndex((prev) => (prev + 1) % offers.length);
+            } else {
+                // Swiped right -> Previous
+                setCurrentOfferIndex((prev) => (prev - 1 + offers.length) % offers.length);
+            }
+        }
+        setTouchStartX(null);
+    };
 
     const loadData = async () => {
         setIsLoading(true);
@@ -133,11 +157,6 @@ function RetailerHome() {
                     return { referral_code: '' };
                 })
             ]);
-
-            console.log("RETAILER DATA:", retailerData);
-            console.log("FEATURED DATA:", featData); // Debug log
-            console.log("BEST DATA:", bestData); // Debug log
-            console.log("USER PROFILE:", userProfile);
 
             setRetailer(retailerData);
 
@@ -400,29 +419,38 @@ function RetailerHome() {
                     </section>
                 )}
 
-                {/* Offers for You (Auto-rotating Hero Slider) */}
+                {/* Offers for You (Auto-rotating Performance Hero Slider) */}
                 {offers.length > 0 && (
                     <section className={styles.section}>
                         <div className={styles.sectionHeader}>
                             <h2>Offers for You</h2>
                         </div>
-                        <div className={styles.heroSlider}>
-                            <div
-                                className={styles.offerBannerSingle}
-                                onClick={() => router.push(`/retailer/products?retailerId=${retailerId}&offerId=${offers[currentOfferIndex].id}&title=${encodeURIComponent(offers[currentOfferIndex].name)}`)}
-                            >
-                                {offers[currentOfferIndex].banner_image ? (
-                                    <img
-                                        src={offers[currentOfferIndex].banner_image}
-                                        alt={offers[currentOfferIndex].name}
-                                        className={styles.bannerImage}
-                                    />
-                                ) : (
-                                    <div className={styles.offerFallback}>
-                                        <div className={styles.offerName}>{offers[currentOfferIndex].name}</div>
-                                        <div className={styles.offerDesc}>{offers[currentOfferIndex].description || 'Limited Time Offer!'}</div>
+                        <div
+                            className={styles.heroSlider}
+                            onTouchStart={handleTouchStart}
+                            onTouchEnd={handleTouchEnd}
+                        >
+                            <div className={styles.bannerStack}>
+                                {offers.map((offer, idx) => (
+                                    <div
+                                        key={offer.id}
+                                        className={`${styles.bannerItem} ${idx === currentOfferIndex ? styles.activeBanner : ''}`}
+                                        onClick={() => router.push(`/retailer/products?retailerId=${retailerId}&offerId=${offer.id}&title=${encodeURIComponent(offer.name)}`)}
+                                    >
+                                        {offer.banner_image ? (
+                                            <img
+                                                src={offer.banner_image}
+                                                alt={offer.name}
+                                                className={styles.bannerImage}
+                                            />
+                                        ) : (
+                                            <div className={styles.offerFallback}>
+                                                <div className={styles.offerName}>{offer.name}</div>
+                                                <div className={styles.offerDesc}>{offer.description || 'Limited Time Offer!'}</div>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
+                                ))}
                             </div>
 
                             {offers.length > 1 && (
