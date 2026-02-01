@@ -250,6 +250,15 @@
     position: relative;
     padding: 0 20px;
     margin-bottom: 24px;
+    max-width: 100%;
+}
+
+@media (min-width: 768px) {
+    .heroSlider {
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
 }
 
 .offerBannerSingle {
@@ -262,6 +271,13 @@
     cursor: pointer;
     background-color: #f1f5f9;
     animation: fadeIn 0.5s ease;
+}
+
+@media (min-width: 1024px) {
+    .offerBannerSingle {
+        aspect-ratio: 21/7;
+        max-height: 350px;
+    }
 }
 
 .bannerImage {
