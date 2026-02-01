@@ -3,9 +3,10 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ShoppingBag, Search, MapPin, ChevronRight, Copy, Star } from 'lucide-react';
+import { ShoppingBag, Search, MapPin, ChevronRight, Copy, Star, Heart } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { useWishlist } from '@/hooks/useWishlist';
+import { useCart } from '@/hooks/useCart';
 import { WishlistIcon } from '@/app/components/WishlistIcon';
 import { ProductImage } from '@/app/components/ProductImage';
 import { ProductCard } from '@/app/components/ProductCard';
@@ -51,6 +52,10 @@ function RetailerHome() {
     const [isSearching, setIsSearching] = useState(false);
     const [showSuggestions, setShowSuggestions] = useState(false);
 
+    // Use shared wishlist and cart hooks
+    const { wishlistIds, loadWishlist, toggleWishlist, isWishlisted } = useWishlist();
+    const { cartCount, loadCartCount } = useCart();
+
     useEffect(() => {
         const timer = setTimeout(() => {
             if (searchQuery.trim().length >= 2) {
@@ -85,15 +90,13 @@ function RetailerHome() {
         }
     };
 
-    // Use shared wishlist hook
-    const { wishlistIds, loadWishlist, toggleWishlist, isWishlisted } = useWishlist();
-
     useEffect(() => {
         if (retailerId) {
             loadData();
             loadWishlist(); // Load wishlist
+            loadCartCount(); // Load cart
         }
-    }, [retailerId, loadWishlist]);
+    }, [retailerId, loadWishlist, loadCartCount]);
 
     const loadData = async () => {
         setIsLoading(true);
@@ -180,9 +183,20 @@ function RetailerHome() {
                             <ChevronRight size={16} className="rotate-90 text-gray-500" />
                         </div>
                     </div>
-                    <button className={styles.wishlistBtn} onClick={() => router.push('/cart')}>
-                        <ShoppingBag size={20} />
-                    </button>
+                    <div className="flex gap-2">
+                        <button className={styles.wishlistBtn} onClick={() => router.push('/wishlist')}>
+                            <div className={styles.iconWrapper}>
+                                <Heart size={20} />
+                                {wishlistIds.size > 0 && <span className={styles.badge}>{wishlistIds.size}</span>}
+                            </div>
+                        </button>
+                        <button className={styles.wishlistBtn} onClick={() => router.push('/cart')}>
+                            <div className={styles.iconWrapper}>
+                                <ShoppingBag size={20} />
+                                {cartCount > 0 && <span className={styles.badge}>{cartCount}</span>}
+                            </div>
+                        </button>
+                    </div>
                 </div>
 
                 <form className={styles.searchBar} onSubmit={handleSearch}>

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { apiService } from '@/services/api';
 
 export const useWishlist = () => {
@@ -68,6 +68,15 @@ export const useWishlist = () => {
     const isWishlisted = useCallback((productId: number | string) => {
         return wishlistIds.has(String(productId));
     }, [wishlistIds]);
+
+    // Refresh on event
+    useEffect(() => {
+        const handleWishlistUpdate = () => {
+            loadWishlist();
+        };
+        window.addEventListener('wishlist-updated', handleWishlistUpdate);
+        return () => window.removeEventListener('wishlist-updated', handleWishlistUpdate);
+    }, [loadWishlist]);
 
     return {
         wishlistIds,

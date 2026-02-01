@@ -330,18 +330,21 @@ export const apiService = {
         Object.keys(CACHE).forEach(k => {
             if (k.startsWith('cart_')) delete CACHE[k];
         });
+        window.dispatchEvent(new CustomEvent('cart-updated'));
         return response.data;
     },
 
     updateCartItem: async (itemId: number, quantity: number) => {
         const response = await api.patch(`cart/items/${itemId}/`, { quantity });
         Object.keys(CACHE).forEach(k => { if (k.startsWith('cart_')) delete CACHE[k]; });
+        window.dispatchEvent(new CustomEvent('cart-updated'));
         return response.data;
     },
 
     removeCartItem: async (itemId: number) => {
         const response = await api.delete(`cart/items/${itemId}/remove/`);
         Object.keys(CACHE).forEach(k => { if (k.startsWith('cart_')) delete CACHE[k]; });
+        window.dispatchEvent(new CustomEvent('cart-updated'));
         return response.data;
     },
 
@@ -357,12 +360,14 @@ export const apiService = {
     addToWishlist: async (productId: number) => {
         const response = await api.post('customer/wishlist/add/', { product: productId });
         delete CACHE['customer_wishlist'];
+        window.dispatchEvent(new CustomEvent('wishlist-updated'));
         return response.data;
     },
 
     removeFromWishlist: async (productId: number) => {
         const response = await api.delete(`customer/wishlist/remove/${productId}/`);
         delete CACHE['customer_wishlist'];
+        window.dispatchEvent(new CustomEvent('wishlist-updated'));
         return response.data;
     },
 

@@ -4,11 +4,15 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, ShoppingBag, Heart, User } from 'lucide-react';
+import { useWishlist } from '@/hooks/useWishlist';
+import { useCart } from '@/hooks/useCart';
 import styles from './BottomNav.module.css';
 
 export default function BottomNav() {
     const pathname = usePathname();
     const [homeLink, setHomeLink] = useState('/retailers');
+    const { wishlistIds, loadWishlist } = useWishlist();
+    const { cartCount, loadCartCount } = useCart();
 
     // Pages where we don't want to show the bottom nav
     const hiddenRoutes = ['/login', '/signup', '/', '/checkout', '/checkout/success', '/retailer/product'];
@@ -18,8 +22,10 @@ export default function BottomNav() {
         const savedRetailerId = localStorage.getItem('current_retailer_id');
         if (savedRetailerId) {
             setHomeLink(`/retailer?id=${savedRetailerId}`);
+            loadWishlist();
+            loadCartCount();
         }
-    }, [pathname]);
+    }, [pathname, loadWishlist, loadCartCount]);
 
     if (hiddenRoutes.includes(pathname)) {
         return null;
@@ -42,12 +48,18 @@ export default function BottomNav() {
             </Link>
 
             <Link href="/cart" className={`${styles.navItem} ${pathname === '/cart' ? styles.active : ''}`}>
-                <ShoppingBag size={24} className={styles.icon} />
+                <div className={styles.iconWrapper}>
+                    <ShoppingBag size={24} className={styles.icon} />
+                    {cartCount > 0 && <span className={styles.badge}>{cartCount}</span>}
+                </div>
                 <span>Cart</span>
             </Link>
 
             <Link href="/wishlist" className={`${styles.navItem} ${pathname === '/wishlist' ? styles.active : ''}`}>
-                <Heart size={24} className={styles.icon} />
+                <div className={styles.iconWrapper}>
+                    <Heart size={24} className={styles.icon} />
+                    {wishlistIds.size > 0 && <span className={styles.badge}>{wishlistIds.size}</span>}
+                </div>
                 <span>Wishlist</span>
             </Link>
 
