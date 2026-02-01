@@ -67,10 +67,23 @@ function AllProducts() {
         setCurrentPage(1);
     }, [search, minPrice, maxPrice, inStock, selectedCategoryId]);
 
+    // Helper to flatten nested categories
+    const flattenCategories = (categories: any[], parentName = ''): any[] => {
+        let flat: any[] = [];
+        categories.forEach(cat => {
+            const fullName = parentName ? `${parentName} > ${cat.name}` : cat.name;
+            flat.push({ ...cat, name: fullName });
+            if (cat.children && cat.children.length > 0) {
+                flat = flat.concat(flattenCategories(cat.children, fullName));
+            }
+        });
+        return flat;
+    };
+
     const fetchCategories = async () => {
         try {
             const data = await apiService.getRetailerCategories(retailerId);
-            setCategories(data);
+            setCategories(flattenCategories(data));
         } catch (error) {
             console.error("Failed to fetch categories", error);
         }
