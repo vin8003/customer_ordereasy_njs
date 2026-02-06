@@ -57,8 +57,8 @@ export default function LoginPage() {
                         <Image
                             src="/assets/images/logo.png"
                             alt="BuyEasy Logo"
-                            width={120}
-                            height={120}
+                            width={200}
+                            height={200}
                             priority
                             className={styles.logo}
                         />

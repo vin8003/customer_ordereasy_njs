@@ -51,13 +51,13 @@ export default function SupportPage() {
                 <section className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
                     <h2 className="text-base font-semibold text-gray-800 mb-4">Contact Us</h2>
                     <div className="space-y-3">
-                        <a href="mailto:support@shopeasy.com" className="flex items-center gap-4 p-3 rounded-lg border border-gray-100 hover:bg-blue-50 transition-colors group">
+                        <a href="mailto:support@ordereasy.com" className="flex items-center gap-4 p-3 rounded-lg border border-gray-100 hover:bg-blue-50 transition-colors group">
                             <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 group-hover:bg-blue-200">
                                 <Mail size={20} />
                             </div>
                             <div className="flex-1">
                                 <p className="font-medium text-gray-900">Email Support</p>
-                                <p className="text-sm text-gray-500">support@shopeasy.com</p>
+                                <p className="text-sm text-gray-500">support@ordereasy.com</p>
                             </div>
                         </a>
 
