@@ -1,0 +1,126 @@
+.container {
+    min-height: 100vh;
+    background-color: #f8f9fa;
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+}
+
+.content {
+    flex: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.iconWrapper {
+    width: 80px;
+    height: 80px;
+    background-color: rgba(var(--primary-rgb), 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+}
+
+.icon {
+    color: var(--primary);
+}
+
+.header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+}
+
+.header p {
+    color: #666;
+    font-size: 16px;
+}
+
+.cityList {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.cityCard {
+    background: white;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.cityCard:hover {
+    border-color: #e0e0e0;
+}
+
+.cityCard.selected {
+    border-color: var(--primary);
+    background-color: rgba(var(--primary-rgb), 0.02);
+}
+
+.cityCard.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #f5f5f5;
+}
+
+.cityInfo h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+}
+
+.cityInfo p {
+    font-size: 14px;
+    color: #666;
+}
+
+.checkIcon {
+    width: 28px;
+    height: 28px;
+    background-color: var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.infoMessage {
+    background-color: #e3f2fd;
+    border: 1px solid #bbdefb;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.infoMessage p {
+    color: #0d47a1;
+    font-size: 14px;
+    margin: 0;
+}
+
+.footer {
+    margin-top: auto;
+}

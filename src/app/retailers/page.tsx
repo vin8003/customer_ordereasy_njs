@@ -26,16 +26,33 @@ export default function RetailersPage() {
     const [retailers, setRetailers] = useState<Retailer[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
+    const [selectedCity, setSelectedCity] = useState<any>(null);
 
     useEffect(() => {
-        fetchRetailers();
+        // Check for selected city
+        const storedCity = localStorage.getItem('selected_city');
+        const storedPincode = localStorage.getItem('selected_pincode');
+
+        if (!storedCity || !storedPincode) {
+            router.push('/city-selection');
+            return;
+        }
+
+        try {
+            const parsedCity = JSON.parse(storedCity);
+            setSelectedCity(parsedCity);
+            fetchRetailers(parsedCity.pincode);
+        } catch (e) {
+            console.error(e);
+            router.push('/city-selection');
+        }
     }, []);
 
-    const fetchRetailers = async () => {
+    const fetchRetailers = async (pincode: string) => {
         setIsLoading(true);
         try {
-            // In a real scenario, we'd get lat/lng here
-            const data = await apiService.getRetailers();
+            // Filter by user_pincode
+            const data = await apiService.getRetailers({ user_pincode: pincode });
             setRetailers(data.results || []);
         } catch (err) {
             console.error(err);
@@ -53,7 +70,7 @@ export default function RetailersPage() {
         return (
             <div className={styles.loadingContainer}>
                 <div className={styles.spinner}></div>
-                <p>Finding stores near you...</p>
+                <p>Finding stores in {selectedCity ? selectedCity.name : 'your area'}...</p>
             </div>
         );
     }
@@ -61,21 +78,30 @@ export default function RetailersPage() {
     return (
         <div className={styles.container}>
             <header className={styles.header}>
+                <div className={styles.locationBar}>
+                    <MapPin size={16} className={styles.locationIcon} />
+                    <span>{selectedCity?.name} ({selectedCity?.pincode})</span>
+                    {/* Future: Add Change button here */}
+                </div>
                 <h1>Select a Store</h1>
                 <p>Choose a retailer to start shopping</p>
+
+                <div className={styles.serviceNotice}>
+                    <p>Currently, services are available only in {selectedCity?.name}.</p>
+                </div>
             </header>
 
             {error && (
                 <div className={styles.errorContainer}>
                     <p>{error}</p>
-                    <Button onClick={fetchRetailers} variant="outline">Retry</Button>
+                    <Button onClick={() => selectedCity && fetchRetailers(selectedCity.pincode)} variant="outline">Retry</Button>
                 </div>
             )}
 
             {retailers.length === 0 && !error ? (
                 <div className={styles.emptyState}>
                     <ShoppingBag size={48} />
-                    <p>No retailers found in your area.</p>
+                    <p>No retailers found serving {selectedCity?.name} ({selectedCity?.pincode}).</p>
                 </div>
             ) : (
                 <div className={styles.retailerList}>
