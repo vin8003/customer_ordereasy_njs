@@ -13,7 +13,6 @@ import { Phone, Lock, User, Mail } from 'lucide-react';
 export default function SignupPage() {
     const router = useRouter();
     const [formData, setFormData] = useState({
-        username: '',
         email: '',
         phone: '',
         password: '',
@@ -40,7 +39,7 @@ export default function SignupPage() {
 
         try {
             const response = await apiService.signup({
-                username: formData.username,
+                username: formData.phone,
                 email: formData.email,
                 phone_number: formData.phone,
                 password: formData.password,
@@ -96,15 +95,7 @@ export default function SignupPage() {
                 <form onSubmit={handleSignup} className={styles.form}>
                     {error && <div className={styles.errorAlert}>{error}</div>}
 
-                    <Input
-                        label="Username"
-                        placeholder="Choose a username"
-                        name="username"
-                        value={formData.username}
-                        onChange={handleChange}
-                        icon={<User size={18} />}
-                        required
-                    />
+
 
                     <Input
                         label="Email"

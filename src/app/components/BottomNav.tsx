@@ -22,8 +22,13 @@ export default function BottomNav() {
         const savedRetailerId = localStorage.getItem('current_retailer_id');
         if (savedRetailerId) {
             setHomeLink(`/retailer?id=${savedRetailerId}`);
-            loadWishlist();
-            loadCartCount();
+
+            // Only load data if we are on a page where the nav is visible
+            // This prevents 401 errors on login/signup if token is expired
+            if (!hiddenRoutes.includes(pathname)) {
+                loadWishlist();
+                loadCartCount();
+            }
         }
     }, [pathname, loadWishlist, loadCartCount]);
 

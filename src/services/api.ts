@@ -51,7 +51,7 @@ api.interceptors.response.use((response) => {
         if (originalRequest.url?.includes('auth/token/refresh/')) {
             if (typeof window !== 'undefined') {
                 setAuthToken('');
-                if (!window.location.pathname.includes('/login')) {
+                if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/signup') && !window.location.pathname.includes('/forgot-password')) {
                     window.location.href = '/login';
                 }
             }
@@ -75,14 +75,14 @@ api.interceptors.response.use((response) => {
                     return api(originalRequest);
                 } catch (refreshError) {
                     setAuthToken('');
-                    if (!window.location.pathname.includes('/login')) {
+                    if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/signup') && !window.location.pathname.includes('/forgot-password')) {
                         window.location.href = '/login';
                     }
                     return Promise.reject(refreshError);
                 }
             } else {
                 setAuthToken('');
-                if (!window.location.pathname.includes('/login')) {
+                if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/signup') && !window.location.pathname.includes('/forgot-password')) {
                     window.location.href = '/login';
                 }
             }
