@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { MapPin, ShoppingBag, Star, Clock } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
+import { DEFAULT_CITY } from '@/config/cities';
 import styles from './Retailers.module.css';
 
 interface Retailer {

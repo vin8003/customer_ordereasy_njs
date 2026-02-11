@@ -29,7 +29,7 @@ export default function LoginPage() {
             // { tokens: { access: '...', refresh: '...' }, ... }
             if (response && response.tokens) {
                 setAuthToken(response.tokens.access, response.tokens.refresh);
-                router.push('/'); // Redirect to Home
+                router.push('/retailers'); // Redirect to Retailers
             } else {
                 setError('Login failed: Invalid response format');
             }

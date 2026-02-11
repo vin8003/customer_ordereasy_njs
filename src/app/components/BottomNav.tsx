@@ -15,7 +15,7 @@ export default function BottomNav() {
     const { cartCount, loadCartCount } = useCart();
 
     // Pages where we don't want to show the bottom nav
-    const hiddenRoutes = ['/login', '/signup', '/', '/checkout', '/checkout/success', '/retailer/product', '/city-selection'];
+    const hiddenRoutes = ['/login', '/signup', '/', '/checkout', '/checkout/success', '/retailer/product'];
 
     useEffect(() => {
         // Determine 'Home' link based on context
