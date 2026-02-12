@@ -3,10 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, Trash2, ArrowLeft, ShoppingCart, Heart } from 'lucide-react';
+import { Trash2, ArrowLeft, Heart } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { ProductImage } from '@/app/components/ProductImage';
+import AddToCartButton from '@/app/components/AddToCartButton';
 import styles from './Wishlist.module.css';
 
 interface WishlistItem {
@@ -42,15 +43,7 @@ export default function WishlistPage() {
         }
     };
 
-    const addToCart = async (item: WishlistItem) => {
-        try {
-            await apiService.addToCart(item.product, 1);
-            router.push('/cart');
-        } catch (error) {
-            console.error("Failed to add to cart", error);
-            alert("Failed to add to cart");
-        }
-    };
+
 
     const removeItem = async (productId: number) => {
         try {
@@ -99,9 +92,9 @@ export default function WishlistPage() {
                             <p className={styles.price}>₹{item.product_price}</p>
                         </div>
                         <div className={styles.actions}>
-                            <button className={styles.actionBtn} onClick={() => addToCart(item)} title="Add to Cart">
-                                <ShoppingCart size={18} className="text-green-600" />
-                            </button>
+                            <div onClick={() => { }} title="Add to Cart">
+                                <AddToCartButton productId={item.product} />
+                            </div>
                             <button className={styles.actionBtn} onClick={() => removeItem(item.product)} title="Remove">
                                 <Trash2 size={18} className="text-red-500" />
                             </button>

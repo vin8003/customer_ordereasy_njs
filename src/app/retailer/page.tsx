@@ -319,11 +319,6 @@ function RetailerHome() {
                                         e.stopPropagation();
                                         toggleWishlist(product.id);
                                     }}
-                                    onAdd={(e: React.MouseEvent) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        apiService.addToCart(product.id, 1);
-                                    }}
                                     onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
                                 />
                             ))}
@@ -347,11 +342,6 @@ function RetailerHome() {
                                         e.preventDefault();
                                         e.stopPropagation();
                                         toggleWishlist(product.id);
-                                    }}
-                                    onAdd={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        apiService.addToCart(product.id, 1);
                                     }}
                                     onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
                                 />
@@ -378,11 +368,6 @@ function RetailerHome() {
                                         e.stopPropagation();
                                         toggleWishlist(product.id);
                                     }}
-                                    onAdd={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        apiService.addToCart(product.id, 1);
-                                    }}
                                     onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
                                 />
                             ))}
@@ -406,11 +391,6 @@ function RetailerHome() {
                                         e.preventDefault();
                                         e.stopPropagation();
                                         toggleWishlist(product.id);
-                                    }}
-                                    onAdd={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        apiService.addToCart(product.id, 1);
                                     }}
                                     onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
                                 />

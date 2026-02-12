@@ -4,6 +4,7 @@ import React from 'react';
 import { ProductImage } from '@/app/components/ProductImage';
 import { WishlistIcon } from '@/app/components/WishlistIcon';
 import styles from './ProductCard.module.css';
+import AddToCartButton from '@/app/components/AddToCartButton';
 
 interface Product {
     id: number;
@@ -19,7 +20,6 @@ interface ProductCardProps {
     product: Product;
     isWishlisted: boolean;
     onToggleWishlist: (e: React.MouseEvent) => void;
-    onAdd: (e: React.MouseEvent) => void;
     onClick: () => void;
 }
 
@@ -27,7 +27,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     product,
     isWishlisted,
     onToggleWishlist,
-    onAdd,
     onClick
 }) => {
     const discount = product.mrp > product.price
@@ -71,9 +70,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                         {discount > 0 && <span className={styles.mrp}>₹{product.mrp}</span>}
                         <span className={styles.price}>₹{product.price}</span>
                     </div>
-                    <button className={styles.addBtn} onClick={onAdd}>
-                        ADD
-                    </button>
+                    <div onClick={(e) => e.stopPropagation()}>
+                        <AddToCartButton productId={product.id} />
+                    </div>
                 </div>
             </div>
         </div>

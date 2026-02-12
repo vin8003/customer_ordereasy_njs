@@ -192,16 +192,6 @@ function CategoryProducts() {
                                 e.stopPropagation();
                                 toggleWishlist(product.id);
                             }}
-                            onAdd={async (e: React.MouseEvent) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                try {
-                                    await apiService.addToCart(product.id, 1);
-                                    alert("Added to cart!");
-                                } catch (err) {
-                                    console.error("Failed to add to cart", err);
-                                }
-                            }}
                             onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
                         />
                     ))}

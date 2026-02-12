@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, ShoppingBag, Heart, Share2, Plus, Minus, ShoppingCart, Tag } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Share2, Tag } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { useWishlist } from '@/hooks/useWishlist';
 import { WishlistIcon } from '@/app/components/WishlistIcon';
+import AddToCartButton from '@/app/components/AddToCartButton';
 import styles from './ProductDetail.module.css';
 
 interface Product {
@@ -35,7 +36,6 @@ function ProductDetail() {
 
     const [product, setProduct] = useState<Product | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [quantity, setQuantity] = useState(1);
     const { isWishlisted, toggleWishlist, loadWishlist } = useWishlist();
 
     useEffect(() => {
@@ -50,7 +50,6 @@ function ProductDetail() {
         try {
             // Force refetch to bypass possible stale cache for wishlist status
             const data = await apiService.getProductDetail(retailerId, productId, true);
-            console.log("Product Detail API Response:", data); // DEBUG log
 
             // Strict mapping based on Serializer fields: 
             // original_price -> MRP
@@ -70,28 +69,11 @@ function ProductDetail() {
                 offers: data.offers || [] // Assuming offers might be in response, else empty
             });
 
-            setQuantity(data.minimum_order_quantity || 1);
-            // No need to set local state, hook will handle it or we use data.is_wishlisted if we want
-            // but the hook is more consistent for toggling.
-            // Actually, for initial state, we might need to sync the hook if it's not global.
-            // Wait, useWishlist iterates over the whole wishlist. 
-            // In RetailerHome, loadWishlist is called.
+            // Quantity state removed as we use CartContext/AddToCartButton now
         } catch (error) {
             console.error("Failed to load product", error);
         } finally {
             setIsLoading(false);
-        }
-    };
-
-    const handleAddToCart = async () => {
-        if (!product) return;
-        try {
-            await apiService.addToCart(product.id, quantity);
-            alert("Added to cart!");
-            router.push('/cart');
-        } catch (err: any) {
-            console.error(err);
-            alert(err.response?.data?.error || "Failed to add to cart");
         }
     };
 
@@ -133,8 +115,7 @@ function ProductDetail() {
         ? product.savings
         : (hasDiscount ? (product.mrp - product.price) : 0);
 
-    const isMinReached = quantity <= 1;
-    const isMaxBlocked = quantity >= product.stock_quantity;
+
 
 
     return (
@@ -225,28 +206,14 @@ function ProductDetail() {
             </div>
 
             <div className={styles.footer}>
-                <div className={styles.qtyControl}>
-                    <button
-                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                        disabled={isMinReached}
-                        className={isMinReached ? 'opacity-50 cursor-not-allowed' : ''}
-                    >
-                        <Minus size={18} />
-                    </button>
-                    <span>{quantity}</span>
-                    <button
-                        onClick={() => setQuantity(Math.min(product.stock_quantity, quantity + 1))}
-                        disabled={isMaxBlocked}
-                        className={isMaxBlocked ? 'opacity-50 cursor-not-allowed' : ''}
-                    >
-                        <Plus size={18} />
-                    </button>
-                </div>
-
                 <div className="flex-1">
-                    <Button fullWidth onClick={handleAddToCart} disabled={product.stock_quantity === 0}>
-                        {product.stock_quantity === 0 ? "Out of Stock" : "Add to Cart"}
-                    </Button>
+                    {product.stock_quantity === 0 ? (
+                        <Button fullWidth disabled>Out of Stock</Button>
+                    ) : (
+                        <div className="w-full h-12">
+                            <AddToCartButton productId={product.id} className="w-full h-full text-lg" />
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
