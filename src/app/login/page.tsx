@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -11,7 +11,7 @@ import styles from './Login.module.css';
 import { Phone, Lock } from 'lucide-react';
 import { useCartContext } from '@/context/CartContext';
 
-export default function LoginPage() {
+function LoginContent() {
     const router = useRouter();
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
@@ -124,5 +124,13 @@ export default function LoginPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="flex h-screen items-center justify-center">Loading...</div>}>
+            <LoginContent />
+        </Suspense>
     );
 }
