@@ -7,6 +7,7 @@ import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { Input } from '@/app/components/ui/Input';
 import MapPicker from '@/app/components/MapPicker';
+import { AVAILABLE_CITIES } from '@/config/cities';
 import styles from './AddressForm.module.css';
 
 export default function NewAddressPage() {
@@ -29,14 +30,32 @@ export default function NewAddressPage() {
     };
 
     const handleLocationSelect = (lat: number, lng: number, address: string, pincode: string, city: string, state: string) => {
+        // Try to match city and state with available ones.
+        // Support partial matches (e.g. "Bharat" -> "Bharatpur", "Raja" -> "Rajasthan")
+        // because geocoders might return shortened names or variations.
+        const normalize = (s: string) => s?.toLowerCase().trim() || '';
+        const nCity = normalize(city);
+        const nState = normalize(state);
+
+        const matchedCity = AVAILABLE_CITIES.find(c => {
+            const cName = normalize(c.name);
+            const cState = normalize(c.state);
+
+            // Check for city match (exact or startsWith) AND state match (exact or startsWith)
+            const cityMatch = nCity && (cName === nCity || cName.startsWith(nCity) || nCity.startsWith(cName));
+            const stateMatch = nState && (cState === nState || cState.startsWith(nState) || nState.startsWith(cState));
+
+            return cityMatch && stateMatch;
+        });
+
         setFormData(prev => ({
             ...prev,
             latitude: Number(lat.toFixed(8)),
             longitude: Number(lng.toFixed(8)),
             address_line1: address,
-            pincode: pincode || prev.pincode,
-            city: city || prev.city,
-            state: state || prev.state
+            pincode: matchedCity ? matchedCity.pincode : (pincode || prev.pincode),
+            city: matchedCity ? matchedCity.name : prev.city,
+            state: matchedCity ? matchedCity.state : prev.state
         }));
     };
 
@@ -98,10 +117,51 @@ export default function NewAddressPage() {
 
                 <div className="flex gap-4">
                     <div className={styles.field}>
-                        <Input label="City" name="city" value={formData.city} onChange={handleChange} required />
+                        <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+                        <select
+                            name="state"
+                            value={formData.state}
+                            onChange={(e) => {
+                                setFormData({
+                                    ...formData,
+                                    state: e.target.value,
+                                    city: '' // Reset city when state changes
+                                });
+                            }}
+                            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required
+                        >
+                            <option value="">Select State</option>
+                            {Array.from(new Set(AVAILABLE_CITIES.map(c => c.state))).map(state => (
+                                <option key={state} value={state}>{state}</option>
+                            ))}
+                        </select>
                     </div>
                     <div className={styles.field}>
-                        <Input label="State" name="state" value={formData.state} onChange={handleChange} required />
+                        <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                        <select
+                            name="city"
+                            value={formData.city}
+                            onChange={(e) => {
+                                const city = AVAILABLE_CITIES.find(c => c.name === e.target.value);
+                                setFormData({
+                                    ...formData,
+                                    city: e.target.value,
+                                    pincode: city ? city.pincode : formData.pincode
+                                });
+                            }}
+                            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                            required
+                            disabled={!formData.state}
+                        >
+                            <option value="">Select City</option>
+                            {AVAILABLE_CITIES
+                                .filter(c => c.state === formData.state && c.isAvailable)
+                                .map(city => (
+                                    <option key={city.id} value={city.name}>{city.name}</option>
+                                ))
+                            }
+                        </select>
                     </div>
                 </div>
 
