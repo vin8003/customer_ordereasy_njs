@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { User, Mail, Phone, Settings, LogOut, Package, MapPin, ChevronRight, Gift, HelpCircle } from 'lucide-react';
 import { apiService } from '@/services/api';
+import { Button } from '@/app/components/ui/Button';
 import styles from './Profile.module.css';
 
 export default function ProfilePage() {
@@ -13,7 +14,16 @@ export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
     const [loyaltyPoints, setLoyaltyPoints] = useState<any[]>([]);
 
+    const [initials, setInitials] = useState('U');
+    const [isGuest, setIsGuest] = useState(false);
+
     useEffect(() => {
+        if (!apiService.isAuthenticated()) {
+            setIsGuest(true);
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
         Promise.all([
             apiService.fetchUserProfile(),
@@ -22,8 +32,14 @@ export default function ProfilePage() {
             .then(([profileData, loyaltyData]) => {
                 setProfile(profileData);
                 setLoyaltyPoints(loyaltyData);
+                const init = `${profileData.first_name?.[0] || ''}${profileData.last_name?.[0] || ''}`.toUpperCase() || 'U';
+                setInitials(init);
             })
-            .catch(err => console.error(err))
+            .catch(err => {
+                console.error(err);
+                // If 401, maybe token expired or invalid
+                setIsGuest(true);
+            })
             .finally(() => setLoading(false));
     }, []);
 
@@ -37,9 +53,39 @@ export default function ProfilePage() {
     };
 
     if (loading) return <div className="p-8 text-center text-gray-500">Loading Profile...</div>;
-    if (!profile) return <div className="p-8 text-center">User not found. Please login.</div>;
 
-    const initials = `${profile.first_name?.[0] || ''}${profile.last_name?.[0] || ''}`.toUpperCase() || 'U';
+    if (isGuest) {
+        return (
+            <div className={styles.container}>
+                <header className={styles.header}>
+                    <div className={styles.avatar}>
+                        <User size={32} />
+                    </div>
+                    <h1 className={styles.name}>Guest User</h1>
+                    <p className={styles.contact}>Login to view your profile</p>
+                </header>
+                <main className={styles.main}>
+                    <div className={styles.section}>
+                        <div className="p-4 flex flex-col gap-3">
+                            <Button fullWidth onClick={() => router.push('/login?redirect=/profile')}>Login</Button>
+                            <Button fullWidth variant="outline" onClick={() => router.push('/signup')}>Sign Up</Button>
+                        </div>
+                    </div>
+                    <div className={styles.section}>
+                        <Link href="/support" className={styles.menuItem}>
+                            <div className="flex items-center gap-3">
+                                <HelpCircle size={20} className="text-blue-500" />
+                                <span>Help & Support</span>
+                            </div>
+                            <ChevronRight size={16} className="text-gray-400" />
+                        </Link>
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
+    if (!profile) return <div className="p-8 text-center">User not found. Please login.</div>;
 
     return (
         <div className={styles.container}>

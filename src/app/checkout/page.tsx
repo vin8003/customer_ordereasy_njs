@@ -54,6 +54,8 @@ export default function CheckoutPage() {
     // For now assuming we are checking out the current active cart
     // We need to fetch cart to display summary or at least total
 
+    const [cartItems, setCartItems] = useState<any[]>([]);
+
     useEffect(() => {
         const checkAuth = () => {
             if (!apiService.isAuthenticated()) {
@@ -167,6 +169,7 @@ export default function CheckoutPage() {
                 setCartTotal(discTotal);
                 setOfferSavings(offerSavings);
                 setHasActiveOffers(offerSavings > 0);
+                setCartItems(data.items || []);
             } catch (e) {
                 console.error(e);
             }
@@ -384,6 +387,21 @@ export default function CheckoutPage() {
                         </div>
                     </section>
                 )}
+
+                <section className={styles.section}>
+                    <h2 className={styles.sectionTitle}>Order Items</h2>
+                    <div className={styles.itemsList}>
+                        {cartItems.map((item: any) => (
+                            <div key={item.id || item.product} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+                                <div className="flex gap-2">
+                                    <span className="text-gray-500 font-medium">{item.quantity}x</span>
+                                    <span>{item.product_name}</span>
+                                </div>
+                                <span className="font-medium">₹{(Number(item.product_price) * item.quantity).toFixed(2)}</span>
+                            </div>
+                        ))}
+                    </div>
+                </section>
 
                 <section className={styles.section}>
                     <h2 className={styles.sectionTitle}>Order Summary</h2>

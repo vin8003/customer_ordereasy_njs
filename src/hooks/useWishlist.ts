@@ -7,6 +7,11 @@ export const useWishlist = () => {
 
     // Load wishlist data from API and normalize IDs to strings
     const loadWishlist = useCallback(async () => {
+        if (!apiService.isAuthenticated()) {
+            setWishlistIds(new Set());
+            return;
+        }
+
         setIsLoading(true);
         try {
             const wishlistData = await apiService.getWishlist().catch(() => ({ results: [] }));
@@ -36,6 +41,14 @@ export const useWishlist = () => {
 
     // Toggle wishlist status with optimistic UI update
     const toggleWishlist = useCallback(async (productId: number) => {
+        if (!apiService.isAuthenticated()) {
+            // Redirect to login if not authenticated
+            if (typeof window !== 'undefined') {
+                window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+            }
+            return;
+        }
+
         const strId = String(productId);
         const isAdding = !wishlistIds.has(strId);
 

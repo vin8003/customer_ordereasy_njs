@@ -1,7 +1,24 @@
 .container {
     min-height: 100vh;
     background-color: var(--background-color);
-    padding-bottom: 100px;
+    padding-bottom: 150px;
+    /* Increased to account for Footer + BottomNav */
+}
+
+/* ... existing styles ... */
+
+.footer {
+    position: fixed;
+    bottom: 60px;
+    /* Height of BottomNav */
+    left: 0;
+    right: 0;
+    background: #fff;
+    padding: 1rem;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+    z-index: 50;
+    border-bottom: 1px solid #f3f4f6;
+    /* visual separation from nav */
 }
 
 .header {
@@ -186,11 +203,14 @@
 
 .footer {
     position: fixed;
-    bottom: 0;
+    bottom: 60px;
+    /* Height of BottomNav */
     left: 0;
     right: 0;
     background: #fff;
     padding: 1rem;
     box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
     z-index: 50;
+    border-bottom: 1px solid #f3f4f6;
+    /* visual separation from nav */
 }

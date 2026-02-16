@@ -25,8 +25,15 @@ export default function WishlistPage() {
     const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    const [isGuest, setIsGuest] = useState(false);
+
     useEffect(() => {
-        loadWishlist();
+        if (apiService.isAuthenticated()) {
+            loadWishlist();
+        } else {
+            setIsGuest(true);
+            setIsLoading(false);
+        }
     }, []);
 
     const loadWishlist = async () => {
@@ -55,6 +62,19 @@ export default function WishlistPage() {
     };
 
     if (isLoading) return <div className="p-8 text-center">Loading Wishlist...</div>;
+
+    if (isGuest) {
+        return (
+            <div className={styles.emptyState}>
+                <Heart size={48} className="text-gray-300" />
+                <p>Please login to view your wishlist.</p>
+                <div className="flex gap-2">
+                    <Button onClick={() => router.push('/login?redirect=/wishlist')}>Login</Button>
+                    <Button variant="outline" onClick={() => router.push('/retailers')}>Continue Shopping</Button>
+                </div>
+            </div>
+        );
+    }
 
     if (wishlistItems.length === 0) {
         return (

@@ -9,6 +9,7 @@ import { Button } from '@/app/components/ui/Button';
 import { useWishlist } from '@/hooks/useWishlist';
 import { WishlistIcon } from '@/app/components/WishlistIcon';
 import { ProductImage } from '@/app/components/ProductImage';
+import { useCartContext } from '@/context/CartContext';
 import styles from './Cart.module.css';
 
 interface CartItem {
@@ -32,7 +33,6 @@ const CartItemRow = ({ item, updateQuantity, removeItem, toggleWishlist, isWishl
 }) => {
     const [localQty, setLocalQty] = useState(item.quantity.toString());
 
-    // Sync local state with prop only when prop changes and not currently fully focused (handled via onBlur mainly)
     useEffect(() => {
         setLocalQty(item.quantity.toString());
     }, [item.quantity]);
@@ -124,6 +124,7 @@ const CartItemRow = ({ item, updateQuantity, removeItem, toggleWishlist, isWishl
 
 export default function CartPage() {
     const router = useRouter();
+    const { items: contextItems, updateQuantity: updateContextQuantity, removeFromCart: removeFromContextCart } = useCartContext();
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [totalAmount, setTotalAmount] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
@@ -141,36 +142,86 @@ export default function CartPage() {
         if (storedId) {
             setRetailerId(storedId);
             fetchData(storedId);
-            loadWishlist(); // Load wishlist data
+            if (apiService.isAuthenticated()) {
+                loadWishlist();
+            }
         } else {
             setIsLoading(false);
         }
-    }, [loadWishlist]);
+    }, [contextItems, loadWishlist]);
 
     const fetchData = async (rId: string) => {
         setIsLoading(true);
         try {
-            const cartData = await apiService.getCart(rId);
-            setCartItems((cartData.items || []).map((item: any) => ({
-                ...item,
-                product_id: item.product, // Map backend 'product' (id) to frontend 'product_id'
-                product_name: item.product_name,
-                product_price: item.product_price,
-                stock_quantity: item.stock_quantity,
-                minimum_order_quantity: item.minimum_order_quantity || 1,
-                maximum_order_quantity: item.maximum_order_quantity
-            })));
-            setTotalAmount(parseFloat(cartData.discounted_total || cartData.total_amount));
-            // You might want to save applied_offers or total_savings to state if you want to display them
-            if (cartData.total_savings > 0) {
-                // Logic to show savings, maybe update a separate state variable
-                setSavings(cartData.total_savings);
-                setAppliedOffers(cartData.applied_offers || []);
+            if (apiService.isAuthenticated()) {
+                const cartData = await apiService.getCart(rId);
+                setCartItems((cartData.items || []).map((item: any) => ({
+                    ...item,
+                    product_id: item.product,
+                    product_name: item.product_name,
+                    product_price: item.product_price,
+                    stock_quantity: item.stock_quantity,
+                    minimum_order_quantity: item.minimum_order_quantity || 1,
+                    maximum_order_quantity: item.maximum_order_quantity
+                })));
+                setTotalAmount(parseFloat(cartData.discounted_total || cartData.total_amount));
+                if (cartData.total_savings > 0) {
+                    setSavings(cartData.total_savings);
+                    setAppliedOffers(cartData.applied_offers || []);
+                } else {
+                    setSavings(0);
+                    setAppliedOffers([]);
+                }
+                setPotentialPoints(cartData.potential_points || 0);
             } else {
+                // Guest Logic
+                const productIds = Object.keys(contextItems).map(Number);
+                if (productIds.length === 0) {
+                    setCartItems([]);
+                    setTotalAmount(0);
+                    setSavings(0);
+                    setAppliedOffers([]);
+                    setIsLoading(false);
+                    return;
+                }
+
+                // Fetch details for guest items
+                const itemsDetails = await Promise.all(
+                    productIds.map(async (pid) => {
+                        try {
+                            const product = await apiService.getProductDetail(rId, pid.toString());
+                            const qty = contextItems[pid].quantity;
+
+                            // Handle various price field possibilities from backend
+                            const price = Number(product.discounted_price) || Number(product.price) || Number(product.original_price) || Number(product.mrp) || 0;
+
+                            return {
+                                id: pid, // Use product ID as ID for guest
+                                product_id: pid,
+                                product_name: product.name,
+                                product_price: price, // Use the resolved price
+                                quantity: qty,
+                                product_image: product.images?.[0]?.image || product.image || '',
+                                stock_quantity: product.stock_quantity || 100,
+                                minimum_order_quantity: product.minimum_order_quantity || 1,
+                                maximum_order_quantity: product.maximum_order_quantity
+                            } as CartItem;
+                        } catch (e) {
+                            console.error(`Failed to fetch product ${pid}`, e);
+                            return null;
+                        }
+                    })
+                );
+
+                const validItems = itemsDetails.filter(i => i !== null) as CartItem[];
+                setCartItems(validItems);
+
+                const total = validItems.reduce((sum, item) => sum + (item.product_price * item.quantity), 0);
+                setTotalAmount(total);
                 setSavings(0);
                 setAppliedOffers([]);
+                setPotentialPoints(0);
             }
-            setPotentialPoints(cartData.potential_points || 0);
         } catch (error) {
             console.error("Failed to fetch data", error);
         } finally {
@@ -182,42 +233,29 @@ export default function CartPage() {
         const item = cartItems.find(i => i.id === itemId);
         if (!item) return;
 
-        if (newQty < 1) return; // Hard floor is 1
+        // Use context for update which handles both guest and auth logic (via sync/api)
+        // But context updateQuantity expects productId. 
+        // For guest, itemId IS productId. For auth, itemId is CartItem ID.
+        // Wait, context.updateQuantity takes productId.
+        // My CartItem has product_id.
 
-        // Only block if EXCEEDING stock
+        if (newQty < 1) return;
         if (newQty > item.stock_quantity) {
             alert(`Only ${item.stock_quantity} units available for ${item.product_name}`);
             return;
         }
 
-        try {
-            await apiService.updateCartItem(itemId, newQty);
-            setCartItems(prev => prev.map(item => item.id === itemId ? { ...item, quantity: newQty } : item));
-            if (retailerId) {
-                const data = await apiService.getCart(retailerId);
-                setTotalAmount(parseFloat(data.discounted_total || data.total_amount));
-                setSavings(parseFloat(data.total_savings || 0));
-                setAppliedOffers(data.applied_offers || []);
-                setPotentialPoints(data.potential_points || 0);
-            }
-        } catch (e) {
-            console.error(e);
-        }
+        // Ideally use Context for everything
+        await updateContextQuantity(item.product_id, newQty);
+
+        // Refresh local state (fetchData will re-run if context items change? No, contextItems change triggers useEffect)
+        // Actually, if contextItems changes, useEffect runs fetchData.
     };
 
     const removeItem = async (itemId: number) => {
-        try {
-            await apiService.removeCartItem(itemId);
-            setCartItems(prev => prev.filter(item => item.id !== itemId));
-            if (retailerId) {
-                const data = await apiService.getCart(retailerId);
-                setTotalAmount(parseFloat(data.discounted_total || data.total_amount));
-                setSavings(parseFloat(data.total_savings || 0));
-                setAppliedOffers(data.applied_offers || []);
-                setPotentialPoints(data.potential_points || 0);
-            }
-        } catch (e) {
-            console.error(e);
+        const item = cartItems.find(i => i.id === itemId);
+        if (item) {
+            await removeFromContextCart(item.product_id);
         }
     };
 
@@ -277,33 +315,6 @@ export default function CartPage() {
                         <span>-₹{Number(savings).toFixed(2)}</span>
                     </div>
                 )}
-                {appliedOffers.length > 0 && (
-                    <div className="space-y-1 py-2 text-sm border-b border-gray-100">
-                        {appliedOffers.map((offer, idx) => (
-                            <div key={idx} className="flex justify-between items-center text-gray-600">
-                                <span className="flex items-center gap-1.5">
-                                    <Tag size={14} className="text-green-600" />
-                                    <span>{offer.name}</span>
-                                </span>
-                                {offer.benefit_type === 'credit_points' ? (
-                                    <span className="text-amber-600 font-medium text-xs">+{Number(offer.savings)} pts</span>
-                                ) : (
-                                    <span className="text-green-600 font-medium">-₹{Number(offer.savings).toFixed(2)}</span>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                )}
-                {/* Potential Cashback Points Summary */}
-                {Number(potentialPoints) > 0 && (
-                    <div className="flex justify-between items-center py-2 mt-1 text-amber-700 bg-amber-50/50 rounded px-2 -mx-2">
-                        <span className="flex items-center gap-1.5 font-medium text-sm">
-                            <Award size={16} />
-                            Points to Earn
-                        </span>
-                        <span className="font-bold">+{potentialPoints}</span>
-                    </div>
-                )}
                 <div className={styles.totalRow}>
                     <span className="font-bold">Total Amount</span>
                     <span className={`${styles.totalValue} font-bold`}>₹{totalAmount.toFixed(2)}</span>
@@ -311,16 +322,7 @@ export default function CartPage() {
                 <Button
                     fullWidth
                     onClick={() => {
-                        const hasErrors = cartItems.some(item =>
-                            item.quantity < item.minimum_order_quantity ||
-                            (item.maximum_order_quantity && item.quantity > item.maximum_order_quantity) ||
-                            item.quantity > item.stock_quantity
-                        );
-
-                        if (hasErrors) {
-                            alert("Please fix the errors in your cart before checking out.");
-                            return;
-                        }
+                        if (cartItems.length === 0) return;
                         router.push('/checkout');
                     }}
                 >
