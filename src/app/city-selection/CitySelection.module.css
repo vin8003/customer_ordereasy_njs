@@ -3,7 +3,7 @@
     background-color: #f8f9fa;
     display: flex;
     flex-direction: column;
-    padding: 24px;
+    padding: 24px 24px 100px 24px;
 }
 
 .content {

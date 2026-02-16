@@ -32,10 +32,15 @@ export default function RetailersPage() {
     useEffect(() => {
         // Check for selected city
         const storedCity = localStorage.getItem('selected_city');
-        const storedPincode = localStorage.getItem('selected_pincode');
+        //const storedPincode = localStorage.getItem('selected_pincode');
 
-        if (!storedCity || !storedPincode) {
-            router.push('/city-selection');
+        if (!storedCity) {
+            // No city selected, default to DEFAULT_CITY
+            const defaultCity = DEFAULT_CITY;
+            localStorage.setItem('selected_city', JSON.stringify(defaultCity));
+            localStorage.setItem('selected_pincode', defaultCity.pincode);
+            setSelectedCity(defaultCity);
+            fetchRetailers(defaultCity.pincode);
             return;
         }
 
@@ -45,7 +50,12 @@ export default function RetailersPage() {
             fetchRetailers(parsedCity.pincode);
         } catch (e) {
             console.error(e);
-            router.push('/city-selection');
+            // Fallback to default if parsing fails
+            const defaultCity = DEFAULT_CITY;
+            localStorage.setItem('selected_city', JSON.stringify(defaultCity));
+            localStorage.setItem('selected_pincode', defaultCity.pincode);
+            setSelectedCity(defaultCity);
+            fetchRetailers(defaultCity.pincode);
         }
     }, []);
 
@@ -79,10 +89,13 @@ export default function RetailersPage() {
     return (
         <div className={styles.container}>
             <header className={styles.header}>
-                <div className={styles.locationBar}>
+                <div
+                    className={styles.locationBar}
+                    onClick={() => router.push('/city-selection')}
+                    style={{ cursor: 'pointer' }}
+                >
                     <MapPin size={16} className={styles.locationIcon} />
                     <span>{selectedCity?.name} ({selectedCity?.pincode})</span>
-                    {/* Future: Add Change button here */}
                 </div>
                 <h1>Select a Store</h1>
                 <p>Choose a retailer to start shopping</p>
