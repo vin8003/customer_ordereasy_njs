@@ -3,12 +3,13 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { apiService, setAuthToken } from '../../services/api';
 import styles from './Login.module.css';
 import { Phone, Lock } from 'lucide-react';
+import { useCartContext } from '@/context/CartContext';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -16,6 +17,9 @@ export default function LoginPage() {
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+
+    const { syncGuestCart } = useCartContext(); // Get sync function
+    const searchParams = useSearchParams();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -25,11 +29,19 @@ export default function LoginPage() {
         try {
             const response = await apiService.login(phone, password);
 
-            // Assuming response follows the structure seen in Flutter app:
-            // { tokens: { access: '...', refresh: '...' }, ... }
             if (response && response.tokens) {
                 setAuthToken(response.tokens.access, response.tokens.refresh);
-                router.push('/retailers'); // Redirect to Retailers
+
+                // Sync Guest Cart
+                await syncGuestCart();
+
+                // Handle Redirect
+                const redirectPath = searchParams.get('redirect');
+                if (redirectPath) {
+                    router.push(decodeURIComponent(redirectPath));
+                } else {
+                    router.push('/retailers');
+                }
             } else {
                 setError('Login failed: Invalid response format');
             }

@@ -28,6 +28,8 @@ export default function RetailersPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const [selectedCity, setSelectedCity] = useState<any>(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [userName, setUserName] = useState('');
 
     useEffect(() => {
         // Check for selected city
@@ -41,21 +43,28 @@ export default function RetailersPage() {
             localStorage.setItem('selected_pincode', defaultCity.pincode);
             setSelectedCity(defaultCity);
             fetchRetailers(defaultCity.pincode);
-            return;
+        } else {
+            try {
+                const parsedCity = JSON.parse(storedCity);
+                setSelectedCity(parsedCity);
+                fetchRetailers(parsedCity.pincode);
+            } catch (e) {
+                console.error(e);
+                // Fallback to default if parsing fails
+                const defaultCity = DEFAULT_CITY;
+                localStorage.setItem('selected_city', JSON.stringify(defaultCity));
+                localStorage.setItem('selected_pincode', defaultCity.pincode);
+                setSelectedCity(defaultCity);
+                fetchRetailers(defaultCity.pincode);
+            }
         }
 
-        try {
-            const parsedCity = JSON.parse(storedCity);
-            setSelectedCity(parsedCity);
-            fetchRetailers(parsedCity.pincode);
-        } catch (e) {
-            console.error(e);
-            // Fallback to default if parsing fails
-            const defaultCity = DEFAULT_CITY;
-            localStorage.setItem('selected_city', JSON.stringify(defaultCity));
-            localStorage.setItem('selected_pincode', defaultCity.pincode);
-            setSelectedCity(defaultCity);
-            fetchRetailers(defaultCity.pincode);
+        // Check Auth Status
+        if (apiService.isAuthenticated()) {
+            setIsAuthenticated(true);
+            apiService.fetchUserProfile().then(profile => {
+                setUserName(profile.first_name || 'User');
+            }).catch(e => console.error("Profile fetch failed", e));
         }
     }, []);
 
@@ -77,6 +86,14 @@ export default function RetailersPage() {
         router.push(`/retailer?id=${id}`);
     };
 
+    const handleLogout = async () => {
+        await apiService.logout();
+        setIsAuthenticated(false);
+        setUserName('');
+        // Optional: reload to ensure clean state
+        window.location.reload();
+    };
+
     if (isLoading) {
         return (
             <div className={styles.loadingContainer}>
@@ -89,14 +106,36 @@ export default function RetailersPage() {
     return (
         <div className={styles.container}>
             <header className={styles.header}>
-                <div
-                    className={styles.locationBar}
-                    onClick={() => router.push('/city-selection')}
-                    style={{ cursor: 'pointer' }}
-                >
-                    <MapPin size={16} className={styles.locationIcon} />
-                    <span>{selectedCity?.name} ({selectedCity?.pincode})</span>
+                <div className={styles.topBar}>
+                    <div
+                        className={styles.locationBar}
+                        onClick={() => router.push('/city-selection')}
+                        style={{ cursor: 'pointer' }}
+                    >
+                        <MapPin size={16} className={styles.locationIcon} />
+                        <span>{selectedCity?.name} ({selectedCity?.pincode})</span>
+                    </div>
+
+                    <div className={styles.authContainer}>
+                        {isAuthenticated ? (
+                            <div className={styles.userInfo}>
+                                <span className={styles.userName}>Hi, {userName}</span>
+                                <Button
+                                    variant="ghost"
+                                    onClick={handleLogout}
+                                    className={styles.logoutButton}
+                                >
+                                    Logout
+                                </Button>
+                            </div>
+                        ) : (
+                            <Link href="/login">
+                                <Button variant="outline">Login / Signup</Button>
+                            </Link>
+                        )}
+                    </div>
                 </div>
+
                 <h1>Select a Store</h1>
                 <p>Choose a retailer to start shopping</p>
 

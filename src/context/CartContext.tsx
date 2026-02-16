@@ -4,23 +4,21 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { apiService } from '@/services/api';
 
 interface CartItem {
-    id: number; // Cart Item ID (not product ID, usually) - wait, backend returns cart items. 
-    // Let's check api.ts getCart response structure. 
-    // api.ts line 15: const count = (cartData.items || []).reduce...
-    // So cartData.items is an array.
+    id: number;
     product: number; // Product ID
     quantity: number;
-    // ... potentially other fields
+    // For guest cart, we might need more details if we manipulate UI optimistically
 }
 
 interface CartContextType {
-    items: { [productId: number]: CartItem }; // Map productId to CartItem for easy lookup
+    items: { [productId: number]: CartItem };
     cartCount: number;
     isLoading: boolean;
     getItemQuantity: (productId: number) => number;
     addToCart: (productId: number, quantity?: number) => Promise<void>;
     removeFromCart: (productId: number) => Promise<void>;
     updateQuantity: (productId: number, quantity: number) => Promise<void>;
+    syncGuestCart: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -29,22 +27,40 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [items, setItems] = useState<{ [productId: number]: CartItem }>({});
     const [cartCount, setCartCount] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
+    const [isGuest, setIsGuest] = useState(true); // Default to guest until proven otherwise
 
-    // Helper to calculate count from items map
+    // Helper to calculate count
     const calculateCount = (currentItems: { [productId: number]: CartItem }) => {
         return Object.values(currentItems).reduce((acc, item) => acc + item.quantity, 0);
     };
 
     const loadCart = useCallback(async () => {
-        // We need retailerId for getCart. 
-        // In this app, it seems retailerId is stored in localStorage 'current_retailer_id'
-        // or derived from URL / context. 
-        // Let's check checking `useCart` in `api.ts` again. 
-        // `useCart` hook used `localStorage.getItem('current_retailer_id')`.
-        // We should likely do the same here.
         if (typeof window === 'undefined') return;
 
         const retailerId = localStorage.getItem('current_retailer_id');
+        const token = localStorage.getItem('access_token');
+        const authenticated = !!token;
+        setIsGuest(!authenticated);
+
+        if (!authenticated) {
+            // Load Guest Cart from LocalStorage
+            try {
+                const guestCartStr = localStorage.getItem(`guest_cart_${retailerId || 'default'}`);
+                if (guestCartStr) {
+                    const guestItems = JSON.parse(guestCartStr);
+                    setItems(guestItems);
+                    setCartCount(calculateCount(guestItems));
+                } else {
+                    setItems({});
+                    setCartCount(0);
+                }
+            } catch (e) {
+                console.error("Error loading guest cart", e);
+                setItems({});
+            }
+            return;
+        }
+
         if (!retailerId) {
             setItems({});
             setCartCount(0);
@@ -57,31 +73,40 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const newItems: { [productId: number]: CartItem } = {};
             if (data.items && Array.isArray(data.items)) {
                 data.items.forEach((item: any) => {
-                    // Start Mapping: Backend usually returns { id: cart_item_id, product: product_id, quantity: N } 
-                    // or { id: cart_item_id, product: { id: product_id, ... }, quantity: N }
-                    // I need to be careful about `item.product`.
-                    // Let's assume item.product is ID or object. 
-                    // To be safe, let's inspect what apiService.getCart returns if possible, or write defensive code.
                     const productId = typeof item.product === 'object' ? item.product.id : item.product;
                     newItems[productId] = { ...item, product: productId };
                 });
             }
             setItems(newItems);
             setCartCount(calculateCount(newItems));
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to load cart", error);
+            // If 401, handle? API interceptor should handle it.
+            // But if we are here, strict mode might have failed.
         } finally {
             setIsLoading(false);
         }
     }, []);
 
+    const saveGuestCart = (newItems: { [productId: number]: CartItem }) => {
+        const retailerId = localStorage.getItem('current_retailer_id');
+        localStorage.setItem(`guest_cart_${retailerId || 'default'}`, JSON.stringify(newItems));
+        // Also fire event for other components
+        window.dispatchEvent(new CustomEvent('cart-updated'));
+    };
+
     useEffect(() => {
         loadCart();
 
-        // Listen for global cart updates (legacy support if other components emit this)
         const handleCartUpdate = () => loadCart();
         window.addEventListener('cart-updated', handleCartUpdate);
-        return () => window.removeEventListener('cart-updated', handleCartUpdate);
+        // Also listen for storage events to sync across tabs
+        window.addEventListener('storage', handleCartUpdate);
+
+        return () => {
+            window.removeEventListener('cart-updated', handleCartUpdate);
+            window.removeEventListener('storage', handleCartUpdate);
+        };
     }, [loadCart]);
 
     const getItemQuantity = useCallback((productId: number) => {
@@ -89,14 +114,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [items]);
 
     const addToCart = useCallback(async (productId: number, quantity: number = 1) => {
-        // Optimistic Update
+        // 1. Optimistic Update (Works for both Guest and Auth)
         const previousItems = { ...items };
         const existingItem = items[productId];
-
         const newQuantity = (existingItem?.quantity || 0) + quantity;
 
+        // Negative quantity check?
+        // if (newQuantity <= 0) return removeFromCart(productId);
+
         const newItem = {
-            id: existingItem?.id || -1, // Temporary ID if new
+            id: existingItem?.id || -1 * Date.now(), // Temp ID
             product: productId,
             quantity: newQuantity
         };
@@ -105,91 +132,29 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setItems(newItems);
         setCartCount(calculateCount(newItems));
 
+        if (isGuest) {
+            saveGuestCart(newItems);
+            return; // Done for guest
+        }
+
         try {
-            // Check if we need to Add or Update
-            // API `addToCart` takes (productId, quantity) and adds to existing or creates new. 
-            // Wait, standard `addToCart` usually ADDS to quantity. 
-            // `api.ts`: `addToCart: async (productId: number, quantity: number) => ... post('cart/add/', ...)`
-            // `updateCartItem`: `updateCartItem: async (itemId: number, quantity: number) => ... patch('cart/items/${itemId}/', ...)`
-
-            // Should we use `addToCart` for initial add, and `updateCartItem` for changes?
-            // If we use `addToCart` for +1, it simplifies things IF backend supports "+1" logic.
-            // But for explicit "Set to 5", we might need update.
-            // The requirement says:
-            // 3. When user clicks "+": Quantity increases.
-            // 4. When user clicks "-": Quantity decreases.
-
-            // If item exists, we should probably use `addToCart` with quantity=1 
-            // OR use `updateCartItem` with total quantity.
-            // `api.ts` `addToCart` seems to be "Add this quantity to cart". 
-            // Let's assume `addToCart` accumulates. 
-            // BUT `updateCartItem` sets specific quantity.
-
-            // Strategy:
-            // If item doesn't exist: call `addToCart(productId, 1)`
-            // If item exists: call `updateCartItem(itemId, newQuantity)` OR `addToCart` if generic.
-            // Using `addToCart` repeatedly might create multiple lines if backend is not coalescing.
-            // Safest: Use `addToCart` for first add. Use `updateCartItem` for subsequent changes.
-
             if (!existingItem) {
-                const res = await apiService.addToCart(productId, quantity);
-                // Refresh cart to get real ID
-                loadCart();
+                await apiService.addToCart(productId, quantity);
+                loadCart(); // Reload to get real ID
             } else {
-                // We have an existing item, we need its ID to update
-                if (existingItem.id !== -1) {
+                if (existingItem.id > 0) {
                     await apiService.updateCartItem(existingItem.id, newQuantity);
-                    // No need to full reload if we trust the update, but to be safe/sync:
-                    // loadCart(); // Optional, maybe too heavy?
-                    // Just updating state is enough if successful.
                 } else {
-                    // Corner case: We added item locally but don't have ID yet (race condition).
-                    // Should revert or wait. For now, trigger reload.
+                    // ID is temporary? Shouldn't happen if loaded from backend.
                     loadCart();
                 }
             }
         } catch (error) {
             console.error("Failed to add to cart", error);
-            // Revert
-            setItems(previousItems);
+            setItems(previousItems); // Revert
             setCartCount(calculateCount(previousItems));
         }
-    }, [items, loadCart]);
-
-    const updateQuantity = useCallback(async (productId: number, quantity: number) => {
-        if (quantity < 0) return;
-        if (quantity === 0) {
-            await removeFromCart(productId);
-            return;
-        }
-
-        const previousItems = { ...items };
-        const existingItem = items[productId];
-
-        if (!existingItem) {
-            // Should have been an add
-            await addToCart(productId, quantity);
-            return;
-        }
-
-        // Optimistic
-        const newItems = { ...items, [productId]: { ...existingItem, quantity } };
-        setItems(newItems);
-        setCartCount(calculateCount(newItems));
-
-        try {
-            if (existingItem.id !== -1) {
-                await apiService.updateCartItem(existingItem.id, quantity);
-            } else {
-                // Fallback
-                loadCart();
-            }
-        } catch (error) {
-            console.error("Failed to update cart", error);
-            setItems(previousItems);
-            setCartCount(calculateCount(previousItems));
-        }
-    }, [items, addToCart, loadCart]); // Added addToCart to deps
+    }, [items, isGuest, loadCart]);
 
     const removeFromCart = useCallback(async (productId: number) => {
         const previousItems = { ...items };
@@ -203,8 +168,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setItems(newItems);
         setCartCount(calculateCount(newItems));
 
+        if (isGuest) {
+            saveGuestCart(newItems);
+            return;
+        }
+
         try {
-            if (existingItem.id !== -1) {
+            if (existingItem.id > 0) {
                 await apiService.removeCartItem(existingItem.id);
             }
         } catch (error) {
@@ -212,7 +182,77 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setItems(previousItems);
             setCartCount(calculateCount(previousItems));
         }
-    }, [items]);
+    }, [items, isGuest]);
+
+    const updateQuantity = useCallback(async (productId: number, quantity: number) => {
+        if (quantity < 0) return;
+        if (quantity === 0) {
+            await removeFromCart(productId);
+            return;
+        }
+
+        const previousItems = { ...items };
+        const existingItem = items[productId];
+
+        if (!existingItem) {
+            await addToCart(productId, quantity); // Should call addToCart
+            return;
+        }
+
+        // Optimistic
+        const newItems = { ...items, [productId]: { ...existingItem, quantity } };
+        setItems(newItems);
+        setCartCount(calculateCount(newItems));
+
+        if (isGuest) {
+            saveGuestCart(newItems);
+            return;
+        }
+
+        try {
+            if (existingItem.id > 0) {
+                await apiService.updateCartItem(existingItem.id, quantity);
+            } else {
+                loadCart();
+            }
+        } catch (error) {
+            console.error("Failed to update cart", error);
+            setItems(previousItems);
+            setCartCount(calculateCount(previousItems));
+        }
+    }, [items, isGuest, addToCart, removeFromCart, loadCart]);
+
+    const syncGuestCart = useCallback(async () => {
+        const retailerId = localStorage.getItem('current_retailer_id');
+        const guestCartStr = localStorage.getItem(`guest_cart_${retailerId || 'default'}`);
+
+        if (!guestCartStr) return;
+
+        try {
+            const guestItems: { [productId: number]: CartItem } = JSON.parse(guestCartStr);
+            const products = Object.values(guestItems);
+
+            if (products.length === 0) return;
+
+            // Sequential add to ensure order? Parallel is faster.
+            // Backend might have race conditions if same product added twice?
+            // Since these are distinct products, parallel is fine.
+            await Promise.all(products.map(async (item) => {
+                // We use addToCart for each item. 
+                // Note: If item already in server cart, this will ADD to it. 
+                // This is generally expected behavior for merging carts.
+                await apiService.addToCart(item.product, item.quantity);
+            }));
+
+            // Clear guest cart
+            localStorage.removeItem(`guest_cart_${retailerId || 'default'}`);
+
+            // Reload to get merged state
+            loadCart();
+        } catch (e) {
+            console.error("Failed to sync guest cart", e);
+        }
+    }, [loadCart]);
 
     return (
         <CartContext.Provider value={{
@@ -222,7 +262,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             getItemQuantity,
             addToCart,
             removeFromCart,
-            updateQuantity
+            updateQuantity,
+            syncGuestCart
         }}>
             {children}
         </CartContext.Provider>

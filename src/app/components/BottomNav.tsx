@@ -5,14 +5,15 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, ShoppingBag, Heart, User } from 'lucide-react';
 import { useWishlist } from '@/hooks/useWishlist';
-import { useCart } from '@/hooks/useCart';
+import { useCartContext } from '@/context/CartContext';
+import { apiService } from '@/services/api';
 import styles from './BottomNav.module.css';
 
 export default function BottomNav() {
     const pathname = usePathname();
     const [homeLink, setHomeLink] = useState('/retailers');
     const { wishlistIds, loadWishlist } = useWishlist();
-    const { cartCount, loadCartCount } = useCart();
+    const { cartCount } = useCartContext();
 
     // Pages where we don't want to show the bottom nav
     const hiddenRoutes = ['/login', '/signup', '/', '/checkout', '/checkout/success', '/retailer/product'];
@@ -26,11 +27,12 @@ export default function BottomNav() {
             // Only load data if we are on a page where the nav is visible
             // This prevents 401 errors on login/signup if token is expired
             if (!hiddenRoutes.includes(pathname)) {
-                loadWishlist();
-                loadCartCount();
+                if (apiService.isAuthenticated()) {
+                    loadWishlist();
+                }
             }
         }
-    }, [pathname, loadWishlist, loadCartCount]);
+    }, [pathname, loadWishlist]);
 
     if (hiddenRoutes.includes(pathname)) {
         return null;

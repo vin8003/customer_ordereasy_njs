@@ -132,6 +132,54 @@
     color: #fbbf24;
 }
 
+.topBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.locationBar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    backdrop-filter: blur(5px);
+    width: fit-content;
+}
+
+.authContainer {
+    display: flex;
+    align-items: center;
+}
+
+.userInfo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.userName {
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: #dc2626;
+}
+
+.logoutButton {
+    color: #dc2626;
+    padding: 0 0.5rem;
+    height: auto;
+}
+
+.logoutButton:hover {
+    background-color: #fee2e2;
+    color: #b91c1c;
+}
+
 .tags {
     display: flex;
     gap: 0.5rem;
@@ -146,26 +194,6 @@
     font-weight: 500;
 }
 
-/* New Logic for Location Bar and Service Notice */
-.locationBar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 12px;
-    padding: 8px 16px;
-    background-color: #f3f4f6;
-    border-radius: 20px;
-    display: inline-flex;
-    font-size: 0.9rem;
-    color: var(--text-primary);
-    font-weight: 500;
-}
-
-.locationIcon {
-    color: var(--primary-color);
-}
-
 .serviceNotice {
     margin-top: 16px;
     padding: 10px;
@@ -175,4 +203,8 @@
     color: #856404;
     font-size: 0.9rem;
     display: inline-block;
+}
+
+.locationIcon {
+    color: var(--primary-color);
 }

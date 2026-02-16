@@ -55,7 +55,18 @@ export default function CheckoutPage() {
     // We need to fetch cart to display summary or at least total
 
     useEffect(() => {
-        loadData();
+        const checkAuth = () => {
+            if (!apiService.isAuthenticated()) {
+                const currentPath = window.location.pathname;
+                router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
+                return false;
+            }
+            return true;
+        };
+
+        if (checkAuth()) {
+            loadData();
+        }
     }, []);
 
     useEffect(() => {

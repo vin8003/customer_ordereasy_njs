@@ -1,0 +1,96 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+    background: linear-gradient(135deg, #fce4ec 0%, #f3e5f5 100%);
+    /* Soft pink/purple gradient */
+    text-align: center;
+}
+
+.logoContainer {
+    margin-bottom: 2rem;
+    animation: float 3s ease-in-out infinite;
+}
+
+.logo {
+    width: 150px;
+    height: 150px;
+    object-fit: contain;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    color: #1a1a1a;
+    letter-spacing: -0.5px;
+}
+
+.subtitle {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 3rem;
+    max-width: 300px;
+    line-height: 1.5;
+}
+
+.buttonGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    max-width: 320px;
+}
+
+.primaryButton {
+    background: #ff4757;
+    /* Accented Red */
+    color: white;
+    padding: 1rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+}
+
+.primaryButton:active {
+    transform: scale(0.98);
+}
+
+.secondaryButton {
+    background: transparent;
+    color: #ff4757;
+    padding: 1rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: 2px solid #ff4757;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.secondaryButton:hover {
+    background: rgba(255, 71, 87, 0.05);
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}

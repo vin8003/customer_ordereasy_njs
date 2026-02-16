@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ShoppingBag, Search, MapPin, ChevronRight, Copy, Star, Heart } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { useWishlist } from '@/hooks/useWishlist';
-import { useCart } from '@/hooks/useCart';
+import { useCartContext } from '@/context/CartContext';
 import { WishlistIcon } from '@/app/components/WishlistIcon';
 import { ProductImage } from '@/app/components/ProductImage';
 import { ProductCard } from '@/app/components/ProductCard';
@@ -56,7 +56,7 @@ function RetailerHome() {
 
     // Use shared wishlist and cart hooks
     const { wishlistIds, loadWishlist, toggleWishlist, isWishlisted } = useWishlist();
-    const { cartCount, loadCartCount } = useCart();
+    const { cartCount } = useCartContext();
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -95,10 +95,12 @@ function RetailerHome() {
     useEffect(() => {
         if (retailerId) {
             loadData();
-            loadWishlist(); // Load wishlist
-            loadCartCount(); // Load cart
+            if (apiService.isAuthenticated()) {
+                loadWishlist(); // Load wishlist only if authenticated
+            }
+            // cart handled by context
         }
-    }, [retailerId, loadWishlist, loadCartCount]);
+    }, [retailerId, loadWishlist]);
 
     useEffect(() => {
         if (offers.length <= 1) return;
@@ -152,10 +154,10 @@ function RetailerHome() {
                     console.error("Recommended error:", e);
                     return [];
                 }) : Promise.resolve([]),
-                apiService.fetchUserProfile().catch((e) => {
+                apiService.isAuthenticated() ? apiService.fetchUserProfile().catch((e) => {
                     console.error("FETCH USER PROFILE FAILED:", e);
                     return { referral_code: '' };
-                })
+                }) : Promise.resolve({ referral_code: '' })
             ]);
 
             setRetailer(retailerData);
