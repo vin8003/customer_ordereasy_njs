@@ -29,21 +29,26 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     onToggleWishlist,
     onClick
 }) => {
-    const discount = product.mrp > product.price
-        ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
+    const price = Number(product.price);
+    const mrp = Number(product.mrp);
+    const discount = mrp > price
+        ? Math.round(((mrp - price) / mrp) * 100)
         : 0;
 
     return (
         <div className={styles.card} onClick={onClick}>
             <div className={styles.imageWrapper}>
                 <div className={styles.badges}>
-                    {product.active_offer_text ? (
-                        <div className={styles.offerBadge}>
-                            {product.active_offer_text}
-                        </div>
-                    ) : discount > 0 ? (
-                        <div className={styles.discountBadge}>{discount}% OFF</div>
-                    ) : <div></div>} {/* Spacer to keep wishlist icon on right */}
+                    <div className={styles.badgeGroup}>
+                        {product.active_offer_text && (
+                            <div className={styles.offerBadge}>
+                                {product.active_offer_text}
+                            </div>
+                        )}
+                        {discount > 0 && (
+                            <div className={styles.discountBadge}>{discount}% OFF</div>
+                        )}
+                    </div>
 
                     <button className={styles.wishlistBtn} onClick={onToggleWishlist}>
                         <WishlistIcon isWishlisted={isWishlisted} />
