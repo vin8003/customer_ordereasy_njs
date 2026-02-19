@@ -11,6 +11,17 @@ const api = axios.create({
     },
 });
 
+export interface Notification {
+    id: number;
+    title: string;
+    message: string;
+    notification_type: string;
+    is_read: boolean;
+    created_at: string;
+    order_id?: number;
+    order_number?: string;
+}
+
 export const setAuthToken = (token: string, refreshToken?: string) => {
     if (token) {
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -548,6 +559,22 @@ export const apiService = {
         const response = await api.post(`orders/${orderId}/feedback/`, data);
         delete CACHE[`order_${orderId}`];
         delete CACHE['orders_history'];
+        return response.data;
+    },
+
+    // Notifications
+    getNotifications: async (params?: any) => {
+        const key = `notifications_${JSON.stringify(params || {})}`;
+        return fetchWithDedupe(key, async () => {
+            const response = await api.get('customer/notifications/', { params });
+            return response.data;
+        });
+    },
+
+    markNotificationRead: async (id: number) => {
+        const response = await api.patch(`customer/notifications/${id}/read/`);
+        // Invalidate notifications cache
+        Object.keys(CACHE).forEach(k => { if (k.startsWith('notifications_')) delete CACHE[k]; });
         return response.data;
     }
 };

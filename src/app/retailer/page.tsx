@@ -3,7 +3,10 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ShoppingBag, Search, MapPin, ChevronRight, Copy, Star, Heart } from 'lucide-react';
+import NotificationDropdown from '@/app/components/NotificationDropdown';
+import HelpModal from '@/app/components/HelpModal';
+import { useNotification } from '@/context/NotificationContext';
+import { ShoppingBag, Search, MapPin, ChevronRight, Copy, Star, Heart, Bell, HelpCircle } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useCartContext } from '@/context/CartContext';
@@ -54,6 +57,10 @@ function RetailerHome() {
     const [currentOfferIndex, setCurrentOfferIndex] = useState(0);
     const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [showHelp, setShowHelp] = useState(false);
+    const { unreadCount, refreshNotifications } = useNotification();
+
     // Use shared wishlist and cart hooks
     const { wishlistIds, loadWishlist, toggleWishlist, isWishlisted } = useWishlist();
     const { cartCount } = useCartContext();
@@ -97,6 +104,7 @@ function RetailerHome() {
             loadData();
             if (apiService.isAuthenticated()) {
                 loadWishlist(); // Load wishlist only if authenticated
+                refreshNotifications();
             }
             // cart handled by context
         }
@@ -216,16 +224,25 @@ function RetailerHome() {
                         </div>
                     </div>
                     <div className="flex gap-2">
-                        <button className={styles.wishlistBtn} onClick={() => router.push('/wishlist')}>
+                        <div className="relative">
+                            <button
+                                className={styles.actionBtn}
+                                onClick={() => setShowNotifications(!showNotifications)}
+                            >
+                                <div className={styles.iconWrapper}>
+                                    <Bell size={20} />
+                                    {unreadCount > 0 && <span className={styles.badge}>{unreadCount}</span>}
+                                </div>
+                            </button>
+                            <NotificationDropdown
+                                isOpen={showNotifications}
+                                onClose={() => setShowNotifications(false)}
+                            />
+                        </div>
+
+                        <button className={styles.actionBtn} onClick={() => setShowHelp(true)}>
                             <div className={styles.iconWrapper}>
-                                <Heart size={20} />
-                                {wishlistIds.size > 0 && <span className={styles.badge}>{wishlistIds.size}</span>}
-                            </div>
-                        </button>
-                        <button className={styles.wishlistBtn} onClick={() => router.push('/cart')}>
-                            <div className={styles.iconWrapper}>
-                                <ShoppingBag size={20} />
-                                {cartCount > 0 && <span className={styles.badge}>{cartCount}</span>}
+                                <HelpCircle size={20} />
                             </div>
                         </button>
                     </div>
@@ -478,7 +495,9 @@ function RetailerHome() {
                     )}
                 </section>
 
+
             </main>
+            <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
         </div>
     );
 }

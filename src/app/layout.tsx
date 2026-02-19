@@ -20,6 +20,7 @@ export const metadata: Metadata = {
 
 import NotificationWrapper from "@/app/components/NotificationWrapper";
 import { CartProvider } from "@/context/CartContext";
+import { NotificationProvider } from "@/context/NotificationContext";
 
 export default function RootLayout({
   children,
@@ -30,9 +31,11 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased pb-48 overflow-x-hidden`}>
         <CartProvider>
-          <NotificationWrapper>
-            {children}
-          </NotificationWrapper>
+          <NotificationProvider>
+            <NotificationWrapper>
+              {children}
+            </NotificationWrapper>
+          </NotificationProvider>
           <BottomNav />
         </CartProvider>
       </body>

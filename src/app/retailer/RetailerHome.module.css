@@ -56,16 +56,39 @@
 }
 
 .wishlistBtn {
-    padding: 12px;
-    border-radius: 14px;
-    background: #f1f5f9;
-    color: #0f172a;
-    transition: all 0.2s ease;
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 50%;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+    position: relative;
 }
 
 .wishlistBtn:hover {
-    background: #e2e8f0;
-    transform: translateY(-1px);
+    background-color: #f3f4f6;
+}
+
+.actionBtn {
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 50%;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+    position: relative;
+}
+
+.actionBtn:hover {
+    background-color: #f3f4f6;
 }
 
 .iconWrapper {
@@ -77,21 +100,20 @@
 
 .badge {
     position: absolute;
-    top: -8px;
-    right: -8px;
+    top: -5px;
+    right: -5px;
     background-color: #ef4444;
-    /* Red-500 */
     color: white;
     font-size: 10px;
-    font-weight: 700;
-    min-width: 18px;
-    height: 18px;
-    border-radius: 9px;
+    font-weight: bold;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0 4px;
-    border: 2px solid #ffffff;
+    border: 2px solid white;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
