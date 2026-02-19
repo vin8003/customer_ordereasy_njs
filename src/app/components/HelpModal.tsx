@@ -24,18 +24,21 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
         if (!feedback.trim()) return;
 
         setIsSubmitting(true);
+        setSubmitStatus('idle'); // Reset status before new attempt
         try {
-            // Since there isn't a direct "generic feedback" endpoint in the visible API,
-            // we'll mock it or use a placeholder. 
-            // Ideally: await apiService.submitFeedback({ message: feedback });
-            // For now, simulate success after delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            const retailerId = localStorage.getItem('current_retailer_id') || undefined;
+
+            await apiService.sendFeedback({
+                retailer_id: retailerId,
+                message: feedback
+            });
+
             setSubmitStatus('success');
             setFeedback('');
             setTimeout(() => {
                 setSubmitStatus('idle');
                 onClose();
-            }, 1500);
+            }, 2000);
         } catch (error) {
             console.error("Feedback error", error);
             setSubmitStatus('error');

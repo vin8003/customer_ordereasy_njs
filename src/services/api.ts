@@ -576,6 +576,11 @@ export const apiService = {
         // Invalidate notifications cache
         Object.keys(CACHE).forEach(k => { if (k.startsWith('notifications_')) delete CACHE[k]; });
         return response.data;
+    },
+
+    sendFeedback: async (data: { retailer_id?: string | undefined; message: string }) => {
+        const response = await api.post('customer/feedback/', data);
+        return response.data;
     }
 };
 
