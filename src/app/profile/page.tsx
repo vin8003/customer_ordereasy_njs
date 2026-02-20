@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { User, Mail, Phone, Settings, LogOut, Package, MapPin, ChevronRight, Gift, HelpCircle } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
+import HelpModal from '@/app/components/HelpModal';
 import styles from './Profile.module.css';
 
 export default function ProfilePage() {
@@ -16,6 +17,7 @@ export default function ProfilePage() {
 
     const [initials, setInitials] = useState('U');
     const [isGuest, setIsGuest] = useState(false);
+    const [showHelp, setShowHelp] = useState(false);
 
     useEffect(() => {
         if (!apiService.isAuthenticated()) {
@@ -72,15 +74,16 @@ export default function ProfilePage() {
                         </div>
                     </div>
                     <div className={styles.section}>
-                        <Link href="/support" className={styles.menuItem}>
+                        <button onClick={() => setShowHelp(true)} className={styles.menuItem}>
                             <div className="flex items-center gap-3">
                                 <HelpCircle size={20} className="text-blue-500" />
                                 <span>Help & Support</span>
                             </div>
                             <ChevronRight size={16} className="text-gray-400" />
-                        </Link>
+                        </button>
                     </div>
                 </main>
+                <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
             </div>
         );
     }
@@ -169,13 +172,13 @@ export default function ProfilePage() {
                         <ChevronRight size={16} className="text-gray-400" />
                     </Link>
 
-                    <Link href="/support" className={styles.menuItem}>
+                    <button onClick={() => setShowHelp(true)} className={styles.menuItem}>
                         <div className="flex items-center gap-3">
                             <HelpCircle size={20} className="text-blue-500" />
                             <span>Help & Support</span>
                         </div>
                         <ChevronRight size={16} className="text-gray-400" />
-                    </Link>
+                    </button>
                 </div>
 
                 <div className={styles.section}>
@@ -185,6 +188,7 @@ export default function ProfilePage() {
                     </button>
                 </div>
             </main>
+            <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
         </div>
     );
 }
