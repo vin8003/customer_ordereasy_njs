@@ -14,8 +14,6 @@ interface HelpModalProps {
 export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
     const [activeTab, setActiveTab] = useState<'faq' | 'feedback'>('faq');
     const [feedback, setFeedback] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
     if (!isOpen) return null;
 
@@ -23,28 +21,19 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
         e.preventDefault();
         if (!feedback.trim()) return;
 
-        setIsSubmitting(true);
-        setSubmitStatus('idle'); // Reset status before new attempt
-        try {
-            const retailerId = localStorage.getItem('current_retailer_id') || undefined;
+        const urlParams = new URLSearchParams(window.location.search);
+        const retailerId = urlParams.get('id') || 'Unknown';
 
-            await apiService.sendFeedback({
-                retailer_id: retailerId,
-                message: feedback
-            });
+        const email = 'ordereasy.win@gmail.com';
+        const subject = 'Order Easy Feedback';
+        const body = `Retailer ID: ${retailerId}\n\nFeedback:\n${feedback}`;
 
-            setSubmitStatus('success');
-            setFeedback('');
-            setTimeout(() => {
-                setSubmitStatus('idle');
-                onClose();
-            }, 2000);
-        } catch (error) {
-            console.error("Feedback error", error);
-            setSubmitStatus('error');
-        } finally {
-            setIsSubmitting(false);
-        }
+        const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+        window.location.href = mailtoLink;
+
+        setFeedback('');
+        onClose();
     };
 
     return (
@@ -106,32 +95,15 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                                 value={feedback}
                                 onChange={(e) => setFeedback(e.target.value)}
                                 rows={5}
-                                disabled={isSubmitting || submitStatus === 'success'}
                             />
-
-                            {submitStatus === 'success' && (
-                                <div className={styles.successMessage}>
-                                    Thank you! Your feedback has been sent.
-                                </div>
-                            )}
-
-                            {submitStatus === 'error' && (
-                                <div className={styles.errorMessage}>
-                                    Something went wrong. Please try again.
-                                </div>
-                            )}
 
                             <div className={styles.actions}>
                                 <Button
                                     type="submit"
-                                    disabled={!feedback.trim() || isSubmitting || submitStatus === 'success'}
+                                    disabled={!feedback.trim()}
                                     className="w-full flex items-center justify-center gap-2"
                                 >
-                                    {isSubmitting ? 'Sending...' : (
-                                        <>
-                                            <Send size={16} /> Send Feedback
-                                        </>
-                                    )}
+                                    <Send size={16} /> Send Feedback
                                 </Button>
                             </div>
                         </form>
