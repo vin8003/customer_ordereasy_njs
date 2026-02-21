@@ -228,9 +228,9 @@ function OrderDetails() {
                 <section className={styles.section}>
                     <div className={styles.retailerCard}>
                         <h2 className={styles.retailerName}>{order.retailer_name}</h2>
-                        <div className={styles.retailerDetail}>
+                        <a href={`tel:${order.retailer_phone}`} className={styles.retailerDetail + " text-blue-600 hover:underline"}>
                             <Phone size={14} /> {order.retailer_phone}
-                        </div>
+                        </a>
                         <div className={styles.retailerDetail}>
                             <MapPin size={14} /> {order.retailer_address}
                         </div>
