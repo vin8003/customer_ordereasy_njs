@@ -36,6 +36,7 @@ interface OrderDetail {
     items: OrderItem[];
     created_at: string;
     has_customer_feedback?: boolean;
+    feedback?: any;
 }
 
 function OrderDetails() {
@@ -340,9 +341,32 @@ function OrderDetails() {
                                 Rate Store
                             </Button>
                         ) : (
-                            <div className="flex items-center justify-center p-3 bg-green-50 text-green-700 rounded-lg border border-green-200">
-                                <CheckCircle size={18} className="mr-2" />
-                                <span className="font-semibold">You rated this order</span>
+                            <div className="flex flex-col p-4 bg-green-50 text-green-800 rounded-lg border border-green-200">
+                                <div className="flex items-center gap-2 mb-2 font-semibold">
+                                    <CheckCircle size={18} />
+                                    <span>You rated this order</span>
+                                </div>
+                                {order.feedback ? (
+                                    <div className="mt-1">
+                                        <div className="flex gap-1 mb-2">
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                <Star
+                                                    key={star}
+                                                    size={16}
+                                                    className={order.feedback.overall_rating >= star ? 'text-yellow-400' : 'text-gray-300'}
+                                                    fill={order.feedback.overall_rating >= star ? '#facc15' : 'none'}
+                                                />
+                                            ))}
+                                        </div>
+                                        {order.feedback.comment && (
+                                            <p className="text-sm italic text-gray-700 bg-white/50 p-2 rounded">
+                                                "{order.feedback.comment}"
+                                            </p>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm">Rating submitted successfully.</p>
+                                )}
                             </div>
                         )}
                     </div>
@@ -369,7 +393,8 @@ function OrderDetails() {
                                         >
                                             <Star
                                                 size={32}
-                                                className={`${rating >= star ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+                                                className={rating >= star ? 'text-yellow-400' : 'text-gray-300'}
+                                                fill={rating >= star ? '#facc15' : 'none'}
                                             />
                                         </button>
                                     ))}

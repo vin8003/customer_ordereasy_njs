@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Package, ChevronRight, Clock } from 'lucide-react';
+import { ArrowLeft, Package, ChevronRight, Clock, Star } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import styles from './Orders.module.css';
@@ -14,6 +14,10 @@ interface Order {
     status: string;
     created_at: string;
     retailer_name?: string;
+    feedback?: {
+        overall_rating: number;
+        comment: string;
+    };
 }
 
 export default function OrdersPage() {
@@ -86,9 +90,17 @@ export default function OrdersPage() {
                                     {new Date(order.created_at).toLocaleDateString()}
                                 </div>
                             </div>
-                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${getStatusColor(order.status)} uppercase`}>
-                                {order.status}
-                            </span>
+                            <div className="flex flex-col items-end gap-1">
+                                <span className={`px-2 py-1 rounded-full text-xs font-bold ${getStatusColor(order.status)} uppercase`}>
+                                    {order.status}
+                                </span>
+                                {order.feedback && (
+                                    <div className="flex items-center gap-1 bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded-full text-xs font-bold border border-yellow-200">
+                                        <span>{order.feedback.overall_rating}</span>
+                                        <Star size={12} className="fill-yellow-500 text-yellow-500" />
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         <div className="mt-3 flex justify-between items-end">
