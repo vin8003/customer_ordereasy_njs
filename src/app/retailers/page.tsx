@@ -106,6 +106,13 @@ export default function RetailersPage() {
     return (
         <div className={styles.container}>
             <header className={styles.header}>
+                <div className={styles.logoContainer}>
+                    <img
+                        src="/assets/images/logo.png"
+                        alt="Order Easy Logo"
+                        className={styles.logo}
+                    />
+                </div>
                 <div className={styles.topBar}>
                     <div
                         className={styles.locationBar}
@@ -140,7 +147,8 @@ export default function RetailersPage() {
                 <p>Choose a retailer to start shopping</p>
 
                 <div className={styles.serviceNotice}>
-                    <p>Currently, services are available only in {selectedCity?.name}.</p>
+                    <MapPin size={16} className={styles.noticeIcon} />
+                    <p>Currently serving only in <strong>{selectedCity?.name}</strong>.</p>
                 </div>
             </header>
 
@@ -185,10 +193,10 @@ export default function RetailersPage() {
 
                                     <div className={styles.tags}>
                                         {retailer.offers_delivery && (
-                                            <span className={styles.tag}>Delivery</span>
+                                            <span className={styles.tagDelivery}>● Delivery</span>
                                         )}
                                         {retailer.offers_pickup && (
-                                            <span className={styles.tag}>Pickup</span>
+                                            <span className={styles.tagPickup}>● Pickup</span>
                                         )}
                                     </div>
                                 </div>
@@ -197,6 +205,22 @@ export default function RetailersPage() {
                     ))}
                 </div>
             )}
+
+            {/* Retail Partner Banner */}
+            <div className={styles.partnerBanner}>
+                <div className={styles.partnerBannerContent}>
+                    <h2>Grow Your Store With Order Easy</h2>
+                    <p>Apni Dukaan Ko Online Banaiye</p>
+                </div>
+                <a
+                    href="https://forms.gle/5e8PdMXTqVfK6os17"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.partnerBannerLink}
+                >
+                    Join us as Retail Partner
+                </a>
+            </div>
         </div>
     );
 }

@@ -38,7 +38,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (typeof window === 'undefined') return;
 
         const retailerId = localStorage.getItem('current_retailer_id');
-        const token = localStorage.getItem('access_token');
+        const token = localStorage.getItem('customer_access_token');
         const authenticated = !!token;
         setIsGuest(!authenticated);
 

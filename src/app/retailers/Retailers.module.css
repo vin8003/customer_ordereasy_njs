@@ -1,7 +1,20 @@
 .container {
     min-height: 100vh;
     padding: 1rem;
-    background-color: var(--background-color);
+    padding-bottom: 100px;
+    background: linear-gradient(to bottom, #f8fafc, #eff6ff);
+}
+
+.logoContainer {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.logo {
+    height: 80px;
+    width: auto;
+    object-fit: contain;
 }
 
 .header {
@@ -10,14 +23,16 @@
 }
 
 .header h1 {
-    font-size: 1.75rem;
+    font-size: 1.85rem;
     font-weight: 800;
-    color: var(--text-primary);
+    color: #0f172a;
+    letter-spacing: -0.025em;
     margin-bottom: 0.5rem;
 }
 
 .header p {
-    color: var(--text-secondary);
+    color: #64748b;
+    font-size: 1rem;
 }
 
 .loadingContainer,
@@ -63,36 +78,36 @@
 }
 
 .retailerCard {
-    background: #fff;
-    border-radius: var(--radius-lg);
+    background: #ffffff;
+    border-radius: 16px;
     padding: 1.25rem;
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
     cursor: pointer;
-    transition: all var(--transition-fast);
-    border: 1px solid var(--border-color);
+    transition: all 0.2s ease-in-out;
+    border: 1px solid rgba(0, 0, 0, 0.03);
 }
 
 .retailerCard:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--primary-color);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
 }
 
 .cardContent {
     display: flex;
-    gap: 1rem;
+    gap: 1.25rem;
     align-items: flex-start;
 }
 
 .retailerIcon {
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
-    border-radius: 12px;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    box-shadow: inset 0 2px 4px 0 rgba(255, 255, 255, 0.5);
 }
 
 .retailerInfo {
@@ -100,15 +115,15 @@
 }
 
 .retailerInfo h2 {
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     font-weight: 700;
-    color: var(--text-primary);
+    color: #1e293b;
     margin-bottom: 0.25rem;
 }
 
 .type {
     font-size: 0.85rem;
-    color: var(--text-secondary);
+    color: #64748b;
     text-transform: capitalize;
     margin-bottom: 0.75rem;
 }
@@ -116,9 +131,10 @@
 .metaRow {
     display: flex;
     gap: 1rem;
-    margin-bottom: 0.75rem;
-    font-size: 0.85rem;
-    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 500;
 }
 
 .metaItem {
@@ -144,12 +160,19 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background-color: rgba(255, 255, 255, 0.2);
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
+    background-color: #ffffff;
+    padding: 0.6rem 1.2rem;
+    border-radius: 9999px;
     font-size: 0.9rem;
-    backdrop-filter: blur(5px);
+    font-weight: 600;
+    color: #334155;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
     width: fit-content;
+    transition: all 0.2s ease;
+}
+
+.locationBar:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .authContainer {
@@ -185,26 +208,129 @@
     gap: 0.5rem;
 }
 
-.tag {
+.tagDelivery {
     font-size: 0.75rem;
     padding: 0.25rem 0.75rem;
-    border-radius: 100px;
-    background: var(--surface-color);
-    color: var(--text-secondary);
-    font-weight: 500;
+    border-radius: 9999px;
+    background: #dcfce7;
+    color: #166534;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.tagPickup {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    background: #eff6ff;
+    color: #1e40af;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .serviceNotice {
-    margin-top: 16px;
-    padding: 10px;
-    background-color: #fff3cd;
-    border: 1px solid #ffeeba;
-    border-radius: 8px;
-    color: #856404;
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background-color: #fef3c7;
+    border: 1px solid #fde68a;
+    border-radius: 12px;
+    color: #92400e;
     font-size: 0.9rem;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.serviceNotice p {
+    color: #92400e;
+    margin: 0;
+}
+
+.noticeIcon {
+    color: #d97706;
 }
 
 .locationIcon {
-    color: var(--primary-color);
+    color: #3b82f6;
+}
+
+.partnerBanner {
+    background: linear-gradient(135deg, #6366f1, #3b82f6);
+    border-radius: 16px;
+    padding: 2rem;
+    margin: 1rem auto 2rem auto;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.5rem;
+    box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3), 0 4px 6px -2px rgba(59, 130, 246, 0.2);
+    color: #ffffff;
+    position: relative;
+    overflow: hidden;
+}
+
+.partnerBanner::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 100%);
+    pointer-events: none;
+}
+
+@media (min-width: 640px) {
+    .partnerBanner {
+        flex-direction: row;
+        justify-content: space-between;
+        text-align: left;
+        padding: 2rem;
+    }
+
+    .partnerBannerContent {
+        flex: 1;
+    }
+}
+
+.partnerBannerContent h2 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.partnerBannerContent p {
+    font-size: 1rem;
+    color: #e0e7ff;
+    font-weight: 500;
+}
+
+.partnerBannerLink {
+    display: inline-block;
+    background-color: #ffffff;
+    color: #4f46e5;
+    padding: 0.75rem 1.5rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: all 0.2s ease-in-out;
+    white-space: nowrap;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    z-index: 1;
+}
+
+.partnerBannerLink:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
+    background-color: #f8fafc;
 }

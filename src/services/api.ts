@@ -26,14 +26,14 @@ export const setAuthToken = (token: string, refreshToken?: string) => {
     if (token) {
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         if (typeof window !== 'undefined') {
-            localStorage.setItem('access_token', token);
-            if (refreshToken) localStorage.setItem('refresh_token', refreshToken);
+            localStorage.setItem('customer_access_token', token);
+            if (refreshToken) localStorage.setItem('customer_refresh_token', refreshToken);
         }
     } else {
         delete api.defaults.headers.common['Authorization'];
         if (typeof window !== 'undefined') {
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('customer_access_token');
+            localStorage.removeItem('customer_refresh_token');
         }
     }
 };
@@ -41,7 +41,7 @@ export const setAuthToken = (token: string, refreshToken?: string) => {
 // Add interceptor to request to ensure token is picked up from localStorage on reload
 api.interceptors.request.use((config) => {
     if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('access_token');
+        const token = localStorage.getItem('customer_access_token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -72,7 +72,7 @@ api.interceptors.response.use((response) => {
         originalRequest._retry = true;
 
         if (typeof window !== 'undefined') {
-            const refreshToken = localStorage.getItem('refresh_token');
+            const refreshToken = localStorage.getItem('customer_refresh_token');
             if (refreshToken) {
                 try {
                     const response = await axios.post(`${API_BASE_URL}auth/token/refresh/`, {
@@ -191,7 +191,7 @@ export const apiService = {
 
     isAuthenticated: () => {
         if (typeof window !== 'undefined') {
-            return !!localStorage.getItem('access_token');
+            return !!localStorage.getItem('customer_access_token');
         }
         return false;
     },
