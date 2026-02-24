@@ -286,6 +286,47 @@ export const apiService = {
         });
     },
 
+    // New Discovery Lanes
+    getDealsOfTheDay: async (retailerId: string | number) => {
+        const key = `deals_${retailerId}`;
+        return fetchWithDedupe(key, async () => {
+            const response = await api.get(`products/retailer/${retailerId}/deals-of-the-day/`);
+            return response.data;
+        });
+    },
+
+    getBudgetBuys: async (retailerId: string | number) => {
+        const key = `budget_${retailerId}`;
+        return fetchWithDedupe(key, async () => {
+            const response = await api.get(`products/retailer/${retailerId}/budget-buys/`);
+            return response.data;
+        });
+    },
+
+    getTrendingProducts: async (retailerId: string | number) => {
+        const key = `trending_${retailerId}`;
+        return fetchWithDedupe(key, async () => {
+            const response = await api.get(`products/retailer/${retailerId}/trending-now/`);
+            return response.data;
+        });
+    },
+
+    getNewArrivals: async (retailerId: string | number) => {
+        const key = `new_arrivals_${retailerId}`;
+        return fetchWithDedupe(key, async () => {
+            const response = await api.get(`products/retailer/${retailerId}/new-arrivals/`);
+            return response.data;
+        });
+    },
+
+    getSeasonalPicks: async (retailerId: string | number) => {
+        const key = `seasonal_${retailerId}`;
+        return fetchWithDedupe(key, async () => {
+            const response = await api.get(`products/retailer/${retailerId}/seasonal-picks/`);
+            return response.data;
+        });
+    },
+
     getRetailerProducts: async (retailerId: string | number, params?: any) => {
         const key = `products_${retailerId}_${JSON.stringify(params || {})}`;
         return fetchWithDedupe(key, async () => {

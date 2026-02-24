@@ -5,16 +5,20 @@
     padding-bottom: 160px;
 }
 
-/* Header */
 .header {
     background: #ffffff;
     padding: 16px 20px 20px;
     position: sticky;
     top: 0;
     z-index: 50;
-    box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05);
+    box-shadow: none;
+    transition: box-shadow 0.3s ease;
     border-bottom-left-radius: 24px;
     border-bottom-right-radius: 24px;
+}
+
+.header.scrolled {
+    box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05);
 }
 
 .topBar {
@@ -52,7 +56,8 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 220px;
+    max-width: calc(100vw - 140px);
+    /* Responsive width */
 }
 
 .wishlistBtn {
@@ -403,6 +408,13 @@
     padding-bottom: 4px;
 }
 
+/* Ensure last item has enough space for scroll affordance */
+.categoriesScroll::after {
+    content: '';
+    flex: 0 0 8px;
+    /* Extra padding at the end */
+}
+
 .categoriesScroll::-webkit-scrollbar {
     display: none;
 }
@@ -468,9 +480,16 @@
     padding-bottom: 24px;
 }
 
+.productsScroll::after {
+    content: '';
+    flex: 0 0 8px;
+    /* Extra padding at the end for scroll affordance */
+}
+
 .productsScroll>* {
     flex-shrink: 0;
-    width: 160px;
+    width: 156px;
+    /* Slightly reduced from original to ensure partial visibility of next card */
 }
 
 .productsScroll::-webkit-scrollbar {
@@ -571,4 +590,91 @@
 .viewAllBtn:hover {
     background: #f8fafc;
     border-color: #cbd5e1;
+}
+
+/* Skeleton Loaders */
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+.skeleton {
+    background: #e2e8f0;
+    background-image: linear-gradient(90deg,
+            #e2e8f0 0px,
+            #f1f5f9 40px,
+            #e2e8f0 80px);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite linear;
+    border-radius: 8px;
+}
+
+.skeletonText {
+    height: 16px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+}
+
+.skeletonTitle {
+    height: 24px;
+    width: 60%;
+    margin-bottom: 16px;
+    border-radius: 6px;
+}
+
+.skeletonBanner {
+    width: 100%;
+    aspect-ratio: 16/7;
+    border-radius: 20px;
+}
+
+@media (min-width: 1024px) {
+    .skeletonBanner {
+        aspect-ratio: 21/7;
+        max-height: 350px;
+    }
+}
+
+.skeletonCatIcon {
+    width: 72px;
+    height: 72px;
+    border-radius: 24px;
+    margin-bottom: 10px;
+}
+
+.skeletonCatText {
+    width: 60px;
+    height: 12px;
+    margin: 0 auto 4px;
+}
+
+.skeletonCard {
+    width: 145px;
+    height: 220px;
+    border-radius: 16px;
+}
+
+/* Infinite Grid */
+.productsGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 0 20px;
+}
+
+@media (min-width: 768px) {
+    .productsGrid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .productsGrid {
+        grid-template-columns: repeat(4, 1fr);
+    }
 }

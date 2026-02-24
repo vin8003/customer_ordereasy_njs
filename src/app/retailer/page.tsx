@@ -13,6 +13,8 @@ import { useCartContext } from '@/context/CartContext';
 import { WishlistIcon } from '@/app/components/WishlistIcon';
 import { ProductImage } from '@/app/components/ProductImage';
 import { ProductCard } from '@/app/components/ProductCard';
+import LazyProductLane from '@/app/components/LazyProductLane';
+import InfiniteProductGrid from '@/app/components/InfiniteProductGrid';
 import styles from './RetailerHome.module.css';
 
 interface Category {
@@ -23,7 +25,7 @@ interface Category {
     parent?: number | null;
 }
 
-interface Product {
+export interface Product {
     id: number;
     name: string;
     description?: string;
@@ -56,6 +58,8 @@ function RetailerHome() {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [currentOfferIndex, setCurrentOfferIndex] = useState(0);
     const [touchStartX, setTouchStartX] = useState<number | null>(null);
+    const [isScrolled, setIsScrolled] = useState(false);
+    const [isBannerHovered, setIsBannerHovered] = useState(false);
 
     const [showNotifications, setShowNotifications] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
@@ -64,6 +68,14 @@ function RetailerHome() {
     // Use shared wishlist and cart hooks
     const { wishlistIds, loadWishlist, toggleWishlist, isWishlisted } = useWishlist();
     const { cartCount } = useCartContext();
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 20);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -111,14 +123,14 @@ function RetailerHome() {
     }, [retailerId, loadWishlist]);
 
     useEffect(() => {
-        if (offers.length <= 1) return;
+        if (offers.length <= 1 || isBannerHovered || touchStartX !== null) return;
 
         const interval = setInterval(() => {
             setCurrentOfferIndex((prev) => (prev + 1) % offers.length);
         }, 5000);
 
         return () => clearInterval(interval);
-    }, [offers.length, currentOfferIndex]);
+    }, [offers.length, currentOfferIndex, isBannerHovered, touchStartX]);
 
     const handleTouchStart = (e: React.TouchEvent) => {
         setTouchStartX(e.touches[0].clientX);
@@ -205,13 +217,57 @@ function RetailerHome() {
         }
     };
 
-    if (!retailer && isLoading) return <div className="flex justify-center p-8">Loading...</div>;
+    if (!retailer && isLoading) {
+        return (
+            <div className={styles.container}>
+                <header className={styles.header}>
+                    <div className="flex justify-between items-center mb-4">
+                        <div className="flex flex-col gap-2">
+                            <div className={`${styles.skeleton} h-4 w-24 rounded`}></div>
+                            <div className={`${styles.skeleton} h-6 w-40 rounded`}></div>
+                        </div>
+                        <div className="flex gap-2">
+                            <div className={`${styles.skeleton} h-10 w-10 rounded-full`}></div>
+                            <div className={`${styles.skeleton} h-10 w-10 rounded-full`}></div>
+                        </div>
+                    </div>
+                    <div className={`${styles.skeleton} h-12 w-full rounded-2xl`}></div>
+                </header>
+                <main className={styles.main}>
+                    <section className={styles.section}>
+                        <div className="flex justify-between px-5 mb-4">
+                            <div className={`${styles.skeleton} h-6 w-32 rounded`}></div>
+                            <div className={`${styles.skeleton} h-6 w-16 rounded`}></div>
+                        </div>
+                        <div className={styles.categoriesScroll}>
+                            {[...Array(6)].map((_, i) => (
+                                <div key={i} className={styles.categoryItem}>
+                                    <div className={`${styles.skeleton} ${styles.skeletonCatIcon}`}></div>
+                                    <div className={`${styles.skeleton} ${styles.skeletonCatText}`}></div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                    <section className={styles.section}>
+                        <div className="flex justify-between px-5 mb-4">
+                            <div className={`${styles.skeleton} h-6 w-40 rounded`}></div>
+                        </div>
+                        <div className={styles.productsScroll}>
+                            {[...Array(4)].map((_, i) => (
+                                <div key={i} className={`${styles.skeleton} ${styles.skeletonCard}`}></div>
+                            ))}
+                        </div>
+                    </section>
+                </main>
+            </div>
+        );
+    }
     if (!retailer) return <div className="p-8 text-center">Retailer not found</div>;
 
     return (
         <div className={styles.container}>
             {/* Header */}
-            <header className={styles.header}>
+            <header className={`${styles.header} ${isScrolled ? styles.scrolled : ''}`}>
                 <div className={styles.topBar}>
                     <div className="flex-1">
                         <div className={styles.locationInfo}>
@@ -428,6 +484,8 @@ function RetailerHome() {
                             className={styles.heroSlider}
                             onTouchStart={handleTouchStart}
                             onTouchEnd={handleTouchEnd}
+                            onMouseEnter={() => setIsBannerHovered(true)}
+                            onMouseLeave={() => setIsBannerHovered(false)}
                         >
                             <div className={styles.bannerStack}>
                                 {offers.map((offer, idx) => (
@@ -495,6 +553,41 @@ function RetailerHome() {
                     )}
                 </section>
 
+                {/* Lazy Loaded Discovery Lanes */}
+                {retailerId && (
+                    <div className="mt-8 space-y-6">
+                        <LazyProductLane
+                            title="Deals of the Day"
+                            fetchFn={() => apiService.getDealsOfTheDay(retailerId)}
+                            retailerId={retailerId}
+                        />
+                        <LazyProductLane
+                            title="Under ₹99 Store"
+                            fetchFn={() => apiService.getBudgetBuys(retailerId)}
+                            retailerId={retailerId}
+                        />
+                        <LazyProductLane
+                            title="Trending Now"
+                            fetchFn={() => apiService.getTrendingProducts(retailerId)}
+                            retailerId={retailerId}
+                        />
+                        <LazyProductLane
+                            title="New Arrivals"
+                            fetchFn={() => apiService.getNewArrivals(retailerId)}
+                            retailerId={retailerId}
+                        />
+                        <LazyProductLane
+                            title="Seasonal Picks"
+                            fetchFn={() => apiService.getSeasonalPicks(retailerId)}
+                            retailerId={retailerId}
+                        />
+                    </div>
+                )}
+
+                {/* Infinite Scrolling Product Grid */}
+                {retailerId && (
+                    <InfiniteProductGrid retailerId={retailerId} />
+                )}
 
             </main>
             <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
