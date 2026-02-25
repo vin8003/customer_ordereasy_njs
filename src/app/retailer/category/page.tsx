@@ -44,7 +44,6 @@ function CategoryProducts() {
     const [hasMore, setHasMore] = useState(true);
 
     const observerTarget = useRef<HTMLDivElement>(null);
-    const activeCategoryId = groupId || subcategoryId || categoryId;
 
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -111,29 +110,30 @@ function CategoryProducts() {
     }, [retailerId, subcategoryId]);
 
     useEffect(() => {
-        if (retailerId && activeCategoryId) {
+        if (retailerId && (categoryId || subcategoryId || groupId)) {
             // Initial load
             setPage(1);
             setProducts([]);
             setHasMore(true);
-            loadProducts(1, activeCategoryId);
+            loadProducts(1);
             loadWishlist();
         }
-    }, [retailerId, activeCategoryId]);
+    }, [retailerId, categoryId, subcategoryId, groupId]);
 
     useEffect(() => {
-        if (page > 1 && activeCategoryId) {
-            loadProducts(page, activeCategoryId);
+        if (page > 1 && (categoryId || subcategoryId || groupId)) {
+            loadProducts(page);
         }
-    }, [page, activeCategoryId]);
+    }, [page, categoryId, subcategoryId, groupId]);
 
-    const loadProducts = async (pageNum: number, currentCatId: string) => {
+    const loadProducts = async (pageNum: number) => {
         if (pageNum === 1) setIsLoading(true);
         else setIsMoreLoading(true);
 
         try {
             const prodData = await apiService.getRetailerProducts(retailerId, {
-                category: currentCatId,
+                category: subcategoryId || categoryId,
+                product_group: groupId || undefined,
                 page: pageNum
             });
 
@@ -252,7 +252,7 @@ function CategoryProducts() {
                             <div
                                 key={group.id}
                                 className={`${styles.productGroupItem} ${isActive ? styles.productGroupItemActive : ''}`}
-                                onClick={() => router.push(`/retailer/category?retailerId=${retailerId}&categoryId=${categoryId}&subcategoryId=${subcategoryId}&groupId=${group.id}`)}
+                                onClick={() => router.push(`/retailer/category?retailerId=${retailerId}&categoryId=${categoryId}&subcategoryId=${subcategoryId}&groupId=${encodeURIComponent(group.id)}`)}
                             >
                                 <div className={styles.productGroupIcon}>
                                     {iconUrl ? (
