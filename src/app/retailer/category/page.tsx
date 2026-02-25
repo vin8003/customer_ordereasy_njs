@@ -8,6 +8,7 @@ import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { ProductCard } from '@/app/components/ProductCard';
 import { useWishlist } from '@/hooks/useWishlist';
+import { getCategoryIcon } from '@/utils/categoryImages';
 import styles from './CategoryProducts.module.css';
 
 interface Product {
@@ -27,9 +28,14 @@ function CategoryProducts() {
     const router = useRouter();
     const retailerId = searchParams.get('retailerId') as string;
     const categoryId = searchParams.get('categoryId') as string;
+    const subcategoryId = searchParams.get('subcategoryId') as string | null;
+    const groupId = searchParams.get('groupId') as string | null;
 
     const [products, setProducts] = useState<Product[]>([]);
     const [subcategories, setSubcategories] = useState<any[]>([]); // Subcategories state
+    const [productGroups, setProductGroups] = useState<any[]>([]); // Product Groups state
+    const [productGroupIcons, setProductGroupIcons] = useState<Record<string, string | null>>({});
+
     const [categoryName, setCategoryName] = useState('Products');
     const [isLoading, setIsLoading] = useState(true);
     const [isMoreLoading, setIsMoreLoading] = useState(false);
@@ -37,6 +43,7 @@ function CategoryProducts() {
     const [hasMore, setHasMore] = useState(true);
 
     const observerTarget = useRef<HTMLDivElement>(null);
+    const activeCategoryId = groupId || subcategoryId || categoryId;
 
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -70,30 +77,51 @@ function CategoryProducts() {
         }
     }, [retailerId, categoryId]);
 
+    // Fetch product groups when a subcategory is selected
     useEffect(() => {
-        if (retailerId && categoryId) {
+        if (retailerId && subcategoryId) {
+            apiService.getRetailerCategories(retailerId, { parent_id: subcategoryId })
+                .then(async data => {
+                    const groups = Array.isArray(data) ? data : [];
+                    setProductGroups(groups);
+
+                    // Fetch dynamic icons for each group
+                    const icons: Record<string, string | null> = {};
+                    for (const group of groups) {
+                        icons[group.id] = await getCategoryIcon(retailerId, group.id);
+                    }
+                    setProductGroupIcons(prev => ({ ...prev, ...icons }));
+                })
+                .catch(err => console.error("Failed to fetch product groups", err));
+        } else {
+            setProductGroups([]);
+        }
+    }, [retailerId, subcategoryId]);
+
+    useEffect(() => {
+        if (retailerId && activeCategoryId) {
             // Initial load
             setPage(1);
             setProducts([]);
             setHasMore(true);
-            loadProducts(1);
+            loadProducts(1, activeCategoryId);
             loadWishlist();
         }
-    }, [retailerId, categoryId]);
+    }, [retailerId, activeCategoryId]);
 
     useEffect(() => {
-        if (page > 1) {
-            loadProducts(page);
+        if (page > 1 && activeCategoryId) {
+            loadProducts(page, activeCategoryId);
         }
-    }, [page]);
+    }, [page, activeCategoryId]);
 
-    const loadProducts = async (pageNum: number) => {
+    const loadProducts = async (pageNum: number, currentCatId: string) => {
         if (pageNum === 1) setIsLoading(true);
         else setIsMoreLoading(true);
 
         try {
             const prodData = await apiService.getRetailerProducts(retailerId, {
-                category: categoryId,
+                category: currentCatId,
                 page: pageNum
             });
 
@@ -125,9 +153,11 @@ function CategoryProducts() {
                 return Array.from(new Map(newProducts.map((p: Product) => [p.id, p])).values()) as Product[];
             });
 
-            // Try to set category name from first product if possible
+            // Try to set category name from first product if possible (only on first page load without filters)
             if (pageNum === 1 && processedProducts.length > 0 && processedProducts[0].category_name) {
-                setCategoryName(processedProducts[0].category_name);
+                if (!subcategoryId) {
+                    setCategoryName(processedProducts[0].category_name);
+                }
             }
         } catch (error) {
             console.error("Failed to load products", error);
@@ -138,7 +168,7 @@ function CategoryProducts() {
         }
     };
 
-    if (isLoading && products.length === 0) return <div className="p-8 text-center text-gray-500">Loading Products...</div>;
+    if (isLoading && products.length === 0 && page === 1) return <div className="p-8 text-center text-gray-500">Loading Products...</div>;
 
     return (
         <div className={styles.container}>
@@ -155,13 +185,19 @@ function CategoryProducts() {
             {/* Subcategories (Chips) */}
             {subcategories.length > 0 && (
                 <div className={styles.subcategoryList}>
+                    <button
+                        className={`${styles.chip} ${!subcategoryId ? styles.chipActive : ''}`}
+                        onClick={() => router.push(`/retailer/category?retailerId=${retailerId}&categoryId=${categoryId}`)}
+                    >
+                        All
+                    </button>
                     {subcategories.map(cat => {
-                        const isActive = String(cat.id) === categoryId;
+                        const isActive = String(cat.id) === subcategoryId;
                         return (
                             <button
                                 key={cat.id}
                                 className={`${styles.chip} ${isActive ? styles.chipActive : ''}`}
-                                onClick={() => router.push(`/retailer/category?retailerId=${retailerId}&categoryId=${cat.id}`)}
+                                onClick={() => router.push(`/retailer/category?retailerId=${retailerId}&categoryId=${categoryId}&subcategoryId=${cat.id}`)}
                             >
                                 {cat.name}
                                 {cat.product_count > 0 && (
@@ -170,6 +206,43 @@ function CategoryProducts() {
                                     </span>
                                 )}
                             </button>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* Product Groups Slider */}
+            {subcategoryId && productGroups.length > 0 && (
+                <div className={styles.productGroupSlider}>
+                    <div
+                        className={`${styles.productGroupItem} ${!groupId ? styles.productGroupItemActive : ''}`}
+                        onClick={() => router.push(`/retailer/category?retailerId=${retailerId}&categoryId=${categoryId}&subcategoryId=${subcategoryId}`)}
+                    >
+                        <div className={styles.productGroupIcon}>
+                            <ShoppingBag className="text-gray-400" size={24} />
+                        </div>
+                        <span className={styles.productGroupName}>All {subcategories.find(c => String(c.id) === subcategoryId)?.name}</span>
+                    </div>
+
+                    {productGroups.map(group => {
+                        const isActive = String(group.id) === groupId;
+                        const iconUrl = productGroupIcons[group.id];
+
+                        return (
+                            <div
+                                key={group.id}
+                                className={`${styles.productGroupItem} ${isActive ? styles.productGroupItemActive : ''}`}
+                                onClick={() => router.push(`/retailer/category?retailerId=${retailerId}&categoryId=${categoryId}&subcategoryId=${subcategoryId}&groupId=${group.id}`)}
+                            >
+                                <div className={styles.productGroupIcon}>
+                                    {iconUrl ? (
+                                        <img src={iconUrl} alt={group.name} />
+                                    ) : (
+                                        <ShoppingBag className="text-gray-400" size={24} />
+                                    )}
+                                </div>
+                                <span className={styles.productGroupName}>{group.name}</span>
+                            </div>
                         );
                     })}
                 </div>
