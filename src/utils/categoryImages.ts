@@ -14,10 +14,15 @@ const pendingRequests = new Map<string, Promise<string | null>>();
  * Since fetching products by any parent category ID returns its descendant products,
  * grabbing one product image is sufficient to represent the category at any level.
  */
-export async function getCategoryIcon(retailerId: string | number, categoryId: string | number): Promise<string | null> {
-    if (!retailerId || !categoryId) return null;
+export async function getCategoryIcon(
+    retailerId: string | number,
+    categoryId?: string | number | null,
+    productGroup?: string | null
+): Promise<string | null> {
+    if (!retailerId) return null;
+    if (!categoryId && !productGroup) return null;
 
-    const cacheKey = `${retailerId}_${categoryId}`;
+    const cacheKey = `${retailerId}_cat:${categoryId || ''}_grp:${productGroup || ''}`;
 
     // 1. Check if we already have it in memory cache
     if (categoryImageCache.has(cacheKey)) {
@@ -32,9 +37,10 @@ export async function getCategoryIcon(retailerId: string | number, categoryId: s
     // 3. Make a new request to get just 1 product for this category
     const promise = async () => {
         try {
-            // Fetch products for this category. The API should return paginated data.
+            // Fetch products for this category/group. The API should return paginated data.
             const prodData = await apiService.getRetailerProducts(retailerId, {
-                category: categoryId,
+                category: categoryId || undefined,
+                product_group: productGroup || undefined,
                 page: 1
             });
 
@@ -68,7 +74,10 @@ export async function getCategoryIcon(retailerId: string | number, categoryId: s
 /**
  * Preloads images for a list of categories to improve perceived performance
  */
-export async function preloadCategoryIcons(retailerId: string | number, categoryIds: (string | number)[]) {
-    const promises = categoryIds.map(id => getCategoryIcon(retailerId, id));
+export async function preloadCategoryIcons(
+    retailerId: string | number,
+    items: { categoryId?: string | number | null, productGroup?: string | null }[]
+) {
+    const promises = items.map(item => getCategoryIcon(retailerId, item.categoryId, item.productGroup));
     await Promise.allSettled(promises);
 }

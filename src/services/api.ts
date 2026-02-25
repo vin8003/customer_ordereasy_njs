@@ -246,10 +246,18 @@ export const apiService = {
     },
 
     // Products & Categories
-    getRetailerCategories: async (retailerId: string, params?: any) => {
+    getRetailerCategories: async (retailerId: string | number, params?: any) => {
         const key = `categories_${retailerId}_${JSON.stringify(params || {})}`;
         return fetchWithDedupe(key, async () => {
             const response = await api.get(`products/retailer/${retailerId}/categories/`, { params });
+            return response.data;
+        });
+    },
+
+    getRetailerProductGroupsByCategory: async (retailerId: string | number, categoryId: string | number) => {
+        const key = `groups_${retailerId}_${categoryId}`;
+        return fetchWithDedupe(key, async () => {
+            const response = await api.get(`products/retailer/${retailerId}/categories/${categoryId}/groups/`);
             return response.data;
         });
     },
