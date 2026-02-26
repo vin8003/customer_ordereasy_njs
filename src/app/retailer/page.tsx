@@ -60,6 +60,7 @@ function RetailerHome() {
     const [touchStartX, setTouchStartX] = useState<number | null>(null);
     const [isScrolled, setIsScrolled] = useState(false);
     const [isBannerHovered, setIsBannerHovered] = useState(false);
+    const [zeroResults, setZeroResults] = useState(false);
 
     const [showNotifications, setShowNotifications] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
@@ -92,9 +93,18 @@ function RetailerHome() {
 
     const fetchSuggestions = async () => {
         setIsSearching(true);
+        setZeroResults(false);
         try {
-            const data = await apiService.searchProducts(retailerId, searchQuery);
-            setSuggestions(Array.isArray(data) ? data : data.results || []);
+            const data = await apiService.searchProducts(retailerId, searchQuery, 5); // Limit suggestions to 5
+            const results = Array.isArray(data) ? data : data.results || [];
+
+            if (results.length === 0) {
+                setZeroResults(true);
+                // If no results, show recommended products instead in the dropdown
+                setSuggestions(recommendedProducts.slice(0, 5));
+            } else {
+                setSuggestions(results);
+            }
             setShowSuggestions(true);
         } catch (error) {
             console.error("Suggestions fetch failed", error);
@@ -320,6 +330,32 @@ function RetailerHome() {
                         <div className={styles.suggestionsContainer}>
                             {isSearching ? (
                                 <div className={styles.noSuggestions}>Searching...</div>
+                            ) : zeroResults ? (
+                                <div>
+                                    <div className="p-3 text-sm text-gray-500 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+                                        <span>No exact matches. Recommended for you:</span>
+                                    </div>
+                                    {suggestions.length > 0 ? suggestions.map((product) => (
+                                        <div
+                                            key={product.id}
+                                            className={styles.suggestionItem}
+                                            onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
+                                        >
+                                            <div className={styles.suggestionImage}>
+                                                <ProductImage src={product.image} alt={product.name} />
+                                            </div>
+                                            <div className={styles.suggestionInfo}>
+                                                <div className={styles.suggestionName}>{product.name}</div>
+                                                <div className={styles.suggestionMeta}>
+                                                    <span className={styles.suggestionPrice}>₹{product.price}</span>
+                                                    {product.unit && <span>• {product.unit}</span>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )) : (
+                                        <div className={styles.noSuggestions}>No recommendations available.</div>
+                                    )}
+                                </div>
                             ) : suggestions.length > 0 ? (
                                 suggestions.map((product) => (
                                     <div

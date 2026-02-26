@@ -50,11 +50,21 @@ function AllProducts() {
 
     const { wishlistIds, loadWishlist, toggleWishlist, isWishlisted } = useWishlist();
 
+    const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+
     useEffect(() => {
         if (retailerId) {
-            // Reset to page 1 when filters change (except when currentPage changes manually)
-            // But here we rely on the dependency array of useEffect checking currentPage
             fetchCategories();
+            apiService.getRecommendedProducts(retailerId).then(data => {
+                setRecommendedProducts((Array.isArray(data) ? data : data.results || []).map((p: any) => ({
+                    ...p,
+                    price: p.discounted_price || p.price,
+                    mrp: p.original_price || p.price,
+                    image: p.image || p.image_url || '',
+                    stock_quantity: p.quantity || 0,
+                    unit: p.unit || 'Unit'
+                })));
+            }).catch(e => console.error("Failed fetching recommendations"));
         }
     }, [retailerId]);
 
@@ -236,9 +246,36 @@ function AllProducts() {
 
             <div className={styles.grid}>
                 {products.length === 0 && !isLoading ? (
-                    <div className="col-span-full py-12 text-center text-gray-400">
-                        <ShoppingBag size={48} className="mx-auto mb-4 opacity-20" />
-                        <p>No products found {search && `for "${search}"`}</p>
+                    <div className="col-span-full py-12">
+                        <div className="text-center text-gray-500 mb-8">
+                            <ShoppingBag size={48} className="mx-auto mb-4 opacity-20" />
+                            <p className="text-lg">No products found {search && `for "${search}"`}</p>
+                            <p className="text-sm mt-2">Try checking your spelling or using fewer words.</p>
+                        </div>
+                        {recommendedProducts.length > 0 && (
+                            <div>
+                                <h3 className="text-lg font-bold mb-4 px-4">Recommended For You</h3>
+                                <div className={styles.grid}>
+                                    {recommendedProducts.map(product => (
+                                        <ProductCard
+                                            key={`rec-${product.id}`}
+                                            product={{
+                                                ...product,
+                                                price: Number(product.price),
+                                                mrp: Number(product.mrp)
+                                            }}
+                                            isWishlisted={isWishlisted(product.id)}
+                                            onToggleWishlist={(e: React.MouseEvent) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                toggleWishlist(product.id);
+                                            }}
+                                            onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <>

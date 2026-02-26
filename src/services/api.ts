@@ -343,10 +343,13 @@ export const apiService = {
         });
     },
 
-    searchProducts: async (retailerId: string | number, query: string) => {
-        const key = `search_${retailerId}_${query}`;
+    searchProducts: async (retailerId: string | number, query: string, limit?: number, category?: string) => {
+        const key = `search_${retailerId}_${query}_${limit || ''}_${category || ''}`;
         return fetchWithDedupe(key, async () => {
-            const response = await api.get(`products/retailer/${retailerId}/search/`, { params: { search: query } });
+            const params: any = { search: query };
+            if (limit) params.limit = limit;
+            if (category) params.category = category;
+            const response = await api.get(`products/retailer/${retailerId}/search/`, { params });
             return response.data;
         });
     },
