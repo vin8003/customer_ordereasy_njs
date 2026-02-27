@@ -1,4 +1,5 @@
 'use client';
+import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, Suspense } from 'react';
 import Image from 'next/image';
@@ -129,7 +130,7 @@ function LoginContent() {
 
 export default function LoginPage() {
     return (
-        <Suspense fallback={<div className="flex h-screen items-center justify-center">Loading...</div>}>
+        <Suspense fallback={<LoadingScreen message="Loading..." fullScreen />}>
             <LoginContent />
         </Suspense>
     );

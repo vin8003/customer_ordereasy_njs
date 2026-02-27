@@ -1,4 +1,5 @@
 'use client';
+import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -161,7 +162,7 @@ function OrderDetails() {
         }
     };
 
-    if (isLoading) return <div className="flex justify-center p-20">Loading...</div>;
+    if (isLoading) return <LoadingScreen message="Loading..." />;
     if (!order) return <div className="p-20 text-center">Order not found.</div>;
 
     const statusInfo = getStatusInfo(order.status);
@@ -437,7 +438,7 @@ function OrderDetails() {
 
 export default function OrderDetailsPage() {
     return (
-        <Suspense fallback={<div className="flex justify-center p-20">Loading...</div>}>
+        <Suspense fallback={<LoadingScreen message="Loading..." />}>
             <OrderDetails />
         </Suspense>
     );

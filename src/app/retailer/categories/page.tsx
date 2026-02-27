@@ -1,4 +1,5 @@
 'use client';
+import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
@@ -50,7 +51,7 @@ function Categories() {
         }
     };
 
-    if (isLoading) return <div className="p-8 text-center text-gray-500">Loading Categories...</div>;
+    if (isLoading) return <LoadingScreen message="Loading Categories..." />;
 
     return (
         <div className={styles.container}>
@@ -85,7 +86,7 @@ function Categories() {
 
 export default function CategoriesPage() {
     return (
-        <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading Categories...</div>}>
+        <Suspense fallback={<LoadingScreen message="Loading Categories..." />}>
             <Categories />
         </Suspense>
     );

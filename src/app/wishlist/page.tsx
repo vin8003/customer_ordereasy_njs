@@ -1,4 +1,5 @@
 'use client';
+import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -61,7 +62,7 @@ export default function WishlistPage() {
         }
     };
 
-    if (isLoading) return <div className="p-8 text-center">Loading Wishlist...</div>;
+    if (isLoading) return <LoadingScreen message="Loading Wishlist..." />;
 
     if (isGuest) {
         return (

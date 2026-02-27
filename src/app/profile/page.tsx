@@ -1,4 +1,5 @@
 'use client';
+import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -54,7 +55,7 @@ export default function ProfilePage() {
         }
     };
 
-    if (loading) return <div className="p-8 text-center text-gray-500">Loading Profile...</div>;
+    if (loading) return <LoadingScreen message="Loading Profile..." />;
 
     if (isGuest) {
         return (

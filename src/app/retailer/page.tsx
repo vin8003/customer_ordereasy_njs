@@ -1,4 +1,5 @@
 'use client';
+import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
@@ -597,7 +598,7 @@ function RetailerHome() {
 
 export default function RetailerHomePage() {
     return (
-        <Suspense fallback={<div className="flex justify-center p-8">Loading...</div>}>
+        <Suspense fallback={<LoadingScreen message="Loading..." />}>
             <RetailerHome />
         </Suspense>
     );

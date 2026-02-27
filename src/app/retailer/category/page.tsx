@@ -1,4 +1,5 @@
 'use client';
+import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect, Suspense, useRef, useCallback } from 'react';
 import Link from 'next/link';
@@ -180,7 +181,7 @@ function CategoryProducts() {
         }
     };
 
-    if (isLoading && products.length === 0 && page === 1) return <div className="p-8 text-center text-gray-500">Loading Products...</div>;
+    if (isLoading && products.length === 0 && page === 1) return <LoadingScreen message="Loading Products..." />;
 
     return (
         <div className={styles.container}>
@@ -305,7 +306,7 @@ function CategoryProducts() {
 
 export default function CategoryProductsPage() {
     return (
-        <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading Products...</div>}>
+        <Suspense fallback={<LoadingScreen message="Loading Products..." />}>
             <CategoryProducts />
         </Suspense>
     );

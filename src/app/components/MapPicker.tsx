@@ -1,4 +1,5 @@
 'use client';
+import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
@@ -97,7 +98,7 @@ export default function MapPicker({ onLocationSelect, initialLat, initialLng }: 
         }
     };
 
-    if (!isLoaded) return <div className="h-[300px] bg-gray-100 rounded-xl animate-pulse flex items-center justify-center text-gray-400">Loading Map...</div>;
+    if (!isLoaded) return <LoadingScreen message="Loading Map..." />;
 
     return (
         <div className="relative w-full">

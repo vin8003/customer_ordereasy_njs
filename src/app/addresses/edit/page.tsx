@@ -1,4 +1,5 @@
 'use client';
+import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -107,7 +108,7 @@ function EditAddressForm() {
         }
     };
 
-    if (isLoading) return <div className="p-8 text-center text-gray-500">Loading...</div>;
+    if (isLoading) return <LoadingScreen message="Loading addresses..." />;
 
     return (
         <div className={styles.container}>

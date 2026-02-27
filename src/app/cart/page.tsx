@@ -1,4 +1,5 @@
 'use client';
+import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -269,7 +270,7 @@ export default function CartPage() {
         );
     }
 
-    if (isLoading) return <div className="p-8 text-center">Loading Cart...</div>;
+    if (isLoading) return <LoadingScreen message="Loading Cart..." />;
 
     if (cartItems.length === 0) {
         return (

@@ -1,4 +1,5 @@
 'use client';
+import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -146,7 +147,7 @@ function ChatContent() {
 
             <div className={styles.chatWindow}>
                 {isLoading && messages.length === 0 ? (
-                    <div className="flex justify-center p-4">Loading messages...</div>
+                    <LoadingScreen message="Loading messages..." />
                 ) : messages.length === 0 ? (
                     <div className={styles.emptyState}>
                         <p>No messages yet.</p>
@@ -209,7 +210,7 @@ function ChatContent() {
 
 export default function ChatPage() {
     return (
-        <Suspense fallback={<div className="p-10 text-center">Loading Chat...</div>}>
+        <Suspense fallback={<LoadingScreen message="Loading Chat..." />}>
             <ChatContent />
         </Suspense>
     );

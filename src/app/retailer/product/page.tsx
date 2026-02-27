@@ -1,4 +1,5 @@
 'use client';
+import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -102,7 +103,7 @@ function ProductDetail() {
         }
     };
 
-    if (isLoading) return <div className="p-8 text-center text-gray-500">Loading details...</div>;
+    if (isLoading) return <LoadingScreen message="Loading details..." />;
     if (!product) return <div className="p-8 text-center">Product not found.</div>;
 
     // Use backend values if available, else calculate
@@ -222,7 +223,7 @@ function ProductDetail() {
 
 export default function ProductDetailPage() {
     return (
-        <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading details...</div>}>
+        <Suspense fallback={<LoadingScreen message="Loading details..." />}>
             <ProductDetail />
         </Suspense>
     );

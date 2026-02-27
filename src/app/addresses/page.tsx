@@ -1,4 +1,5 @@
 'use client';
+import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -52,7 +53,7 @@ export default function AddressesPage() {
 
             <div className={styles.list}>
                 {isLoading ? (
-                    <div className="text-center p-8 text-gray-500">Loading addresses...</div>
+                    <LoadingScreen message="Loading addresses..." />
                 ) : addresses.length === 0 ? (
                     <div className="text-center p-12 text-gray-400">
                         <MapPin size={48} className="mx-auto mb-4 text-gray-300" />
