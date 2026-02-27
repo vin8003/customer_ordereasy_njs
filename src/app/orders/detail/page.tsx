@@ -40,6 +40,7 @@ interface OrderDetail {
     feedback?: any;
     preparation_time_minutes?: number;
     estimated_ready_time?: string;
+    expected_processing_start?: string;
 }
 
 function OrderDetails() {
@@ -201,6 +202,16 @@ function OrderDetails() {
                         <span>{new Date(order.created_at).toLocaleString()}</span>
                     </div>
                 </div>
+
+                {order.expected_processing_start && order.status.toLowerCase() === 'pending' && (
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mt-4 flex items-start gap-3 text-orange-800 mx-4 shadow-sm">
+                        <AlertCircle size={20} className="shrink-0 mt-0.5" />
+                        <div className="text-sm">
+                            <span className="font-semibold block mb-1">Received outside business hours</span>
+                            Processing will begin {new Date(order.expected_processing_start).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}.
+                        </div>
+                    </div>
+                )}
 
                 {order.estimated_ready_time && ['confirmed', 'processing', 'packed'].includes(order.status.toLowerCase()) && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4 text-center text-blue-800">

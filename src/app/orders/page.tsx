@@ -18,6 +18,7 @@ interface Order {
         overall_rating: number;
         comment: string;
     };
+    expected_processing_start?: string;
 }
 
 export default function OrdersPage() {
@@ -89,6 +90,12 @@ export default function OrdersPage() {
                                     <Clock size={12} />
                                     {new Date(order.created_at).toLocaleDateString()}
                                 </div>
+                                {order.expected_processing_start && order.status.toLowerCase() === 'pending' && (
+                                    <div className="text-xs text-orange-600 flex items-center gap-1 mt-1 font-medium bg-orange-50 px-2 py-0.5 rounded-md w-fit border border-orange-100">
+                                        <Clock size={12} />
+                                        Processing starts later
+                                    </div>
+                                )}
                             </div>
                             <div className="flex flex-col items-end gap-1">
                                 <span className={`px-2 py-1 rounded-full text-xs font-bold ${getStatusColor(order.status)} uppercase`}>

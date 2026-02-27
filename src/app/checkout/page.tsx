@@ -37,6 +37,8 @@ export default function CheckoutPage() {
         deliveryCharge: number;
         freeDeliveryThreshold: number;
         minimumOrderAmount: number;
+        isCurrentlyOpen?: boolean;
+        nextOpenTime?: string;
     } | null>(null);
 
     // Rewards
@@ -97,7 +99,9 @@ export default function CheckoutPage() {
                 setRetailerSettings({
                     deliveryCharge: parseFloat(data.delivery_charge || '0'),
                     freeDeliveryThreshold: parseFloat(data.free_delivery_threshold || '0'),
-                    minimumOrderAmount: parseFloat(data.minimum_order_amount || '0')
+                    minimumOrderAmount: parseFloat(data.minimum_order_amount || '0'),
+                    isCurrentlyOpen: data.is_currently_open,
+                    nextOpenTime: data.next_open_time
                 });
             } catch (e) {
                 console.error("Failed to load retailer settings", e);
@@ -275,6 +279,18 @@ export default function CheckoutPage() {
             </header>
 
             <main className={styles.main}>
+                {/* Store Closed Warning */}
+                {retailerSettings && retailerSettings.isCurrentlyOpen === false && (
+                    <div className="mx-4 mt-4 mb-2 p-3 bg-orange-50 border border-orange-200 rounded-lg flex items-start gap-3 text-orange-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                        <div className="text-sm">
+                            <span className="font-semibold block mb-1">Store is currently closed</span>
+                            You can still place your order now. It will be scheduled for processing when the store opens next
+                            {retailerSettings.nextOpenTime ? ` at ${retailerSettings.nextOpenTime}` : ''}.
+                        </div>
+                    </div>
+                )}
+
                 {/* Delivery Mode Toggle */}
                 <section className={styles.section}>
                     <h2 className={styles.sectionTitle}>Order Type</h2>

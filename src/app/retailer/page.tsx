@@ -279,6 +279,19 @@ function RetailerHome() {
                             <h1 className={styles.shopName}>{retailer?.shop_name || 'Loading...'}</h1>
                             <ChevronRight size={16} className="rotate-90 text-gray-500" />
                         </div>
+                        {retailer && (
+                            <div className="mt-1.5">
+                                {retailer.is_currently_open ? (
+                                    <div className="inline-block text-xs font-semibold text-green-800 bg-green-50 px-2.5 py-1.5 rounded-md border border-green-200">
+                                        🟢 Accepting orders now
+                                    </div>
+                                ) : (
+                                    <div className="inline-block text-xs font-medium text-indigo-800 bg-indigo-50 px-2.5 py-1.5 rounded-md border border-indigo-200 leading-relaxed">
+                                        🌙 <span className="font-bold">Closed.</span> Orders placed now will be processed starting at <span className="font-bold whitespace-nowrap">{retailer.next_open_time || 'next open time'}</span>.
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                     <div className="flex gap-2">
                         <div className="relative">
