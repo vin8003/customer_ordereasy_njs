@@ -38,6 +38,8 @@ interface OrderDetail {
     created_at: string;
     has_customer_feedback?: boolean;
     feedback?: any;
+    preparation_time_minutes?: number;
+    estimated_ready_time?: string;
 }
 
 function OrderDetails() {
@@ -199,6 +201,18 @@ function OrderDetails() {
                         <span>{new Date(order.created_at).toLocaleString()}</span>
                     </div>
                 </div>
+
+                {order.estimated_ready_time && ['confirmed', 'processing', 'packed'].includes(order.status.toLowerCase()) && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4 text-center text-blue-800">
+                        <Clock size={16} className="inline mr-2 mb-1" />
+                        <span className="font-medium text-sm">
+                            {order.delivery_mode === 'pickup' ? "Estimated Pickup Ready Time:" : "Estimated Ready Time:"}
+                        </span>
+                        <span className="font-bold ml-2 text-lg block sm:inline mt-1 sm:mt-0">
+                            {new Date(order.estimated_ready_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                    </div>
+                )}
 
                 {order.status === 'waiting_for_customer_approval' && (
                     <div className={styles.approvalSection}>
