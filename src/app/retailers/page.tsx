@@ -106,13 +106,6 @@ export default function RetailersPage() {
     return (
         <div className={styles.container}>
             <header className={styles.header}>
-                <div className={styles.logoContainer}>
-                    <img
-                        src="/assets/images/logo.png"
-                        alt="Order Easy Logo"
-                        className={styles.logo}
-                    />
-                </div>
                 <div className={styles.topBar}>
                     <div
                         className={styles.locationBar}
@@ -141,6 +134,13 @@ export default function RetailersPage() {
                             </Link>
                         )}
                     </div>
+                </div>
+                <div className={styles.logoContainer}>
+                    <img
+                        src="/assets/images/logo.png"
+                        alt="Order Easy Logo"
+                        className={styles.logo}
+                    />
                 </div>
 
                 <h1>Select a Store</h1>
