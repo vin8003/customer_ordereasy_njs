@@ -3,7 +3,7 @@
     background-color: #ffffff;
     padding-bottom: 100px;
     /* Space for fixed footer on mobile */
-    font-family: var(--font-inter, sans-serif);
+    font-family: var(--font-inter), sans-serif;
 }
 
 .header {
