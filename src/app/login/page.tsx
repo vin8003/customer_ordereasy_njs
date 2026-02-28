@@ -49,6 +49,11 @@ function LoginContent() {
 
         } catch (err: any) {
             console.error(err);
+            if (err.response && err.response.data && err.response.data.code === 'email_not_verified') {
+                const unverifiedEmail = err.response.data.email;
+                router.push(`/verify-email?email=${encodeURIComponent(unverifiedEmail)}`);
+                return;
+            }
             if (err.response && err.response.data && err.response.data.detail) {
                 setError(err.response.data.detail);
             } else if (err.response && err.response.status === 401) {

@@ -163,6 +163,26 @@ export const apiService = {
         return response.data;
     },
 
+    forgotPasswordEmail: async (email: string) => {
+        const response = await api.post('auth/password/email/forgot/', { email });
+        return response.data;
+    },
+
+    resetPasswordEmail: async (data: any) => {
+        const response = await api.post('auth/password/email/reset/', data);
+        return response.data;
+    },
+
+    verifyEmailOTP: async (email: string, otpCode: string) => {
+        const response = await api.post('auth/verify-email/', { email, otp_code: otpCode });
+        return response.data;
+    },
+
+    resendEmailOTP: async (email: string) => {
+        const response = await api.post('auth/resend-email-otp/', { email });
+        return response.data;
+    },
+
     registerDeviceToken: async (token: string) => {
         try {
             await api.post('auth/device/register/', {
