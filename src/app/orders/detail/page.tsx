@@ -1,4 +1,5 @@
 'use client';
+import toast from 'react-hot-toast';
 import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect, Suspense } from 'react';
@@ -111,7 +112,8 @@ function OrderDetails() {
             loadOrderDetails(true);
         } catch (error) {
             console.error(error);
-            alert("Failed to cancel order. Please try again.");
+            // global error interceptor handles this
+            console.error(error);
         } finally {
             setIsActionLoading(false);
         }
@@ -125,7 +127,8 @@ function OrderDetails() {
             loadOrderDetails(true);
         } catch (error) {
             console.error(error);
-            alert("Failed to process request. Please try again.");
+            // global error interceptor handles this
+            console.error(error);
         } finally {
             setIsActionLoading(false);
         }
@@ -148,7 +151,8 @@ function OrderDetails() {
             loadOrderDetails(true);
         } catch (error) {
             console.error('Rating failed:', error);
-            alert("Failed to submit rating. Please try again.");
+            // global error interceptor handles this
+            console.error(error);
         } finally {
             setIsRatingSubmitting(false);
         }

@@ -1,4 +1,5 @@
 'use client';
+import toast from 'react-hot-toast';
 import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect, Suspense } from 'react';
@@ -53,7 +54,8 @@ function EditAddressForm() {
             });
         } catch (error) {
             console.error(error);
-            alert("Failed to load address");
+            // global error interceptor handles this
+            console.error(error);
             router.back();
         } finally {
             setIsLoading(false);
@@ -102,7 +104,8 @@ function EditAddressForm() {
             router.back();
         } catch (error) {
             console.error(error);
-            alert("Failed to update address");
+            // global error interceptor handles this
+            console.error(error);
         } finally {
             setIsSaving(false);
         }

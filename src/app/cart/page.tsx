@@ -1,4 +1,5 @@
 'use client';
+import toast from 'react-hot-toast';
 import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect } from 'react';
@@ -242,7 +243,7 @@ export default function CartPage() {
 
         if (newQty < 1) return;
         if (newQty > item.stock_quantity) {
-            alert(`Only ${item.stock_quantity} units available for ${item.product_name}`);
+            toast.error(`Only ${item.stock_quantity} units available for ${item.product_name}`);
             return;
         }
 

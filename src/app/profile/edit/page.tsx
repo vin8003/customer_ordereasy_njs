@@ -1,4 +1,5 @@
 'use client';
+import toast from 'react-hot-toast';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -38,11 +39,12 @@ export default function EditProfilePage() {
         setIsLoading(true);
         try {
             await apiService.updateUserProfile(formData);
-            alert("Profile updated successfully!");
+            toast.success("Profile updated successfully!");
             router.back();
         } catch (error) {
             console.error(error);
-            alert("Failed to update profile.");
+            // global error interceptor handles this
+            console.error(error);
         } finally {
             setIsLoading(false);
         }

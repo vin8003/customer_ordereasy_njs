@@ -1,4 +1,5 @@
 'use client';
+import toast from 'react-hot-toast';
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -67,7 +68,8 @@ export default function CreateAddressPage() {
             router.back();
         } catch (error) {
             console.error(error);
-            alert("Failed to create address");
+            // global error interceptor handles this
+            console.error(error);
         } finally {
             setIsLoading(false);
         }
