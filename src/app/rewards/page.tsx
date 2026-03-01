@@ -47,7 +47,7 @@ export default function RewardsPage() {
         if (stats?.referral_code) {
             navigator.clipboard.writeText(stats.referral_code);
             // Optionally could use a toast here
-            alert("Referral code copied!");
+            toast.success("Referral code copied!");
         }
     };
 
@@ -57,14 +57,15 @@ export default function RewardsPage() {
         setApplying(true);
         try {
             await apiService.applyReferralCode(referralCode, parseInt(selectedRetailer));
-            alert("Referral code applied successfully! Points will be awarded after your first order.");
+            toast.success("Referral code applied successfully! Points will be awarded after your first order.");
             setReferralCode('');
             setSelectedRetailer('');
             loadData(); // Reload to refresh state if needed
         } catch (error: any) {
             console.error("Apply failed", error);
             const msg = error.response?.data?.error || "Failed to apply code. Only new users can apply referral codes.";
-            alert(msg);
+            // global error interceptor handles this
+            console.error(error);
         } finally {
             setApplying(false);
         }

@@ -1,4 +1,5 @@
 'use client';
+import toast from 'react-hot-toast';
 import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect, Suspense } from 'react';
@@ -96,7 +97,7 @@ function ProductDetail() {
                 await navigator.share(shareData);
             } else {
                 await navigator.clipboard.writeText(window.location.href);
-                alert("Product link copied to clipboard!");
+                toast.success("Product link copied to clipboard!");
             }
         } catch (err) {
             console.error("Error sharing:", err);

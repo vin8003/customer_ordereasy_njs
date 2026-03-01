@@ -1,4 +1,5 @@
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production'
     ? 'https://api.ordereasy.win/api/'
@@ -99,6 +100,12 @@ api.interceptors.response.use((response) => {
             }
         }
     }
+
+    // Global Error Toasting
+    if (typeof window !== 'undefined' && error.response && error.response.status >= 400 && error.response.status !== 401) {
+        toast.error(getErrorMessage(error));
+    }
+
     return Promise.reject(error);
 });
 

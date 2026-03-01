@@ -1,4 +1,5 @@
 'use client';
+import toast from 'react-hot-toast';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -226,13 +227,13 @@ export default function CheckoutPage() {
         }
 
         if (deliveryMode === 'delivery' && !selectedAddressId) {
-            alert("Please select a delivery address.");
+            toast.error("Please select a delivery address.");
             return;
         }
 
         const storedId = localStorage.getItem('current_retailer_id');
         if (!storedId) {
-            alert("Retailer session lost. Please go back to cart.");
+            toast.error("Retailer session lost. Please go back to cart.");
             return;
         }
 
@@ -251,7 +252,8 @@ export default function CheckoutPage() {
             router.push(`/orders/detail?id=${response.id}`);
         } catch (error) {
             console.error(error);
-            alert(getErrorMessage(error));
+            // global error interceptor handles this
+            console.error(error);
         } finally {
             setIsLoading(false);
         }

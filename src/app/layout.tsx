@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import BottomNav from "@/app/components/BottomNav";
+import { Toaster } from "react-hot-toast";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -27,6 +28,7 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased pb-48 overflow-x-hidden`}>
         <CartProvider>
           <NotificationProvider>
+            <Toaster position="top-center" />
             <NotificationWrapper>
               {children}
             </NotificationWrapper>
