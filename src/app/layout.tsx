@@ -28,7 +28,13 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased pb-48 overflow-x-hidden`}>
         <CartProvider>
           <NotificationProvider>
-            <Toaster position="top-center" />
+            <Toaster
+              position="top-center"
+              containerStyle={{
+                top: '50%',
+                transform: 'translateY(-50%)'
+              }}
+            />
             <NotificationWrapper>
               {children}
             </NotificationWrapper>
