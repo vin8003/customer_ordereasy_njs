@@ -58,3 +58,8 @@
     min-width: 20px;
     text-align: center;
 }
+
+.disabledBtn {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

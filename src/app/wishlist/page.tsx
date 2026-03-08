@@ -19,6 +19,8 @@ interface WishlistItem {
     product_image: string;
     retailer_name: string;
     product_stock?: number;
+    minimum_order_quantity?: number;
+    maximum_order_quantity?: number | null;
 }
 
 export default function WishlistPage() {
@@ -114,7 +116,11 @@ export default function WishlistPage() {
                         </div>
                         <div className={styles.actions}>
                             <div onClick={() => { }} title="Add to Cart">
-                                <AddToCartButton productId={item.product} />
+                                <AddToCartButton
+                                    productId={item.product}
+                                    minimumOrderQuantity={item.minimum_order_quantity}
+                                    maximumOrderQuantity={item.maximum_order_quantity}
+                                />
                             </div>
                             <button className={styles.actionBtn} onClick={() => removeItem(item.product)} title="Remove">
                                 <Trash2 size={18} className="text-red-500" />

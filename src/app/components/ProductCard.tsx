@@ -14,6 +14,8 @@ interface Product {
     image: string;
     unit?: string;
     active_offer_text?: string;
+    minimum_order_quantity?: number;
+    maximum_order_quantity?: number | null;
 }
 
 interface ProductCardProps {
@@ -76,7 +78,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                         <span className={styles.price}>₹{product.price}</span>
                     </div>
                     <div onClick={(e) => e.stopPropagation()}>
-                        <AddToCartButton productId={product.id} />
+                        <AddToCartButton
+                            productId={product.id}
+                            minimumOrderQuantity={product.minimum_order_quantity}
+                            maximumOrderQuantity={product.maximum_order_quantity}
+                        />
                     </div>
                 </div>
             </div>

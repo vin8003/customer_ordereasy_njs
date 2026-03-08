@@ -36,6 +36,8 @@ export interface Product {
     category_name?: string;
     stock_quantity: number;
     unit?: string;
+    minimum_order_quantity?: number;
+    maximum_order_quantity?: number | null;
 }
 
 function RetailerHome() {
@@ -199,7 +201,9 @@ function RetailerHome() {
                 mrp: p.original_price || p.price,
                 image: p.image || '',
                 stock_quantity: p.quantity || 0,
-                unit: p.unit || 'Unit'
+                unit: p.unit || 'Unit',
+                minimum_order_quantity: p.minimum_order_quantity || 1,
+                maximum_order_quantity: p.maximum_order_quantity
             }));
 
             setFeaturedProducts(processProducts(featData));

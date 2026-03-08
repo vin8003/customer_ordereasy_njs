@@ -1,16 +1,24 @@
 'use client';
 
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useCartContext } from '@/context/CartContext';
 import styles from './AddToCartButton.module.css';
 
 interface AddToCartButtonProps {
     productId: number;
+    minimumOrderQuantity?: number;
+    maximumOrderQuantity?: number | null;
     retailerId?: string; // Optional if we want to enforce retailer check, but CartContext handles logic
     className?: string;
 }
 
-const AddToCartButton: React.FC<AddToCartButtonProps> = ({ productId, className }) => {
+const AddToCartButton: React.FC<AddToCartButtonProps> = ({
+    productId,
+    minimumOrderQuantity = 1,
+    maximumOrderQuantity = null,
+    className
+}) => {
     const { getItemQuantity, addToCart, updateQuantity } = useCartContext();
     const quantity = getItemQuantity(productId);
     const [loading, setLoading] = useState(false);
@@ -19,7 +27,13 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({ productId, className 
         e.stopPropagation();
         setLoading(true);
         try {
-            await addToCart(productId, 1);
+            await addToCart(productId, minimumOrderQuantity);
+            if (minimumOrderQuantity > 1) {
+                toast(`Minimum order quantity is ${minimumOrderQuantity}`, {
+                    icon: 'ℹ️',
+                    duration: 3000
+                });
+            }
         } finally {
             setLoading(false);
         }
@@ -27,6 +41,10 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({ productId, className 
 
     const handleIncrement = async (e: React.MouseEvent) => {
         e.stopPropagation();
+        if (maximumOrderQuantity && quantity >= maximumOrderQuantity) {
+            toast.error(`Maximum order limit is ${maximumOrderQuantity}`);
+            return;
+        }
         setLoading(true);
         try {
             await updateQuantity(productId, quantity + 1);
@@ -39,7 +57,11 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({ productId, className 
         e.stopPropagation();
         setLoading(true);
         try {
-            await updateQuantity(productId, quantity - 1);
+            if (quantity <= minimumOrderQuantity) {
+                await updateQuantity(productId, 0);
+            } else {
+                await updateQuantity(productId, quantity - 1);
+            }
         } finally {
             setLoading(false);
         }
@@ -68,7 +90,7 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({ productId, className 
             </button>
             <span className={styles.quantity}>{quantity}</span>
             <button
-                className={styles.controlBtn}
+                className={`${styles.controlBtn} ${(!!maximumOrderQuantity && quantity >= maximumOrderQuantity) ? styles.disabledBtn : ''}`}
                 onClick={handleIncrement}
                 disabled={loading}
             >

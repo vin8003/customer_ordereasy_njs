@@ -213,7 +213,12 @@ function ProductDetail() {
                         <Button fullWidth disabled>Out of Stock</Button>
                     ) : (
                         <div className="w-full h-12">
-                            <AddToCartButton productId={product.id} className="w-full h-full text-lg" />
+                            <AddToCartButton
+                                productId={product.id}
+                                minimumOrderQuantity={product.minimum_order_quantity}
+                                maximumOrderQuantity={product.maximum_order_quantity}
+                                className="w-full h-full text-lg"
+                            />
                         </div>
                     )}
                 </div>

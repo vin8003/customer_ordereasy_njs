@@ -1,4 +1,5 @@
 'use client';
+import toast from 'react-hot-toast';
 import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect } from 'react';

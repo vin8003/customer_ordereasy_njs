@@ -99,8 +99,10 @@ export default function InfiniteProductGrid({ retailerId }: InfiniteProductGridP
                         key={`infinite-${product.id}`}
                         product={{
                             ...product,
-                            price: Number(product.price),
-                            mrp: Number(product.mrp || (product as any).original_price || product.price)
+                            price: Number(product.price || (product as any).discounted_price),
+                            mrp: Number(product.mrp || (product as any).original_price || product.price),
+                            minimum_order_quantity: product.minimum_order_quantity || 1,
+                            maximum_order_quantity: product.maximum_order_quantity || null
                         }}
                         isWishlisted={isWishlisted(product.id)}
                         onToggleWishlist={(e) => {

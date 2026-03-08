@@ -40,13 +40,28 @@ const CartItemRow = ({ item, updateQuantity, removeItem, toggleWishlist, isWishl
     }, [item.quantity]);
 
     const handleBlur = () => {
-        const qty = parseInt(localQty);
+        let qty = parseInt(localQty);
         if (isNaN(qty) || qty < 1) {
             setLocalQty(item.quantity.toString()); // Revert
             return;
         }
+        if (qty < item.minimum_order_quantity) {
+            qty = item.minimum_order_quantity;
+            toast.error(`Minimum order quantity is ${item.minimum_order_quantity}`);
+        }
+        if (item.maximum_order_quantity && qty > item.maximum_order_quantity) {
+            qty = item.maximum_order_quantity;
+            toast.error(`Maximum order limit is ${item.maximum_order_quantity}`);
+        }
+        if (qty > item.stock_quantity) {
+            qty = item.stock_quantity;
+            toast.error(`Maximum order limit is ${item.stock_quantity}`);
+        }
+
         if (qty !== item.quantity) {
             updateQuantity(item.id, qty);
+        } else {
+            setLocalQty(item.quantity.toString());
         }
     };
 
@@ -87,9 +102,13 @@ const CartItemRow = ({ item, updateQuantity, removeItem, toggleWishlist, isWishl
                 <div className={styles.controls}>
                     <div className={styles.qtyControls}>
                         <button
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            disabled={item.quantity <= 1}
-                            className={item.quantity <= 1 ? 'opacity-50 cursor-not-allowed' : ''}
+                            onClick={() => {
+                                if (item.quantity <= item.minimum_order_quantity) {
+                                    updateQuantity(item.id, 0);
+                                } else {
+                                    updateQuantity(item.id, item.quantity - 1);
+                                }
+                            }}
                         >
                             <Minus size={16} />
                         </button>
@@ -104,8 +123,7 @@ const CartItemRow = ({ item, updateQuantity, removeItem, toggleWishlist, isWishl
                         />
                         <button
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            disabled={isStockMaxReached}
-                            className={isStockMaxReached ? 'opacity-50 cursor-not-allowed' : ''}
+                            className={(isStockMaxReached || (!!item.maximum_order_quantity && item.quantity >= item.maximum_order_quantity)) ? 'opacity-50 cursor-not-allowed' : ''}
                         >
                             <Plus size={16} />
                         </button>
@@ -241,9 +259,13 @@ export default function CartPage() {
         // Wait, context.updateQuantity takes productId.
         // My CartItem has product_id.
 
-        if (newQty < 1) return;
+        if (newQty < 0) return;
         if (newQty > item.stock_quantity) {
-            toast.error(`Only ${item.stock_quantity} units available for ${item.product_name}`);
+            toast.error(`Maximum order limit is ${item.stock_quantity}`);
+            return;
+        }
+        if (item.maximum_order_quantity && newQty > item.maximum_order_quantity) {
+            toast.error(`Maximum order limit is ${item.maximum_order_quantity}`);
             return;
         }
 
