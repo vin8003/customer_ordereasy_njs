@@ -7,8 +7,6 @@
     border: 1px solid var(--surface-secondary);
     overflow: hidden;
     transition: box-shadow var(--transition-normal);
-    height: 100%;
-    /* Ensure card stretches to fill row height */
 }
 
 .card:hover {
@@ -123,7 +121,7 @@
 }
 
 .title {
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     font-weight: 600;
     /* slightly bolder for readability */
     color: var(--text-primary);

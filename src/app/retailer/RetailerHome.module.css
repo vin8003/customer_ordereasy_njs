@@ -488,8 +488,8 @@
 
 .productsScroll>* {
     flex-shrink: 0;
-    width: 156px;
-    /* Slightly reduced from original to ensure partial visibility of next card */
+    width: 144px;
+    /* Reduced to make it slightly smaller than original as requested */
 }
 
 .productsScroll::-webkit-scrollbar {
