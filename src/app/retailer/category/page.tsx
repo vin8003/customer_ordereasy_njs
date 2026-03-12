@@ -33,6 +33,7 @@ function CategoryProducts() {
     const categoryId = searchParams.get('categoryId') as string;
     const subcategoryId = searchParams.get('subcategoryId') as string | null;
     const groupId = searchParams.get('groupId') as string | null;
+    const categoryNameParam = searchParams.get('categoryName') as string | null;
 
     const [products, setProducts] = useState<Product[]>([]);
     const [subcategories, setSubcategories] = useState<any[]>([]); // Subcategories state
@@ -40,7 +41,8 @@ function CategoryProducts() {
     const [productGroups, setProductGroups] = useState<any[]>([]); // Product Groups state
     const [productGroupIcons, setProductGroupIcons] = useState<Record<string, string | null>>({});
 
-    const [categoryName, setCategoryName] = useState('Products');
+    const [mainCategoryName, setMainCategoryName] = useState(categoryNameParam ? decodeURIComponent(categoryNameParam) : 'Products');
+    const [categoryName, setCategoryName] = useState(mainCategoryName);
     const [isLoading, setIsLoading] = useState(true);
     const [isMoreLoading, setIsMoreLoading] = useState(false);
     const [page, setPage] = useState(1);
@@ -70,6 +72,35 @@ function CategoryProducts() {
     }, [hasMore, isLoading, isMoreLoading]);
 
     const { wishlistIds, loadWishlist, toggleWishlist, isWishlisted } = useWishlist();
+
+    // Fetch main category name if not provided
+    useEffect(() => {
+        if (retailerId && categoryId && !categoryNameParam) {
+            apiService.getRetailerCategories(retailerId)
+                .then(data => {
+                    const cats = Array.isArray(data) ? data : data.results || [];
+                    const currentCat = cats.find((c: any) => String(c.id) === categoryId);
+                    if (currentCat) {
+                        setMainCategoryName(currentCat.name);
+                    }
+                })
+                .catch(e => console.error("Failed to fetch main categories", e));
+        }
+    }, [retailerId, categoryId, categoryNameParam]);
+
+    // Update derived categoryName based on subcategoryId or mainCategoryName
+    useEffect(() => {
+        if (subcategoryId && subcategories.length > 0) {
+            const selectedSub = subcategories.find(c => String(c.id) === subcategoryId);
+            if (selectedSub) {
+                setCategoryName(selectedSub.name);
+            } else {
+                setCategoryName(mainCategoryName);
+            }
+        } else {
+            setCategoryName(mainCategoryName);
+        }
+    }, [subcategoryId, subcategories, mainCategoryName]);
 
     // Fetch subcategories
     useEffect(() => {
@@ -169,13 +200,6 @@ function CategoryProducts() {
                 // Simple de-dupe by ID
                 return Array.from(new Map(newProducts.map((p: Product) => [p.id, p])).values()) as Product[];
             });
-
-            // Try to set category name from first product if possible (only on first page load without filters)
-            if (pageNum === 1 && processedProducts.length > 0 && processedProducts[0].category_name) {
-                if (!subcategoryId) {
-                    setCategoryName(processedProducts[0].category_name);
-                }
-            }
         } catch (error) {
             console.error("Failed to load products", error);
             setHasMore(false);
@@ -204,7 +228,7 @@ function CategoryProducts() {
                 <div className={styles.productGroupSlider}>
                     <div
                         className={`${styles.productGroupItem} ${!subcategoryId ? styles.productGroupItemActive : ''}`}
-                        onClick={() => router.push(`/retailer/category?retailerId=${retailerId}&categoryId=${categoryId}`)}
+                        onClick={() => router.push(`/retailer/category?retailerId=${retailerId}&categoryId=${categoryId}${mainCategoryName !== 'Products' ? `&categoryName=${encodeURIComponent(mainCategoryName)}` : ''}`)}
                     >
                         <div className={styles.productGroupIcon}>
                             <ShoppingBag className="text-gray-400" size={24} />
@@ -220,7 +244,7 @@ function CategoryProducts() {
                             <div
                                 key={cat.id}
                                 className={`${styles.productGroupItem} ${isActive ? styles.productGroupItemActive : ''}`}
-                                onClick={() => router.push(`/retailer/category?retailerId=${retailerId}&categoryId=${categoryId}&subcategoryId=${cat.id}`)}
+                                onClick={() => router.push(`/retailer/category?retailerId=${retailerId}&categoryId=${categoryId}&subcategoryId=${cat.id}${mainCategoryName !== 'Products' ? `&categoryName=${encodeURIComponent(mainCategoryName)}` : ''}`)}
                             >
                                 <div className={styles.productGroupIcon}>
                                     {iconUrl ? (
@@ -241,7 +265,7 @@ function CategoryProducts() {
                 <div className={styles.productGroupSlider}>
                     <div
                         className={`${styles.productGroupItem} ${!groupId ? styles.productGroupItemActive : ''}`}
-                        onClick={() => router.push(`/retailer/category?retailerId=${retailerId}&categoryId=${categoryId}&subcategoryId=${subcategoryId}`)}
+                        onClick={() => router.push(`/retailer/category?retailerId=${retailerId}&categoryId=${categoryId}&subcategoryId=${subcategoryId}${mainCategoryName !== 'Products' ? `&categoryName=${encodeURIComponent(mainCategoryName)}` : ''}`)}
                     >
                         <div className={styles.productGroupIcon}>
                             <ShoppingBag className="text-gray-400" size={24} />
@@ -257,7 +281,7 @@ function CategoryProducts() {
                             <div
                                 key={group.id}
                                 className={`${styles.productGroupItem} ${isActive ? styles.productGroupItemActive : ''}`}
-                                onClick={() => router.push(`/retailer/category?retailerId=${retailerId}&categoryId=${categoryId}&subcategoryId=${subcategoryId}&groupId=${encodeURIComponent(group.id)}`)}
+                                onClick={() => router.push(`/retailer/category?retailerId=${retailerId}&categoryId=${categoryId}&subcategoryId=${subcategoryId}&groupId=${encodeURIComponent(group.id)}${mainCategoryName !== 'Products' ? `&categoryName=${encodeURIComponent(mainCategoryName)}` : ''}`)}
                             >
                                 <div className={styles.productGroupIcon}>
                                     {iconUrl ? (

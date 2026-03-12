@@ -67,7 +67,7 @@ function Categories() {
                 {categories.map((cat) => {
                     const iconUrl = categoryIcons[cat.id];
                     return (
-                        <Link href={`/retailer/category?retailerId=${retailerId}&categoryId=${cat.id}`} key={cat.id} className={styles.card}>
+                        <Link href={`/retailer/category?retailerId=${retailerId}&categoryId=${cat.id}&categoryName=${encodeURIComponent(cat.name)}`} key={cat.id} className={styles.card}>
                             <div className={styles.iconWrapper}>
                                 {iconUrl ? (
                                     <img src={iconUrl} alt={cat.name} className="w-full h-full object-cover rounded-full" />
