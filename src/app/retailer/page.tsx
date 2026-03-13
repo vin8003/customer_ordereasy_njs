@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import NotificationDropdown from '@/app/components/NotificationDropdown';
 import HelpModal from '@/app/components/HelpModal';
 import { useNotification } from '@/context/NotificationContext';
-import { ShoppingBag, Search, MapPin, ChevronRight, Copy, Star, Heart, Bell, HelpCircle } from 'lucide-react';
+import { ShoppingBag, Search, MapPin, ChevronRight, Copy, Star, Heart, Bell, HelpCircle, Check } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useCartContext } from '@/context/CartContext';
@@ -66,6 +66,7 @@ function RetailerHome() {
 
     const [showNotifications, setShowNotifications] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
+    const [isCopied, setIsCopied] = useState(false);
     const { unreadCount, refreshNotifications } = useNotification();
 
     // Use shared wishlist and cart hooks
@@ -156,6 +157,17 @@ function RetailerHome() {
             }
         }
         setTouchStartX(null);
+    };
+
+    const handleCopyCode = async () => {
+        if (!referralCode) return;
+        try {
+            await navigator.clipboard.writeText(referralCode);
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy code:', err);
+        }
     };
 
     const loadData = async () => {
@@ -549,8 +561,15 @@ function RetailerHome() {
                         <div className={styles.codeBox}>
                             <span className={styles.code}>{referralCode}</span>
                             <div className={styles.referralActions}>
-                                <button className={styles.actionBtn} onClick={() => navigator.clipboard.writeText(referralCode)}>
-                                    <Copy size={14} /> Copy
+                                <button
+                                    className={`${styles.actionBtn} ${isCopied ? styles.copied : ''}`}
+                                    onClick={handleCopyCode}
+                                >
+                                    {isCopied ? (
+                                        <><Check size={16} /> Copied!</>
+                                    ) : (
+                                        <><Copy size={16} /> Copy Code</>
+                                    )}
                                 </button>
                             </div>
                         </div>
