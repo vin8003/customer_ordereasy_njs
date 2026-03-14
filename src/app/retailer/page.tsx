@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import NotificationDropdown from '@/app/components/NotificationDropdown';
 import HelpModal from '@/app/components/HelpModal';
 import { useNotification } from '@/context/NotificationContext';
-import { ShoppingBag, Search, MapPin, ChevronRight, Copy, Star, Heart, Bell, HelpCircle, Check } from 'lucide-react';
+import { ShoppingBag, Search, MapPin, ChevronRight, Copy, Star, Heart, Bell, HelpCircle } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useCartContext } from '@/context/CartContext';
@@ -63,10 +63,10 @@ function RetailerHome() {
     const [touchStartX, setTouchStartX] = useState<number | null>(null);
     const [isScrolled, setIsScrolled] = useState(false);
     const [isBannerHovered, setIsBannerHovered] = useState(false);
+    const [activeRewardTab, setActiveRewardTab] = useState<'offers' | 'refer'>('offers');
 
     const [showNotifications, setShowNotifications] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
-    const [isCopied, setIsCopied] = useState(false);
     const { unreadCount, refreshNotifications } = useNotification();
 
     // Use shared wishlist and cart hooks
@@ -157,17 +157,6 @@ function RetailerHome() {
             }
         }
         setTouchStartX(null);
-    };
-
-    const handleCopyCode = async () => {
-        if (!referralCode) return;
-        try {
-            await navigator.clipboard.writeText(referralCode);
-            setIsCopied(true);
-            setTimeout(() => setIsCopied(false), 2000);
-        } catch (err) {
-            console.error('Failed to copy code:', err);
-        }
     };
 
     const loadData = async () => {
@@ -373,6 +362,107 @@ function RetailerHome() {
 
             <main className={styles.main}>
 
+                {/* ===== Combined Rewards Strip (Offers + Refer & Earn) ===== */}
+                {(offers.length > 0 || referralCode || apiService.isAuthenticated()) && (
+                    <div className={styles.rewardsPanel}>
+                        {/* Tab switcher */}
+                        <div className={styles.rewardsTabs}>
+                            <button
+                                className={`${styles.rewardsTab} ${activeRewardTab === 'offers' ? styles.activeTab : ''}`}
+                                onClick={() => setActiveRewardTab('offers')}
+                            >
+                                🎁 Offers
+                            </button>
+                            <button
+                                className={`${styles.rewardsTab} ${activeRewardTab === 'refer' ? styles.activeTab : ''}`}
+                                onClick={() => setActiveRewardTab('refer')}
+                            >
+                                ⭐ Refer & Earn
+                            </button>
+                        </div>
+
+                        <div className={styles.rewardsContent}>
+                            {/* Offers Tab */}
+                            {activeRewardTab === 'offers' && offers.length > 0 && (
+                                <div>
+                                    <div
+                                        className={styles.slimBannerStack}
+                                        onTouchStart={handleTouchStart}
+                                        onTouchEnd={handleTouchEnd}
+                                        onMouseEnter={() => setIsBannerHovered(true)}
+                                        onMouseLeave={() => setIsBannerHovered(false)}
+                                    >
+                                        {offers.map((offer, idx) => (
+                                            <div
+                                                key={offer.id}
+                                                className={`${styles.bannerItem} ${idx === currentOfferIndex ? styles.activeBanner : ''}`}
+                                                onClick={() => router.push(`/retailer/products?retailerId=${retailerId}&offerId=${offer.id}&title=${encodeURIComponent(offer.name)}`)}
+                                            >
+                                                {offer.banner_image ? (
+                                                    <img src={offer.banner_image} alt={offer.name} className={styles.bannerImage} />
+                                                ) : (
+                                                    <div className={styles.offerFallback}>
+                                                        <div className={styles.offerName}>{offer.name}</div>
+                                                        <div className={styles.offerDesc}>{offer.description || 'Limited Time Offer!'}</div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                        {offers.length > 1 && (
+                                            <div className={styles.sliderDots}>
+                                                {offers.map((_, idx) => (
+                                                    <button
+                                                        key={idx}
+                                                        className={`${styles.dot} ${idx === currentOfferIndex ? styles.activeDot : ''}`}
+                                                        onClick={() => setCurrentOfferIndex(idx)}
+                                                    />
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                            {activeRewardTab === 'offers' && offers.length === 0 && (
+                                <div style={{ textAlign: 'center', padding: '16px', color: '#94a3b8', fontSize: '14px' }}>
+                                    No active offers right now. Check back soon! 🛒
+                                </div>
+                            )}
+
+                            {/* Refer & Earn Tab */}
+                            {activeRewardTab === 'refer' && (
+                                <div className={styles.referContent}>
+                                    <div className={styles.referTitle}>
+                                        <Star className="text-yellow-300 fill-yellow-300" size={20} />
+                                        Refer &amp; Earn
+                                    </div>
+                                    <p className={styles.referSubtitle}>Share your code and earn rewards together!</p>
+                                    {referralCode ? (
+                                        <div className={styles.codeBox}>
+                                            <span className={styles.code}>{referralCode}</span>
+                                            <div className={styles.referralActions}>
+                                                <button
+                                                    className={styles.actionBtn}
+                                                    onClick={() => navigator.clipboard.writeText(referralCode)}
+                                                >
+                                                    <Copy size={14} /> Copy
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : apiService.isAuthenticated() ? (
+                                        <div className="text-center" style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>
+                                            Code unavailable. <button onClick={() => window.location.reload()} style={{ textDecoration: 'underline', background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}>Retry</button>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center">
+                                            <Link href="/login" className="text-white font-bold underline">Login to view code</Link>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 {/* Categories */}
                 <section className={styles.section}>
                     <div className={styles.sectionHeader}>
@@ -498,91 +588,7 @@ function RetailerHome() {
                     </section>
                 )}
 
-                {/* Offers for You (Auto-rotating Performance Hero Slider) */}
-                {offers.length > 0 && (
-                    <section className={styles.section}>
-                        <div className={styles.sectionHeader}>
-                            <h2>Offers for You</h2>
-                        </div>
-                        <div
-                            className={styles.heroSlider}
-                            onTouchStart={handleTouchStart}
-                            onTouchEnd={handleTouchEnd}
-                            onMouseEnter={() => setIsBannerHovered(true)}
-                            onMouseLeave={() => setIsBannerHovered(false)}
-                        >
-                            <div className={styles.bannerStack}>
-                                {offers.map((offer, idx) => (
-                                    <div
-                                        key={offer.id}
-                                        className={`${styles.bannerItem} ${idx === currentOfferIndex ? styles.activeBanner : ''}`}
-                                        onClick={() => router.push(`/retailer/products?retailerId=${retailerId}&offerId=${offer.id}&title=${encodeURIComponent(offer.name)}`)}
-                                    >
-                                        {offer.banner_image ? (
-                                            <img
-                                                src={offer.banner_image}
-                                                alt={offer.name}
-                                                className={styles.bannerImage}
-                                            />
-                                        ) : (
-                                            <div className={styles.offerFallback}>
-                                                <div className={styles.offerName}>{offer.name}</div>
-                                                <div className={styles.offerDesc}>{offer.description || 'Limited Time Offer!'}</div>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-
-                            {offers.length > 1 && (
-                                <div className={styles.sliderDots}>
-                                    {offers.map((_, idx) => (
-                                        <button
-                                            key={idx}
-                                            className={`${styles.dot} ${idx === currentOfferIndex ? styles.activeDot : ''}`}
-                                            onClick={() => setCurrentOfferIndex(idx)}
-                                        />
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </section>
-                )}
-
-                {/* Referral Banner */}
-                <section className={styles.referralBanner}>
-                    <div className="flex items-center gap-2 mb-2 justify-center">
-                        <Star className="text-yellow-300 fill-yellow-300" size={24} />
-                        <h2 className="text-white text-xl font-bold">Refer & Earn</h2>
-                    </div>
-                    <p className="text-white/80 text-sm mb-4 text-center">Share your code and earn rewards together!</p>
-
-                    {referralCode ? (
-                        <div className={styles.codeBox}>
-                            <span className={styles.code}>{referralCode}</span>
-                            <div className={styles.referralActions}>
-                                <button
-                                    className={`${styles.actionBtn} ${isCopied ? styles.copied : ''}`}
-                                    onClick={handleCopyCode}
-                                >
-                                    {isCopied ? (
-                                        <><Check size={16} /> Copied!</>
-                                    ) : (
-                                        <><Copy size={16} /> Copy Code</>
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-                    ) : apiService.isAuthenticated() ? (
-                        <div className="text-center text-white/80 text-sm">
-                            Code unavailable. <button onClick={() => window.location.reload()} className="underline">Retry</button>
-                        </div>
-                    ) : (
-                        <div className="text-center">
-                            <Link href="/login" className="text-white font-bold underline">Login to view code</Link>
-                        </div>
-                    )}
-                </section>
+                {/* Offers and Referral have been moved to the top Rewards Panel */}
 
                 {/* Lazy Loaded Discovery Lanes */}
                 {retailerId && (
