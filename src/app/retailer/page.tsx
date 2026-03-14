@@ -5,9 +5,8 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import NotificationDropdown from '@/app/components/NotificationDropdown';
-import HelpModal from '@/app/components/HelpModal';
 import { useNotification } from '@/context/NotificationContext';
-import { ShoppingBag, Search, MapPin, ChevronRight, Copy, Star, Heart, Bell, HelpCircle } from 'lucide-react';
+import { ShoppingBag, Search, MapPin, ChevronRight, Copy, Star, Heart, Bell } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useCartContext } from '@/context/CartContext';
@@ -66,7 +65,6 @@ function RetailerHome() {
     const [activeRewardTab, setActiveRewardTab] = useState<'offers' | 'refer'>('offers');
 
     const [showNotifications, setShowNotifications] = useState(false);
-    const [showHelp, setShowHelp] = useState(false);
     const { unreadCount, refreshNotifications } = useNotification();
 
     // Use shared wishlist and cart hooks
@@ -309,11 +307,7 @@ function RetailerHome() {
                             />
                         </div>
 
-                        <button className={styles.actionBtn} onClick={() => setShowHelp(true)}>
-                            <div className={styles.iconWrapper}>
-                                <HelpCircle size={20} />
-                            </div>
-                        </button>
+
                     </div>
                 </div>
 
@@ -627,7 +621,7 @@ function RetailerHome() {
                 )}
 
             </main>
-            <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
+
         </div>
     );
 }

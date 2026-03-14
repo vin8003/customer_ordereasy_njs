@@ -4,7 +4,7 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, MapPin, Phone, Package, Clock, CheckCircle, XCircle, AlertCircle, Star } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, Package, Clock, CheckCircle, XCircle, AlertCircle, Star, MessageCircle } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { ProductImage } from '@/app/components/ProductImage';
@@ -52,7 +52,6 @@ function OrderDetails() {
     const [order, setOrder] = useState<OrderDetail | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isActionLoading, setIsActionLoading] = useState(false);
-    const [savedRetailerId, setSavedRetailerId] = useState<string | null>(null);
 
     // Rating State
     const [showRatingModal, setShowRatingModal] = useState(false);
@@ -60,11 +59,6 @@ function OrderDetails() {
     const [comment, setComment] = useState('');
     const [isRatingSubmitting, setIsRatingSubmitting] = useState(false);
 
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            setSavedRetailerId(localStorage.getItem('current_retailer_id'));
-        }
-    }, []);
 
     useEffect(() => {
         if (orderId) {
@@ -182,18 +176,27 @@ function OrderDetails() {
                 </Button>
                 <h1>Order Details</h1>
                 <div className="flex gap-2 items-center">
-                    <Button
-                        variant="outline"
-                        className="text-xs px-3 h-8 flex items-center gap-1"
+                    <button
                         onClick={() => router.push(`/orders/chat?id=${order.id}`)}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            backgroundColor: '#16a34a',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '999px',
+                            padding: '7px 16px',
+                            fontSize: '13px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            boxShadow: '0 2px 8px rgba(22,163,74,0.35)',
+                            letterSpacing: '0.01em',
+                        }}
                     >
-                        <span className="font-semibold">Chat</span>
-                    </Button>
-                    {savedRetailerId && (
-                        <Button variant="outline" className="text-xs px-2 h-8" onClick={() => router.push(`/retailer?id=${savedRetailerId}`)}>
-                            Shop
-                        </Button>
-                    )}
+                        <MessageCircle size={16} />
+                        Chat
+                    </button>
                 </div>
             </header>
 
