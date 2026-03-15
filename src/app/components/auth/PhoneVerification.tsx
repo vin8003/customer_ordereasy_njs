@@ -34,34 +34,44 @@ export default function PhoneVerification({ isOpen, onClose, onVerified, initial
         }
     }, [isOpen, initialPhone]);
 
-    // Initialize Recaptcha
+    // Helper to fully destroy the existing reCAPTCHA instance
+    const clearRecaptcha = () => {
+        if (window.recaptchaVerifier) {
+            try {
+                window.recaptchaVerifier.clear();
+            } catch (_) {}
+            window.recaptchaVerifier = null;
+        }
+    };
+
+    // Initialize (or re-initialize) reCAPTCHA whenever the request step is shown
     useEffect(() => {
-        if (!isOpen) return;
+        if (!isOpen || step !== 'request') return;
+
+        // Always start fresh so we never reuse a verifier whose DOM node is gone
+        clearRecaptcha();
 
         try {
-            if (!window.recaptchaVerifier) {
-                window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-                    'size': 'normal',
-                    'callback': (response: any) => {
-                        // reCAPTCHA solved, allow signInWithPhoneNumber.
-                        // We handle this in handleSendOtp
-                    },
-                    'expired-callback': () => {
-                        // Response expired. Ask user to solve reCAPTCHA again.
-                        setError('Recaptcha expired, please try again.');
-                    }
-                });
-                window.recaptchaVerifier.render();
-            }
+            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                'size': 'normal',
+                'callback': (_response: any) => {
+                    // reCAPTCHA solved – actual send happens in handleSendOtp
+                },
+                'expired-callback': () => {
+                    setError('Recaptcha expired, please try again.');
+                }
+            });
+            window.recaptchaVerifier.render();
         } catch (e) {
-            console.error("Recaptcha init error:", e);
+            console.error('Recaptcha init error:', e);
         }
 
         return () => {
-            // Cleanup if needed? Usually recaptcha instance persists.
-            // Clearing it might cause issues on re-open.
+            // Clean up when the component unmounts or the modal closes
+            if (!isOpen) clearRecaptcha();
         };
-    }, [isOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, step]);
 
     const handleSendOtp = async () => {
         if (!phone || phone.length < 10) {
@@ -80,10 +90,10 @@ export default function PhoneVerification({ isOpen, onClose, onVerified, initial
             setConfirmationResult(confirmation);
             setStep('verify');
         } catch (err: any) {
-            console.error("Error sending OTP:", err);
+            console.error('Error sending OTP:', err);
             setError(err.message || 'Failed to send OTP. Try again.');
-            // Reset recaptcha
-            if (window.recaptchaVerifier) window.recaptchaVerifier.clear();
+            // Destroy stale verifier so it is recreated fresh on next attempt
+            clearRecaptcha();
         } finally {
             setLoading(false);
         }
@@ -209,7 +219,11 @@ export default function PhoneVerification({ isOpen, onClose, onVerified, initial
                         </Button>
 
                         <button
-                            onClick={() => setStep('request')}
+                            onClick={() => {
+                                // Clear reCAPTCHA before going back so it is recreated fresh
+                                clearRecaptcha();
+                                setStep('request');
+                            }}
                             style={{ background: 'none', border: 'none', color: '#666', fontSize: '14px', cursor: 'pointer', textDecoration: 'underline' }}
                         >
                             Change Number / Resend

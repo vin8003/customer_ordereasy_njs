@@ -43,7 +43,7 @@ export default function SignupPage() {
                 email: formData.email,
                 phone_number: formData.phone,
                 password: formData.password,
-                password_confirm: formData.confirmPassword, // Updated to match API expectation
+                password_confirm: formData.confirmPassword,
             });
 
             if (response && response.tokens) {
