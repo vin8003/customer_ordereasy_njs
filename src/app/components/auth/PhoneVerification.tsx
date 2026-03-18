@@ -6,6 +6,7 @@ import { auth } from '@/services/firebase';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { X, Phone, ShieldCheck, Loader2 } from 'lucide-react';
+import { canRequestOTP, recordOTPRequest } from '@/utils/rateLimit';
 
 interface PhoneVerificationProps {
     isOpen: boolean;
@@ -21,6 +22,30 @@ export default function PhoneVerification({ isOpen, onClose, onVerified, initial
     const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [cooldown, setCooldown] = useState<{ allowed: boolean; remaining: number; reason?: 'cooldown' | 'attempts' }>({ allowed: true, remaining: 0 });
+
+    useEffect(() => {
+        if (!isOpen || !phone) return;
+        
+        const formattedPhone = phone.startsWith('+91') ? phone : `+91${phone}`;
+        const rateLimitKey = `otp_limit_phone_${formattedPhone.replace(/\s+/g, '')}`;
+        
+        const updateCooldown = () => {
+            const check = canRequestOTP(rateLimitKey);
+            setCooldown(check);
+        };
+
+        updateCooldown(); // Initial check
+
+        const timer = setInterval(() => {
+            const check = canRequestOTP(rateLimitKey);
+            setCooldown(check);
+            // We could clear interval if check.allowed, but standard interval keeps hitting
+            // which handles state moving into cooldown later or updates every second.
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [isOpen, phone]);
 
     // Reset state when opened
     useEffect(() => {
@@ -84,11 +109,25 @@ export default function PhoneVerification({ isOpen, onClose, onVerified, initial
 
         try {
             const formattedPhone = phone.startsWith('+91') ? phone : `+91${phone}`;
+            const rateLimitKey = `otp_limit_phone_${formattedPhone.replace(/\s+/g, '')}`;
+            
+            const check = canRequestOTP(rateLimitKey);
+            if (!check.allowed) {
+                setError(check.reason === 'attempts' 
+                    ? `Too many attempts. Try again in ${Math.ceil(check.remaining / 60)} mins.` 
+                    : `Please wait ${check.remaining}s before resending.`);
+                setLoading(false);
+                return;
+            }
+
             const appVerifier = window.recaptchaVerifier;
 
             const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
             setConfirmationResult(confirmation);
             setStep('verify');
+            
+            // Record OTP request on success trigger
+            recordOTPRequest(rateLimitKey);
         } catch (err: any) {
             console.error('Error sending OTP:', err);
             setError(err.message || 'Failed to send OTP. Try again.');
@@ -191,8 +230,8 @@ export default function PhoneVerification({ isOpen, onClose, onVerified, initial
 
                         <div id="recaptcha-container" style={{ margin: '0 auto' }}></div>
 
-                        <Button onClick={handleSendOtp} disabled={loading} style={{ width: '100%' }}>
-                            {loading ? <Loader2 className="animate-spin" /> : 'Send OTP'}
+                        <Button onClick={handleSendOtp} disabled={loading || !cooldown.allowed} style={{ width: '100%' }}>
+                            {loading ? <Loader2 className="animate-spin" /> : cooldown.allowed ? 'Send OTP' : cooldown.reason === 'attempts' ? `Retry in ${Math.ceil(cooldown.remaining / 60)}m` : `Resend in ${cooldown.remaining}s`}
                         </Button>
                     </div>
                 )}

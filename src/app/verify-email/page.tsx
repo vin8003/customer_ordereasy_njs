@@ -9,6 +9,7 @@ import { apiService, getErrorMessage } from '../../services/api';
 import styles from './VerifyEmail.module.css';
 import { Key } from 'lucide-react';
 import LoadingScreen from '@/app/components/LoadingScreen';
+import { canRequestOTP, recordOTPRequest } from '@/utils/rateLimit';
 
 function VerifyEmailContent() {
     const router = useRouter();
@@ -20,6 +21,26 @@ function VerifyEmailContent() {
     const [isResending, setIsResending] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [cooldown, setCooldown] = useState<{ allowed: boolean; remaining: number; reason?: 'cooldown' | 'attempts' }>({ allowed: true, remaining: 0 });
+
+    React.useEffect(() => {
+        if (!email) return;
+        
+        const rateLimitKey = `otp_limit_email_${email.replace(/\s+/g, '')}`;
+        const updateCooldown = () => {
+            const check = canRequestOTP(rateLimitKey);
+            setCooldown(check);
+        };
+
+        updateCooldown(); // Initial check
+
+        const timer = setInterval(() => {
+            const check = canRequestOTP(rateLimitKey);
+            setCooldown(check);
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [email]);
 
     const handleVerify = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -42,6 +63,16 @@ function VerifyEmailContent() {
     };
 
     const handleResend = async () => {
+        const rateLimitKey = `otp_limit_email_${email.replace(/\s+/g, '')}`;
+        const check = canRequestOTP(rateLimitKey);
+        
+        if (!check.allowed) {
+            setError(check.reason === 'attempts' 
+                ? `Too many attempts. Try again in ${Math.ceil(check.remaining / 60)} mins.` 
+                : `Please wait ${check.remaining}s before resending.`);
+            return;
+        }
+
         setIsResending(true);
         setError('');
         setSuccess('');
@@ -49,6 +80,7 @@ function VerifyEmailContent() {
         try {
             await apiService.resendEmailOTP(email);
             setSuccess('A new OTP has been sent to your email.');
+            recordOTPRequest(rateLimitKey);
         } catch (err: any) {
             console.error(err);
             setError(getErrorMessage(err));
@@ -115,10 +147,10 @@ function VerifyEmailContent() {
                         Didn't receive the code?
                         <button
                             onClick={handleResend}
-                            disabled={isResending}
+                            disabled={isResending || !cooldown.allowed}
                             className={styles.resendBtn}
                         >
-                            {isResending ? 'Sending...' : 'Resend OTP'}
+                            {isResending ? 'Sending...' : cooldown.allowed ? 'Resend OTP' : cooldown.reason === 'attempts' ? `Retry in ${Math.ceil(cooldown.remaining / 60)}m` : `Resend in ${cooldown.remaining}s`}
                         </button>
                     </p>
                 </div>
