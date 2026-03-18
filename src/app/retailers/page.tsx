@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { MapPin, ShoppingBag, Star, Clock } from 'lucide-react';
+import { MapPin, ShoppingBag, Star, Clock, ChevronRight } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { DEFAULT_CITY } from '@/config/cities';
@@ -20,6 +20,7 @@ interface Retailer {
     offers_pickup: boolean;
     shop_image?: string;
     distance?: number;
+    categories?: any[];
 }
 
 export default function RetailersPage() {
@@ -92,6 +93,12 @@ export default function RetailersPage() {
         setUserName('');
         // Optional: reload to ensure clean state
         window.location.reload();
+    };
+
+    const getImageUrl = (path?: string) => {
+        if (!path) return null;
+        if (path.startsWith('http')) return path;
+        return `https://api.ordereasy.win${path.startsWith('/') ? '' : '/'}${path}`;
     };
 
     if (isLoading) {
@@ -173,12 +180,33 @@ export default function RetailersPage() {
                             onClick={() => handleRetailerSelect(retailer.id)}
                         >
                             <div className={styles.cardContent}>
-                                <div className={styles.retailerIcon}>
-                                    <ShoppingBag size={24} color="#fff" />
+                                <div className={styles.retailerIconContainer}>
+                                    {retailer.shop_image ? (
+                                        <img 
+                                            src={getImageUrl(retailer.shop_image) || ''} 
+                                            alt={retailer.shop_name} 
+                                            className={styles.retailerImage} 
+                                        />
+                                    ) : (
+                                        <div className={styles.retailerIconFallback}>
+                                            <ShoppingBag size={28} color="#2563eb" />
+                                        </div>
+                                    )}
                                 </div>
                                 <div className={styles.retailerInfo}>
-                                    <h2>{retailer.shop_name}</h2>
-                                    <p className={styles.type}>{retailer.business_type}</p>
+                                    <div className={styles.retailerHeader}>
+                                        <h2>{retailer.shop_name}</h2>
+                                    </div>
+
+                                    {retailer.categories && retailer.categories.length > 0 ? (
+                                        <div className={styles.categoriesWrapper}>
+                                            {retailer.categories.map((cat: any) => (
+                                                <span key={cat.id} className={styles.categoryBadge}>{cat.name}</span>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className={styles.type}>{retailer.business_type}</p>
+                                    )}
 
                                     <div className={styles.metaRow}>
                                         <span className={styles.metaItem}>
@@ -191,13 +219,19 @@ export default function RetailersPage() {
                                         </span>
                                     </div>
 
-                                    <div className={styles.tags}>
-                                        {retailer.offers_delivery && (
-                                            <span className={styles.tagDelivery}>● Delivery</span>
-                                        )}
-                                        {retailer.offers_pickup && (
-                                            <span className={styles.tagPickup}>● Pickup</span>
-                                        )}
+                                    <div className={styles.cardFooter}>
+                                        <div className={styles.tags}>
+                                            {retailer.offers_delivery && (
+                                                <span className={styles.tagDelivery}>● Delivery</span>
+                                            )}
+                                            {retailer.offers_pickup && (
+                                                <span className={styles.tagPickup}>● Pickup</span>
+                                            )}
+                                        </div>
+
+                                        <div className={styles.shopNowCTA}>
+                                            Shop Now <ChevronRight size={16} />
+                                        </div>
                                     </div>
                                 </div>
                             </div>

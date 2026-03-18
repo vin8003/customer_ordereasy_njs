@@ -81,58 +81,102 @@
     background: #ffffff;
     border-radius: 16px;
     padding: 1.25rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03); /* Enhanced subtle shadow */
     cursor: pointer;
-    transition: all 0.2s ease-in-out;
-    border: 1px solid rgba(0, 0, 0, 0.03);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 .retailerCard:hover {
     transform: translateY(-4px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04); /* More prominent hover shadow */
+    border-color: rgba(59, 130, 246, 0.2); /* Highlight border on hover */
 }
 
 .cardContent {
     display: flex;
-    gap: 1.25rem;
+    gap: 1rem;
     align-items: flex-start;
+    width: 100%;
 }
 
-.retailerIcon {
-    width: 56px;
-    height: 56px;
-    background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
-    border-radius: 16px;
+.retailerIconContainer {
+    width: 96px;
+    height: 96px;
+    border-radius: 14px;
+    flex-shrink: 0;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08); /* Nice drop shadow for image */
+    border: 1px solid rgba(0,0,0,0.06);
+    background: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
-    box-shadow: inset 0 2px 4px 0 rgba(255, 255, 255, 0.5);
+}
+
+.retailerImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.retailerIconFallback {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .retailerInfo {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.retailerHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.35rem;
 }
 
 .retailerInfo h2 {
-    font-size: 1.15rem;
+    font-size: 1.25rem;
     font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 0.25rem;
+    color: #0f172a;
+    line-height: 1.2;
 }
 
-.type {
-    font-size: 0.85rem;
-    color: #64748b;
-    text-transform: capitalize;
+.categoriesWrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
     margin-bottom: 0.75rem;
+}
+
+.categoryBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.5rem;
+    background-color: #f1f5f9;
+    color: #475569;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
 }
 
 .metaRow {
     display: flex;
     gap: 1rem;
-    margin-bottom: 1rem;
-    font-size: 0.875rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.85rem;
     color: #64748b;
     font-weight: 500;
 }
@@ -208,10 +252,37 @@
     gap: 0.5rem;
 }
 
+.cardFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed #e2e8f0;
+}
+
+.shopNowCTA {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background-color: #eff6ff;
+    color: #2563eb;
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 9999px;
+    transition: all 0.2s;
+}
+
+.retailerCard:hover .shopNowCTA {
+    background-color: #2563eb;
+    color: #ffffff;
+}
+
 .tagDelivery {
     font-size: 0.65rem;
     padding: 0.15rem 0.5rem;
-    border-radius: 9999px;
+    border-radius: 6px;
     background: #dcfce7;
     color: #166534;
     font-weight: 600;
@@ -223,9 +294,9 @@
 .tagPickup {
     font-size: 0.65rem;
     padding: 0.15rem 0.5rem;
-    border-radius: 9999px;
-    background: #eff6ff;
-    color: #1e40af;
+    border-radius: 6px;
+    background: #f1f5f9;
+    color: #475569;
     font-weight: 600;
     display: flex;
     align-items: center;
