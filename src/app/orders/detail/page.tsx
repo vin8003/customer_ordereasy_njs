@@ -42,6 +42,7 @@ interface OrderDetail {
     preparation_time_minutes?: number;
     estimated_ready_time?: string;
     expected_processing_start?: string;
+    cancelled_by?: string;
 }
 
 function OrderDetails() {
@@ -204,6 +205,11 @@ function OrderDetails() {
                 <div className={`${styles.statusBanner} ${statusInfo.color}`}>
                     {statusInfo.icon}
                     <div className={styles.statusLabel}>Order {order.status.replace(/_/g, ' ')}</div>
+                    {order.status.toLowerCase() === 'cancelled' && order.cancelled_by && (
+                        <div className="text-sm font-bold opacity-90 mt-1 uppercase">
+                            By {order.cancelled_by}
+                        </div>
+                    )}
                     <div className={styles.statusValue}>#{order.order_number}</div>
                     <div className={styles.orderInfo}>
                         <span>{new Date(order.created_at).toLocaleString()}</span>
