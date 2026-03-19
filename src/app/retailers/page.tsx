@@ -218,21 +218,21 @@ export default function RetailersPage() {
                                             {retailer.average_rating}
                                         </span>
                                     </div>
+                                </div>
+                            </div>
+                            
+                            <div className={styles.cardFooter}>
+                                <div className={styles.tags}>
+                                    {retailer.offers_delivery && (
+                                        <span className={styles.tagDelivery}>● Delivery</span>
+                                    )}
+                                    {retailer.offers_pickup && (
+                                        <span className={styles.tagPickup}>● Pickup</span>
+                                    )}
+                                </div>
 
-                                    <div className={styles.cardFooter}>
-                                        <div className={styles.tags}>
-                                            {retailer.offers_delivery && (
-                                                <span className={styles.tagDelivery}>● Delivery</span>
-                                            )}
-                                            {retailer.offers_pickup && (
-                                                <span className={styles.tagPickup}>● Pickup</span>
-                                            )}
-                                        </div>
-
-                                        <div className={styles.shopNowCTA}>
-                                            Shop Now <ChevronRight size={16} />
-                                        </div>
-                                    </div>
+                                <div className={styles.shopNowCTA}>
+                                    Shop Now <ChevronRight size={16} />
                                 </div>
                             </div>
                         </div>

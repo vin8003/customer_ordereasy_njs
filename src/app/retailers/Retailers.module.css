@@ -85,6 +85,7 @@
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid rgba(0, 0, 0, 0.04);
+    border-bottom: 4px solid #4f46e5; /* Accent border */
     position: relative;
     display: flex;
     flex-direction: column;
@@ -250,15 +251,17 @@
 .tags {
     display: flex;
     gap: 0.5rem;
+    flex-wrap: wrap; /* allow wrapping on very small screens */
 }
 
 .cardFooter {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 0.5rem;
-    padding-top: 0.75rem;
-    border-top: 1px dashed #e2e8f0;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f1f5f9;
+    width: 100%;
 }
 
 .shopNowCTA {
