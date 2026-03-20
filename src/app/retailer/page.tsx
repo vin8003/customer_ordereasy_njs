@@ -21,6 +21,7 @@ interface Category {
     id: number;
     name: string;
     icon?: string;
+    image?: string;
     product_count?: number;
     parent?: number | null;
 }
@@ -470,7 +471,9 @@ function RetailerHome() {
                         {categories.slice(0, 12).map(cat => (
                             <Link href={`/retailer/category?retailerId=${retailerId}&categoryId=${cat.id}`} key={cat.id} className={styles.categoryItem}>
                                 <div className={styles.catIcon}>
-                                    {cat.icon ? (
+                                    {cat.image ? (
+                                        <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" />
+                                    ) : cat.icon ? (
                                         <img src={cat.icon} alt={cat.name} className="w-full h-full object-cover" />
                                     ) : (
                                         <ShoppingBag size={24} />

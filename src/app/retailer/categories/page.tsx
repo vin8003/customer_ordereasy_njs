@@ -41,7 +41,7 @@ function Categories() {
 
             const icons: Record<string, string | null> = {};
             for (const cat of cats) {
-                icons[cat.id] = await getCategoryIcon(retailerId, cat.id);
+                icons[cat.id] = cat.image || await getCategoryIcon(retailerId, cat.id);
             }
             setCategoryIcons(icons);
         } catch (error) {
