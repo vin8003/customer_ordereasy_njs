@@ -4,7 +4,7 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, MapPin, Phone, Package, Clock, CheckCircle, XCircle, AlertCircle, Star, MessageCircle } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, Package, Clock, CheckCircle, XCircle, AlertCircle, Star, MessageCircle, Loader2 } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { ProductImage } from '@/app/components/ProductImage';
@@ -43,6 +43,12 @@ interface OrderDetail {
     estimated_ready_time?: string;
     expected_processing_start?: string;
     cancelled_by?: string;
+    retailer_upi_id?: string;
+    retailer_upi_qr_code?: string;
+    payment_reference_id?: string;
+    payment_status?: string;
+    payment_edit_count?: number;
+    is_payment_locked?: boolean;
 }
 
 function OrderDetails() {
@@ -59,6 +65,9 @@ function OrderDetails() {
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState('');
     const [isRatingSubmitting, setIsRatingSubmitting] = useState(false);
+    const [referenceId, setReferenceId] = useState('');
+    const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
+    const [isEditingPayment, setIsEditingPayment] = useState(false);
 
 
     useEffect(() => {
@@ -147,9 +156,54 @@ function OrderDetails() {
         } catch (error) {
             console.error('Rating failed:', error);
             // global error interceptor handles this
-            console.error(error);
         } finally {
             setIsRatingSubmitting(false);
+        }
+    };
+
+    const handleSubmitPayment = async () => {
+        if (!order) return;
+        
+        const cleanRefId = referenceId.trim();
+        if (!cleanRefId) {
+            toast.error("Please enter a transaction ID");
+            return;
+        }
+
+        // 12-digit numeric validation
+        if (!/^\d{12}$/.test(cleanRefId)) {
+            toast.error("Invalid ID format. Please enter exactly 12 digits from your UPI app.");
+            return;
+        }
+
+        setIsSubmittingPayment(true);
+        try {
+            await apiService.submitOrderPayment(order.id, cleanRefId);
+            toast.success("Transaction ID submitted successfully!");
+            setReferenceId('');
+            setIsEditingPayment(false);
+            await loadOrderDetails(true);
+        } catch (error: any) {
+            console.error('Payment submission failed:', error);
+            const errorMsg = error.response?.data?.error || "Failed to submit payment details.";
+            toast.error(errorMsg);
+        } finally {
+            setIsSubmittingPayment(false);
+        }
+    };
+
+    const getPaymentStatusInfo = (status: string) => {
+        switch (status) {
+            case 'pending_payment': 
+                return { label: 'Pending Payment', color: 'text-amber-600', icon: <Clock size={16} /> };
+            case 'pending_verification': 
+                return { label: 'Pending Verification', color: 'text-blue-600', icon: <Loader2 size={16} className="animate-spin" /> };
+            case 'verified': 
+                return { label: 'Verified', color: 'text-green-600', icon: <CheckCircle size={16} /> };
+            case 'failed': 
+                return { label: 'Verification Failed', color: 'text-red-600', icon: <XCircle size={16} /> };
+            default: 
+                return { label: status, color: 'text-gray-600', icon: <Clock size={16} /> };
         }
     };
 
@@ -215,6 +269,140 @@ function OrderDetails() {
                         <span>{new Date(order.created_at).toLocaleString()}</span>
                     </div>
                 </div>
+
+                {/* UPI Payment Section */}
+                {order.payment_mode === 'upi' && order.status !== 'cancelled' && (
+                    <div className={styles.upipaymentSection}>
+                        <div className={styles.upipaymentHeader}>
+                            <div className={styles.upipaymentIcon}>
+                                <AlertCircle size={24} />
+                            </div>
+                            <h3 className={styles.upipaymentTitle}>UPI Payment Details</h3>
+                        </div>
+                        
+                        {(!order.payment_reference_id || isEditingPayment) ? (
+                            <>
+                                <p className={styles.upipaymentDescription}>
+                                    Please complete the payment and provide the transaction ID below.
+                                </p>
+
+                                <div className={styles.qrContainer}>
+                                    {order.retailer_upi_qr_code ? (
+                                        <div className={styles.qrWrapper}>
+                                            <img 
+                                                src={order.retailer_upi_qr_code} 
+                                                alt="UPI QR Code" 
+                                                className={styles.qrImage}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="text-sm text-gray-500 italic">No QR Code available</div>
+                                    )}
+                                    
+                                    <div className={styles.upiIdContainer}>
+                                        <span className={styles.upiIdLabel}>UPI ID</span>
+                                        <div className={styles.upiIdValue}>
+                                            {order.retailer_upi_id || "Not Provided"}
+                                        </div>
+                                        <button 
+                                            onClick={() => {
+                                                if (order.retailer_upi_id) {
+                                                    navigator.clipboard.writeText(order.retailer_upi_id);
+                                                    toast.success("UPI ID copied!");
+                                                }
+                                            }}
+                                            className={styles.copyButton}
+                                        >
+                                            Copy UPI ID
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className={styles.formGroup}>
+                                    <label>Transaction ID / Reference Number</label>
+                                    <input 
+                                        type="text"
+                                        className={styles.inputField}
+                                        placeholder="Enter 12-digit UPI Ref No."
+                                        value={referenceId}
+                                        onChange={(e) => setReferenceId(e.target.value)}
+                                    />
+                                    {order.payment_edit_count !== undefined && order.payment_edit_count > 0 && (
+                                        <p className="text-[10px] text-amber-600 font-bold mb-1">
+                                            Edit attempt {order.payment_edit_count} of 3
+                                        </p>
+                                    )}
+                                    <div className="flex gap-2">
+                                        <Button 
+                                            variant="primary" 
+                                            fullWidth 
+                                            onClick={handleSubmitPayment}
+                                            isLoading={isSubmittingPayment}
+                                            disabled={isSubmittingPayment || !referenceId.trim()}
+                                        >
+                                            {order.payment_reference_id ? 'Update Details' : 'Submit Details'}
+                                        </Button>
+                                        {isEditingPayment && (
+                                            <Button 
+                                                variant="outline" 
+                                                onClick={() => setIsEditingPayment(false)}
+                                                disabled={isSubmittingPayment}
+                                            >
+                                                Cancel
+                                            </Button>
+                                        )}
+                                    </div>
+                                    <p className="text-[10px] text-gray-500 mt-2 text-center">
+                                        You can edit transaction ID until verification
+                                    </p>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div>
+                                            <span className={styles.upiIdLabel}>Submitted Trans. ID</span>
+                                            <div className="font-mono font-bold text-gray-800 break-all">{order.payment_reference_id}</div>
+                                        </div>
+                                        
+                                        {!order.is_payment_locked && (order.payment_edit_count || 0) < 3 && (
+                                            <button 
+                                                onClick={() => {
+                                                    setReferenceId(order.payment_reference_id || '');
+                                                    setIsEditingPayment(true);
+                                                }}
+                                                className="text-primary text-xs font-bold px-3 py-1 bg-primary/10 rounded-lg"
+                                            >
+                                                Edit
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100">
+                                        <span className="text-xs text-gray-500 font-bold uppercase">Status:</span>
+                                        <div className={`flex items-center gap-1.5 text-sm font-bold ${getPaymentStatusInfo(order.payment_status || '').color}`}>
+                                            {getPaymentStatusInfo(order.payment_status || '').icon}
+                                            {getPaymentStatusInfo(order.payment_status || '').label}
+                                        </div>
+                                    </div>
+                                    
+                                    {order.payment_status === 'failed' && (
+                                        <p className="text-xs text-red-500 mt-2 italic">
+                                            Verification failed. Please check your transaction ID and edit if incorrect.
+                                        </p>
+                                    )}
+                                </div>
+                                
+                                {order.is_payment_locked && (
+                                    <p className="text-[10px] text-green-600 font-bold text-center">
+                                        Payment verified and locked. No further edits allowed.
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {order.expected_processing_start && order.status.toLowerCase() === 'pending' && (
                     <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mt-4 flex items-start gap-3 text-orange-800 mx-4 shadow-sm">

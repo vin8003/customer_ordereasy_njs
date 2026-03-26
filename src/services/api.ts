@@ -604,6 +604,12 @@ export const apiService = {
         return response.data;
     },
 
+    submitOrderPayment: async (orderId: number | string, referenceId: string) => {
+        const response = await api.post(`orders/${orderId}/submit_payment/`, { payment_reference_id: referenceId });
+        delete CACHE[`order_${orderId}`];
+        return response.data;
+    },
+
     cancelOrder: async (orderId: number | string, reason: string = '') => {
         const response = await api.post(`orders/${orderId}/cancel/`, { reason });
         delete CACHE[`order_${orderId}`];

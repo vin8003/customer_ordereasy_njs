@@ -249,7 +249,8 @@ export default function CheckoutPage() {
             });
 
             // Navigate to Order Details
-            router.push(`/orders/detail?id=${response.id}`);
+            const isUPI = paymentMethod === 'upi';
+            router.push(`/orders/detail?id=${response.id}${isUPI ? '&payment=true' : ''}`);
         } catch (error) {
             console.error(error);
             // global error interceptor handles this

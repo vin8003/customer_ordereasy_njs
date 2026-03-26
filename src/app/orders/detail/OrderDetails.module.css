@@ -182,3 +182,161 @@
     color: var(--text-secondary);
     font-style: italic;
 }
+
+/* UPI Payment Section */
+.upipaymentSection {
+    margin: 1.5rem 1rem;
+    padding: 1.25rem;
+    background: #fff;
+    border: 2px solid #6366f120;
+    border-radius: 1.25rem;
+    box-shadow: var(--shadow-lg);
+    max-width: 450px;
+}
+
+@media (min-width: 640px) {
+    .upipaymentSection {
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+.upipaymentHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+}
+
+.upipaymentHeader h3 {
+    font-size: 1.125rem;
+    font-weight: 700;
+}
+
+.upipaymentIcon {
+    padding: 0.5rem;
+    background: #6366f110;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.upipaymentDescription {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.qrContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.qrWrapper {
+    background: #fff;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    width: fit-content;
+}
+
+.qrImage {
+    width: 140px;
+    height: 140px;
+    object-fit: contain;
+    display: block;
+}
+
+.upiIdContainer {
+    text-align: center;
+}
+
+.upiIdLabel {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.upiIdValue {
+    font-family: monospace;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 0.25rem;
+}
+
+.copyButton {
+    color: var(--primary-color);
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-top: 0.5rem;
+    background: none;
+    border: none;
+    padding: 0;
+    text-decoration: underline;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.formGroup label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.inputField {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    outline: none;
+    font-family: monospace;
+    font-size: 1rem;
+    transition: var(--transition-fast);
+}
+
+.inputField:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px #6366f120;
+}
+
+.paymentSuccessBadge {
+    margin: 1rem;
+    padding: 1rem;
+    background: #f0fdf4;
+    border: 2px solid #dcfce7;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #166534;
+}
+
+.successTitle {
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.successSubtitle {
+    font-size: 0.75rem;
+    opacity: 0.8;
+    font-family: monospace;
+    margin-top: 0.125rem;
+}
