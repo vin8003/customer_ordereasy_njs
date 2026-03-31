@@ -18,6 +18,7 @@ interface WishlistItem {
     product_price: number;
     product_image: string;
     retailer_name: string;
+    retailer_id: number;
     product_stock?: number;
     minimum_order_quantity?: number;
     maximum_order_quantity?: number | null;
@@ -120,6 +121,8 @@ export default function WishlistPage() {
                                     productId={item.product}
                                     minimumOrderQuantity={item.minimum_order_quantity}
                                     maximumOrderQuantity={item.maximum_order_quantity}
+                                    retailerId={String(item.retailer_id)}
+                                    retailerName={item.retailer_name}
                                 />
                             </div>
                             <button className={styles.actionBtn} onClick={() => removeItem(item.product)} title="Remove">

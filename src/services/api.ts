@@ -593,6 +593,14 @@ export const apiService = {
         }, force);
     },
 
+    getLoyaltyTransactions: async (retailerId?: string | number, force: boolean = false) => {
+        const key = `loyalty_transactions_${retailerId || 'all'}`;
+        return fetchWithDedupe(key, async () => {
+            const response = await api.get('customer/loyalty/transactions/', { params: { retailer_id: retailerId } });
+            return response.data;
+        }, force);
+    },
+
     confirmOrderModification: async (orderId: number | string, action: 'accept' | 'reject') => {
         const response = await api.post(`orders/${orderId}/confirm_modification/`, { action });
         delete CACHE[`order_${orderId}`];

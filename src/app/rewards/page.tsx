@@ -4,7 +4,7 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, CheckCircle, Users } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Users, Gem, History, Clock, Info, TrendingUp, TrendingDown } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { ReferralCard } from '@/app/components/ReferralCard';
@@ -16,6 +16,7 @@ export default function RewardsPage() {
     const [stats, setStats] = useState<any>(null);
     const [retailers, setRetailers] = useState<any[]>([]);
     const [loyaltyPoints, setLoyaltyPoints] = useState<any[]>([]);
+    const [transactions, setTransactions] = useState<any[]>([]);
 
     // Apply Form State
     const [selectedRetailer, setSelectedRetailer] = useState('');
@@ -29,14 +30,16 @@ export default function RewardsPage() {
     const loadData = async () => {
         setLoading(true);
         try {
-            const [statsData, retailersData, loyaltyData] = await Promise.all([
+            const [statsData, retailersData, loyaltyData, transactionsData] = await Promise.all([
                 apiService.getReferralStats(),
-                apiService.getRetailers(), // Fetch retailers for dropdown
-                apiService.getAllCustomerLoyalty()
+                apiService.getRetailers({ has_referral: true }), // Fetch only retailers with active referral programs
+                apiService.getAllCustomerLoyalty(),
+                apiService.getLoyaltyTransactions()
             ]);
             setStats(statsData);
             setRetailers(retailersData.results || retailersData);
             setLoyaltyPoints(loyaltyData);
+            setTransactions(transactionsData);
         } catch (error) {
             console.error("Failed to load rewards data", error);
         } finally {
@@ -86,45 +89,116 @@ export default function RewardsPage() {
             <div className={styles.content}>
 
                 {/* Visual Hierarchy: Refer & Earn first as it's the main engaging action */}
-                <ReferralCard
-                    referralCode={stats?.referral_code}
-                    totalReferrals={stats?.total_referrals || 0}
-                    successfulReferrals={stats?.successful_referrals || 0}
-                    onCopy={handleCopyCode}
-                />
-
-                {/* Section: My Points */}
                 <div className={styles.card}>
-                    <div className={styles.cardTitle}>
-                        <CheckCircle size={20} className="text-blue-500" />
-                        <span>My Cashback Points</span>
-                    </div>
+                    <ReferralCard
+                        referralCode={stats?.referral_code}
+                        totalReferrals={stats?.total_referrals || 0}
+                        successfulReferrals={stats?.successful_referrals || 0}
+                        onCopy={handleCopyCode}
+                    />
 
-                    {loyaltyPoints.length > 0 && (
-                        <div className={styles.totalBalanceBox}>
-                            <div className={styles.totalLabel}>Total Balance</div>
-                            <div className={styles.totalValue}>₹{loyaltyPoints.reduce((sum, lp) => sum + (lp.value_in_currency || parseFloat(lp.points || 0)), 0).toFixed(2)}</div>
-                            <div className={styles.totalHint}>Redeemable at respective shops</div>
+                    {/* Active Schemes List */}
+                    {stats?.active_referral_schemes?.length > 0 && (
+                        <div className={styles.activeSchemesList}>
+                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">Active Offers Nearby</h4>
+                            {stats.active_referral_schemes.map((scheme: any) => (
+                                <div key={scheme.retailer_id} className={styles.schemeItem}>
+                                    <div className="flex justify-between items-center">
+                                        <span className="font-bold text-sm text-gray-800">{scheme.retailer_name}</span>
+                                        <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded">₹{scheme.referral_reward_points} Reward</span>
+                                    </div>
+                                    <p className="text-[10px] text-gray-500 mt-1">Min order: ₹{scheme.min_referral_order_amount} | Your friend gets ₹{scheme.referee_reward_points}</p>
+                                </div>
+                            ))}
                         </div>
                     )}
+                </div>
 
+                {/* Section: Your Loyalty Points */}
+                <div className={styles.card}>
+                    <div className={styles.cardTitle}>
+                        <Gem size={20} className="text-indigo-500" />
+                        <span>Store Points Balance</span>
+                    </div>
                     {loyaltyPoints.length === 0 ? (
                         <div className={styles.emptyState}>
-                            No cashback points earned yet. Start shopping to earn rewards!
+                            No points earned yet. Shop from your favorite stores to earn points!
                         </div>
                     ) : (
                         <div className={styles.loyaltyList}>
                             {loyaltyPoints.map((lp: any, index: number) => (
                                 <div key={index} className={styles.loyaltyItem}>
-                                    <div className={styles.lpInfo}>
-                                        <span className={styles.lpRetailer}>{lp.retailer_name}</span>
-                                        <span className={styles.lpConversion}>1 Point = ₹{lp.conversion_rate || 1}</span>
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex flex-col">
+                                            <span className={styles.shopName}>{lp.retailer_name}</span>
+                                            <div className="flex items-center gap-1">
+                                              <span className={styles.pointsCount}>{lp.points} pts</span>
+                                              <span className={styles.pointsValue}>≈ ₹{lp.value_in_currency}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col items-end gap-1">
+                                            {lp.next_expiry_date && (
+                                              <div className={styles.expiryBadge}>
+                                                <Clock size={10} />
+                                                <span>
+                                                  {lp.points_expiring_soon} pts expire {new Date(lp.next_expiry_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                                </span>
+                                              </div>
+                                            )}
+                                            <Button 
+                                                variant="outline" 
+                                                className="h-8 px-3 text-xs font-bold border-indigo-200 text-indigo-600"
+                                                onClick={() => router.push(`/retailer?id=${lp.retailer_id}`)}
+                                            >
+                                                Shop
+                                            </Button>
+                                        </div>
                                     </div>
-                                    <div className={styles.lpPoints}>
-                                        <span className={styles.lpValue}>{lp.points}</span>
-                                        <span className="text-xs text-green-600 font-bold">
-                                            (₹{lp.value_in_currency ? Number(lp.value_in_currency).toFixed(2) : lp.points})
-                                        </span>
+                                    <div className={styles.conversionRule}>
+                                        <Info size={10} /> 1 Pt = ₹{lp.conversion_rate}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Section: Loyalty History */}
+                <div className={styles.card}>
+                    <div className={styles.cardTitle}>
+                        <History size={20} className="text-blue-500" />
+                        <span>Transaction History</span>
+                    </div>
+
+                    {transactions.length === 0 ? (
+                        <div className={styles.emptyState}>
+                            No transactions yet.
+                        </div>
+                    ) : (
+                        <div className={styles.transactionList}>
+                            {transactions.map((tx: any) => (
+                                <div key={tx.id} className={styles.transactionItem}>
+                                    <div className={styles.txIconBox}>
+                                        {tx.transaction_type === 'earn' || tx.transaction_type === 'refund' ? (
+                                            <TrendingUp size={16} className="text-green-500" />
+                                        ) : (
+                                            <TrendingDown size={16} className="text-red-500" />
+                                        )}
+                                    </div>
+                                    <div className={styles.txInfo}>
+                                        <div className="flex justify-between items-baseline">
+                                            <span className={styles.txRetailer}>{tx.retailer_name}</span>
+                                            <span className={`${styles.txAmount} ${tx.transaction_type === 'earn' || tx.transaction_type === 'refund' ? styles.positive : styles.negative}`}>
+                                                {tx.transaction_type === 'earn' || tx.transaction_type === 'refund' ? '+' : '-'}{tx.amount}
+                                            </span>
+                                        </div>
+                                        <p className={styles.txDesc}>{tx.description}</p>
+                                        <div className="flex justify-between items-center mt-1">
+                                            <span className={styles.txDate}>{new Date(tx.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                                            {tx.expiry_date && !tx.is_expired && (
+                                                <span className={styles.txExpiry}>Valid till {new Date(tx.expiry_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -189,14 +263,35 @@ export default function RewardsPage() {
                     ) : (
                         <div className={styles.historyList}>
                             {stats?.referrals_detail?.map((ref: any, index: number) => (
-                                <div key={index} className={styles.historyItem}>
-                                    <div className={styles.refereeInfo}>
-                                        <span className={styles.refereeName}>{ref.referee_name}</span>
-                                        <span className={styles.retailerName}>{ref.retailer_name}</span>
+                                <div key={index} className={styles.historyItemStyle}>
+                                    <div className="flex justify-between items-start">
+                                        <div className={styles.refereeInfo}>
+                                            <span className={styles.refereeName}>{ref.referee_name}</span>
+                                            <span className={styles.retailerName}>{ref.retailer_name}</span>
+                                        </div>
+                                        <span className={`${styles.rewardStatus} ${ref.is_rewarded ? styles.rewarded : styles.pending}`}>
+                                            {ref.is_rewarded ? 'Rewarded' : 'Pending'}
+                                        </span>
                                     </div>
-                                    <span className={`${styles.rewardStatus} ${ref.is_rewarded ? styles.rewarded : styles.pending}`}>
-                                        {ref.is_rewarded ? 'Rewarded' : 'Pending'}
-                                    </span>
+                                    
+                                    {ref.reward_rules && (
+                                        <div className="mt-2 pt-2 border-t border-gray-50 flex justify-between items-center">
+                                            <div className="flex gap-3">
+                                                <div className="flex flex-col">
+                                                    <span className="text-[9px] text-gray-400 uppercase font-bold">You'll Get</span>
+                                                    <span className="text-xs font-bold text-blue-600">₹{ref.reward_rules.your_reward}</span>
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[9px] text-gray-400 uppercase font-bold">They'll Get</span>
+                                                    <span className="text-xs font-bold text-indigo-600">₹{ref.reward_rules.friend_reward}</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="text-[9px] text-gray-400 uppercase font-bold block">Condition</span>
+                                                <span className="text-[10px] text-gray-600">Order {'>'} ₹{ref.reward_rules.min_order_condition}</span>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>

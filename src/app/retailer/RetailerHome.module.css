@@ -422,17 +422,17 @@
 
 .rewardsTab {
     flex: 1;
-    padding: 8px 12px;
+    padding: 8px 4px; /* Reduced side padding for 3 tabs */
     border: none;
     border-radius: 12px;
-    font-size: 13px;
+    font-size: 12px; /* Slightly smaller font */
     font-weight: 700;
     cursor: pointer;
     transition: all 0.22s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 4px;
     background: transparent;
     color: #64748b;
 }
@@ -473,6 +473,51 @@
     align-items: center;
 }
 
+.pointsBalanceBox {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.pointsValue {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 12px 24px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-width: 160px;
+}
+
+.pointsLarge {
+    font-size: 32px;
+    font-weight: 900;
+    line-height: 1;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pointsLabel {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.8;
+    margin-top: 4px;
+    font-weight: 700;
+}
+
+.earningRule {
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffd700; /* Gold color */
+    background: rgba(0, 0, 0, 0.2);
+    padding: 6px 16px;
+    border-radius: 20px;
+    display: inline-block;
+}
+
 .referContent::before {
     content: '';
     position: absolute;
@@ -493,7 +538,7 @@
     font-size: 17px;
     font-weight: 800;
     color: white;
-    margin-bottom: 4px;
+    margin-bottom: 12px;
 }
 
 .referSubtitle {

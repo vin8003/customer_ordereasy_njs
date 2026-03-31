@@ -9,7 +9,8 @@ interface AddToCartButtonProps {
     productId: number;
     minimumOrderQuantity?: number;
     maximumOrderQuantity?: number | null;
-    retailerId?: string; // Optional if we want to enforce retailer check, but CartContext handles logic
+    retailerId?: string;
+    retailerName?: string;
     className?: string;
 }
 
@@ -17,6 +18,8 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
     productId,
     minimumOrderQuantity = 1,
     maximumOrderQuantity = null,
+    retailerId,
+    retailerName,
     className
 }) => {
     const { getItemQuantity, addToCart, updateQuantity } = useCartContext();
@@ -25,6 +28,19 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
 
     const handleAdd = async (e: React.MouseEvent) => {
         e.stopPropagation();
+
+        // Retailer Validation
+        const currentRetailerId = localStorage.getItem('current_retailer_id');
+        if (retailerId && currentRetailerId && retailerId !== currentRetailerId) {
+            toast.error(
+                <span>
+                    Switch to <span style={{ color: '#007bff', fontWeight: '600' }}>{retailerName || 'its'}</span> store to add this item.
+                </span>,
+                { duration: 4000 }
+            );
+            return;
+        }
+
         setLoading(true);
         try {
             await addToCart(productId, minimumOrderQuantity);

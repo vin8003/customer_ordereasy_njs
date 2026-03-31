@@ -1,12 +1,13 @@
 'use client';
 import LoadingScreen from '@/app/components/LoadingScreen';
+import toast from 'react-hot-toast';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import NotificationDropdown from '@/app/components/NotificationDropdown';
 import { useNotification } from '@/context/NotificationContext';
-import { ShoppingBag, Search, MapPin, ChevronRight, Copy, Star, Heart, Bell } from 'lucide-react';
+import { ShoppingBag, Search, MapPin, ChevronRight, Copy, Star, Heart, Bell, Gem } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useCartContext } from '@/context/CartContext';
@@ -63,7 +64,8 @@ function RetailerHome() {
     const [touchStartX, setTouchStartX] = useState<number | null>(null);
     const [isScrolled, setIsScrolled] = useState(false);
     const [isBannerHovered, setIsBannerHovered] = useState(false);
-    const [activeRewardTab, setActiveRewardTab] = useState<'offers' | 'refer'>('offers');
+    const [userLoyalty, setUserLoyalty] = useState<{ points: number } | null>(null);
+    const [activeRewardTab, setActiveRewardTab] = useState<'offers' | 'refer' | 'points'>('offers');
 
     const [showNotifications, setShowNotifications] = useState(false);
     const { unreadCount, refreshNotifications } = useNotification();
@@ -161,7 +163,7 @@ function RetailerHome() {
     const loadData = async () => {
         setIsLoading(true);
         try {
-            const [retailerData, catData, featData, bestData, againData, recData, userProfile] = await Promise.all([
+            const [retailerData, catData, featData, bestData, againData, recData, userProfile, loyaltyData] = await Promise.all([
                 apiService.getRetailerDetails(retailerId),
                 apiService.getRetailerCategories(retailerId),
                 apiService.getFeaturedProducts(retailerId),
@@ -180,10 +182,15 @@ function RetailerHome() {
                 apiService.isAuthenticated() ? apiService.fetchUserProfile().catch((e) => {
                     console.error("FETCH USER PROFILE FAILED:", e);
                     return { referral_code: '' };
-                }) : Promise.resolve({ referral_code: '' })
+                }) : Promise.resolve({ referral_code: '' }),
+                apiService.isAuthenticated() ? apiService.getCustomerLoyalty(retailerId).catch((e) => {
+                    console.error("Loyalty fetch error:", e);
+                    return { points: 0 };
+                }) : Promise.resolve({ points: 0 })
             ]);
 
             setRetailer(retailerData);
+            setUserLoyalty(loyaltyData);
 
             if (typeof window !== 'undefined') {
                 localStorage.setItem('current_retailer_id', retailerId);
@@ -357,8 +364,11 @@ function RetailerHome() {
 
             <main className={styles.main}>
 
-                {/* ===== Combined Rewards Strip (Offers + Refer & Earn) ===== */}
-                {(offers.length > 0 || referralCode || apiService.isAuthenticated()) && (
+                {/* ===== Combined Rewards Strip (Offers + Refer + Loyalty) ===== */}
+                {(offers.length > 0 || 
+                  (retailer.is_referral_enabled && (referralCode || apiService.isAuthenticated())) ||
+                  (retailer.is_reward_active || (userLoyalty && userLoyalty.points > 0))
+                ) && (
                     <div className={styles.rewardsPanel}>
                         {/* Tab switcher */}
                         <div className={styles.rewardsTabs}>
@@ -368,12 +378,22 @@ function RetailerHome() {
                             >
                                 🎁 Offers
                             </button>
-                            <button
-                                className={`${styles.rewardsTab} ${activeRewardTab === 'refer' ? styles.activeTab : ''}`}
-                                onClick={() => setActiveRewardTab('refer')}
-                            >
-                                ⭐ Refer & Earn
-                            </button>
+                            {retailer.is_referral_enabled && (
+                                <button
+                                    className={`${styles.rewardsTab} ${activeRewardTab === 'refer' ? styles.activeTab : ''}`}
+                                    onClick={() => setActiveRewardTab('refer')}
+                                >
+                                    ⭐ Refer
+                                </button>
+                            )}
+                            {(retailer.is_reward_active || (userLoyalty && userLoyalty.points > 0)) && (
+                                <button
+                                    className={`${styles.rewardsTab} ${activeRewardTab === 'points' ? styles.activeTab : ''}`}
+                                    onClick={() => setActiveRewardTab('points')}
+                                >
+                                    💎 Points
+                                </button>
+                            )}
                         </div>
 
                         <div className={styles.rewardsContent}>
@@ -424,20 +444,25 @@ function RetailerHome() {
                             )}
 
                             {/* Refer & Earn Tab */}
-                            {activeRewardTab === 'refer' && (
+                            {activeRewardTab === 'refer' && retailer.is_referral_enabled && (
                                 <div className={styles.referContent}>
                                     <div className={styles.referTitle}>
                                         <Star className="text-yellow-300 fill-yellow-300" size={20} />
-                                        Refer &amp; Earn
+                                        Refer & Earn {retailer.referral_reward_points > 0 ? `(₹${retailer.referral_reward_points})` : ''}
                                     </div>
-                                    <p className={styles.referSubtitle}>Share your code and earn rewards together!</p>
+                                    <p className={styles.referSubtitle}>
+                                        Earn {retailer.referral_reward_points} pts on your friend's first order above ₹{retailer.min_referral_order_amount}!
+                                    </p>
                                     {referralCode ? (
                                         <div className={styles.codeBox}>
                                             <span className={styles.code}>{referralCode}</span>
                                             <div className={styles.referralActions}>
                                                 <button
                                                     className={styles.actionBtn}
-                                                    onClick={() => navigator.clipboard.writeText(referralCode)}
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(referralCode);
+                                                        toast.success("Code copied!");
+                                                    }}
                                                 >
                                                     <Copy size={14} /> Copy
                                                 </button>
@@ -452,6 +477,36 @@ function RetailerHome() {
                                             <Link href="/login" className="text-white font-bold underline">Login to view code</Link>
                                         </div>
                                     )}
+                                </div>
+                            )}
+
+                            {/* Loyalty Points Tab */}
+                            {activeRewardTab === 'points' && (
+                                <div className={styles.referContent}>
+                                    <div className={styles.referTitle}>
+                                        <Gem className="text-blue-300 fill-blue-300" size={20} />
+                                        My Shop Points
+                                    </div>
+                                    <div className={styles.pointsBalanceBox}>
+                                        <div className={styles.pointsValue}>
+                                            {apiService.isAuthenticated() ? (
+                                                <>
+                                                    <span className={styles.pointsLarge}>{userLoyalty?.points || 0}</span>
+                                                    <span className={styles.pointsLabel}>Available Points</span>
+                                                </>
+                                            ) : (
+                                                <Link href="/login" className="text-white underline">Login to check balance</Link>
+                                            )}
+                                        </div>
+                                        {retailer.is_reward_active && (
+                                            <div className={styles.earningRule}>
+                                                🔥 {retailer.loyalty_earning_type === 'percentage' 
+                                                    ? `Earn ${retailer.loyalty_earning_value}% Gems on every order!` 
+                                                    : `Earn 1 Gem for every ₹${parseFloat(retailer.loyalty_earning_value).toFixed(0)} spent!`}
+                                                {parseFloat(retailer.loyalty_min_order_value) > 0 && ` (Min order ₹${parseFloat(retailer.loyalty_min_order_value).toFixed(0)})`}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>

@@ -237,48 +237,120 @@
 }
 
 .loyaltyItem {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     padding: 16px;
     background: white;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-}
-
-.lpInfo {
+    border-radius: 16px;
+    border: 1px solid #f1f5f9;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
     display: flex;
     flex-direction: column;
-    gap: 2px;
 }
 
-.lpRetailer {
-    font-size: 15px;
+.pointsCount {
+    font-size: 20px;
+    font-weight: 800;
+    color: #4f46e5;
+}
+
+.pointsValue {
+    font-size: 14px;
+    color: #10b981;
     font-weight: 700;
-    color: #334155;
 }
 
-.lpConversion {
+.expiryBadge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #fff1f2;
+    color: #e11d48;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 8px;
+    border: 1px solid #ffe4e6;
+}
+
+.conversionRule {
+    margin-top: 8px;
+    font-size: 10px;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+}
+
+/* Transaction List */
+.transactionList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.transactionItem {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #f1f5f9;
+}
+
+.txIconBox {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.txInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.txRetailer {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.txAmount {
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.positive {
+    color: #10b981;
+}
+
+.negative {
+    color: #ef4444;
+}
+
+.txDesc {
     font-size: 11px;
     color: #64748b;
-    font-weight: 500;
-    background: #f1f5f9;
-    padding: 2px 6px;
+    margin: 2px 0;
+}
+
+.txDate {
+    font-size: 10px;
+    color: #94a3b8;
+}
+
+.txExpiry {
+    font-size: 10px;
+    color: #f97316;
+    font-weight: 600;
+    background: #fff7ed;
+    padding: 1px 6px;
     border-radius: 4px;
-    display: inline-block;
-    align-self: flex-start;
-}
-
-.lpPoints {
-    text-align: right;
-}
-
-.lpValue {
-    display: block;
-    font-size: 18px;
-    font-weight: 800;
-    color: #0ea5e9;
-    line-height: 1;
 }
 
 /* New: Hide sections not needed if used with ReferralCard */
@@ -289,13 +361,36 @@
 .statValue,
 .statLabel,
 .codeValue,
-.codeLabel {
-    /* These are now in ReferralCard, but keeping just in case or deleting if conflicts. 
-       Actually, I will remove them if I am sure they are not used. 
-       I'll keep them if I want to reuse them, but I will likely remove them from the component usage.
-       For cleaning up, I should remove them if they are redundant.
-       But since I'm overwriting the file, I just didn't include them in the new content above except for what I still need.
-       Wait, I didn't include them in the new content. So they are gone. Good.
-    */
+.codeLabel,
+.totalBalanceBox {
     display: none;
 }
+
+.activeSchemesList {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px dashed #e2e8f0;
+}
+
+.schemeItem {
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    border: 1px solid #f1f5f9;
+}
+
+.historyItemStyle {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    transition: all 0.2s;
+}
+
+.historyItemStyle:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
