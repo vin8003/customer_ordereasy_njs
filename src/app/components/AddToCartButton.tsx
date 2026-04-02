@@ -11,6 +11,8 @@ interface AddToCartButtonProps {
     maximumOrderQuantity?: number | null;
     retailerId?: string;
     retailerName?: string;
+    offersDelivery?: boolean;
+    offersPickup?: boolean;
     className?: string;
 }
 
@@ -20,6 +22,8 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
     maximumOrderQuantity = null,
     retailerId,
     retailerName,
+    offersDelivery = true, // Default to true if not provided
+    offersPickup = true,
     className
 }) => {
     const { getItemQuantity, addToCart, updateQuantity } = useCartContext();
@@ -38,6 +42,15 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
                 </span>,
                 { duration: 4000 }
             );
+            return;
+        }
+
+        // Offline Validation
+        if (!offersDelivery && !offersPickup) {
+            toast.error("This store is currently not accepting orders.", {
+                icon: '🚫',
+                duration: 3000
+            });
             return;
         }
 
@@ -86,11 +99,11 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
     if (quantity === 0) {
         return (
             <button
-                className={`${styles.addButton} ${className || ''}`}
+                className={`${styles.addButton} ${className || ''} ${(!offersDelivery && !offersPickup) ? styles.disabled : ''}`}
                 onClick={handleAdd}
-                disabled={loading}
+                disabled={loading || (!offersDelivery && !offersPickup)}
             >
-                {loading ? '...' : 'ADD'}
+                {loading ? '...' : (!offersDelivery && !offersPickup ? 'OFFLINE' : 'ADD')}
             </button>
         );
     }

@@ -10,9 +10,11 @@ interface LazyProductLaneProps {
     title: string;
     fetchFn: () => Promise<Product[]>;
     retailerId?: string | number;
+    offersDelivery?: boolean;
+    offersPickup?: boolean;
 }
 
-export default function LazyProductLane({ title, fetchFn, retailerId }: LazyProductLaneProps) {
+export default function LazyProductLane({ title, fetchFn, retailerId, offersDelivery, offersPickup }: LazyProductLaneProps) {
     const router = useRouter();
     const { ref, inView } = useInView({
         triggerOnce: true,
@@ -76,6 +78,8 @@ export default function LazyProductLane({ title, fetchFn, retailerId }: LazyProd
                                 // Ideally toggleWishlist from hook
                             }}
                             onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
+                            offersDelivery={offersDelivery}
+                            offersPickup={offersPickup}
                         />
                     ))}
                 </div>

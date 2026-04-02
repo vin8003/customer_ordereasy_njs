@@ -11,9 +11,11 @@ import { Product } from '../retailer/page';
 
 interface InfiniteProductGridProps {
     retailerId: string | number;
+    offersDelivery?: boolean;
+    offersPickup?: boolean;
 }
 
-export default function InfiniteProductGrid({ retailerId }: InfiniteProductGridProps) {
+export default function InfiniteProductGrid({ retailerId, offersDelivery, offersPickup }: InfiniteProductGridProps) {
     const router = useRouter();
     const { ref, inView } = useInView({
         rootMargin: '400px 0px', // Fetch well before it enters viewport
@@ -111,6 +113,8 @@ export default function InfiniteProductGrid({ retailerId }: InfiniteProductGridP
                             toggleWishlist(product.id);
                         }}
                         onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
+                        offersDelivery={offersDelivery}
+                        offersPickup={offersPickup}
                     />
                 ))}
             </div>

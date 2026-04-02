@@ -37,6 +37,7 @@ function ProductDetail() {
     const productId = searchParams.get('productId') as string;
 
     const [product, setProduct] = useState<Product | null>(null);
+    const [retailerStatus, setRetailerStatus] = useState<{offersDelivery: boolean, offersPickup: boolean} | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const { isWishlisted, toggleWishlist, loadWishlist } = useWishlist();
 
@@ -69,6 +70,13 @@ function ProductDetail() {
                 savings: Number(data.savings),
                 discount_percentage: Number(data.discount_percentage),
                 offers: data.offers || [] // Assuming offers might be in response, else empty
+            });
+
+            // Fetch retailer details for online status
+            const retailerData = await apiService.getRetailerDetails(retailerId);
+            setRetailerStatus({
+                offersDelivery: retailerData.offers_delivery,
+                offersPickup: retailerData.offers_pickup
             });
 
             // Quantity state removed as we use CartContext/AddToCartButton now
@@ -155,6 +163,12 @@ function ProductDetail() {
             <div className={styles.details}>
                 <h1 className={styles.title}>{product.name}</h1>
 
+                {retailerStatus && !retailerStatus.offersDelivery && !retailerStatus.offersPickup && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-xs font-bold animate-pulse flex items-center gap-2">
+                        <span>⚠️</span> This store is currently not accepting online orders.
+                    </div>
+                )}
+
                 <div className={styles.priceBlock}>
                     <span className={styles.price}>₹{product.price}</span>
                     {hasDiscount && (
@@ -218,6 +232,8 @@ function ProductDetail() {
                                 minimumOrderQuantity={product.minimum_order_quantity}
                                 maximumOrderQuantity={product.maximum_order_quantity}
                                 className="w-full h-full text-lg"
+                                offersDelivery={retailerStatus?.offersDelivery}
+                                offersPickup={retailerStatus?.offersPickup}
                             />
                         </div>
                     )}

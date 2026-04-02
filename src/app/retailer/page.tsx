@@ -297,6 +297,13 @@ function RetailerHome() {
                                 </div>
                             </div>
                         )}
+                        {retailer && !retailer.offers_delivery && !retailer.offers_pickup && (
+                            <div className="mt-1.5">
+                                <div className="inline-block text-[10px] font-bold text-red-800 bg-red-50 px-2 py-1 rounded border border-red-200 leading-relaxed animate-pulse">
+                                    ⚠️ <span className="uppercase">Not Accepting Orders.</span> This store is currently offline.
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <div className="flex gap-2">
                         <div className="relative">
@@ -561,6 +568,8 @@ function RetailerHome() {
                                         toggleWishlist(product.id);
                                     }}
                                     onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
+                                    offersDelivery={retailer.offers_delivery}
+                                    offersPickup={retailer.offers_pickup}
                                 />
                             ))}
                         </div>
@@ -585,6 +594,8 @@ function RetailerHome() {
                                         toggleWishlist(product.id);
                                     }}
                                     onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
+                                    offersDelivery={retailer.offers_delivery}
+                                    offersPickup={retailer.offers_pickup}
                                 />
                             ))}
                         </div>
@@ -610,6 +621,8 @@ function RetailerHome() {
                                         toggleWishlist(product.id);
                                     }}
                                     onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
+                                    offersDelivery={retailer.offers_delivery}
+                                    offersPickup={retailer.offers_pickup}
                                 />
                             ))}
                         </div>
@@ -634,6 +647,8 @@ function RetailerHome() {
                                         toggleWishlist(product.id);
                                     }}
                                     onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
+                                    offersDelivery={retailer.offers_delivery}
+                                    offersPickup={retailer.offers_pickup}
                                 />
                             ))}
                         </div>
@@ -649,33 +664,47 @@ function RetailerHome() {
                             title="Deals of the Day"
                             fetchFn={() => apiService.getDealsOfTheDay(retailerId)}
                             retailerId={retailerId}
+                            offersDelivery={retailer.offers_delivery}
+                            offersPickup={retailer.offers_pickup}
                         />
                         <LazyProductLane
                             title="Under ₹99 Store"
                             fetchFn={() => apiService.getBudgetBuys(retailerId)}
                             retailerId={retailerId}
+                            offersDelivery={retailer.offers_delivery}
+                            offersPickup={retailer.offers_pickup}
                         />
                         <LazyProductLane
                             title="Trending Now"
                             fetchFn={() => apiService.getTrendingProducts(retailerId)}
                             retailerId={retailerId}
+                            offersDelivery={retailer.offers_delivery}
+                            offersPickup={retailer.offers_pickup}
                         />
                         <LazyProductLane
                             title="New Arrivals"
                             fetchFn={() => apiService.getNewArrivals(retailerId)}
                             retailerId={retailerId}
+                            offersDelivery={retailer.offers_delivery}
+                            offersPickup={retailer.offers_pickup}
                         />
                         <LazyProductLane
                             title="Seasonal Picks"
                             fetchFn={() => apiService.getSeasonalPicks(retailerId)}
                             retailerId={retailerId}
+                            offersDelivery={retailer.offers_delivery}
+                            offersPickup={retailer.offers_pickup}
                         />
                     </div>
                 )}
 
                 {/* Infinite Scrolling Product Grid */}
                 {retailerId && (
-                    <InfiniteProductGrid retailerId={retailerId} />
+                    <InfiniteProductGrid 
+                        retailerId={retailerId} 
+                        offersDelivery={retailer.offers_delivery}
+                        offersPickup={retailer.offers_pickup}
+                    />
                 )}
 
             </main>

@@ -23,13 +23,17 @@ interface ProductCardProps {
     isWishlisted: boolean;
     onToggleWishlist: (e: React.MouseEvent) => void;
     onClick: () => void;
+    offersDelivery?: boolean;
+    offersPickup?: boolean;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
     product,
     isWishlisted,
     onToggleWishlist,
-    onClick
+    onClick,
+    offersDelivery,
+    offersPickup
 }) => {
     const price = Number(product.price);
     const mrp = Number(product.mrp);
@@ -82,6 +86,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                             productId={product.id}
                             minimumOrderQuantity={product.minimum_order_quantity}
                             maximumOrderQuantity={product.maximum_order_quantity}
+                            offersDelivery={offersDelivery}
+                            offersPickup={offersPickup}
                         />
                     </div>
                 </div>

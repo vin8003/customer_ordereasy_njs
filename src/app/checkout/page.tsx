@@ -38,6 +38,10 @@ export default function CheckoutPage() {
         deliveryCharge: number;
         freeDeliveryThreshold: number;
         minimumOrderAmount: number;
+        offersDelivery: boolean;
+        offersPickup: boolean;
+        acceptsCod: boolean;
+        acceptsUpi: boolean;
         isCurrentlyOpen?: boolean;
         nextOpenTime?: string;
     } | null>(null);
@@ -101,9 +105,27 @@ export default function CheckoutPage() {
                     deliveryCharge: parseFloat(data.delivery_charge || '0'),
                     freeDeliveryThreshold: parseFloat(data.free_delivery_threshold || '0'),
                     minimumOrderAmount: parseFloat(data.minimum_order_amount || '0'),
+                    offersDelivery: data.offers_delivery,
+                    offersPickup: data.offers_pickup,
+                    acceptsCod: data.accepts_cod,
+                    acceptsUpi: data.accepts_upi,
                     isCurrentlyOpen: data.is_currently_open,
                     nextOpenTime: data.next_open_time
                 });
+
+                // Set default delivery mode based on what's offered
+                if (data.offers_delivery === false && data.offers_pickup === true) {
+                    setDeliveryMode('pickup');
+                } else if (data.offers_delivery === true) {
+                    setDeliveryMode('delivery');
+                }
+
+                // Set default payment method based on what's offered
+                if (data.accepts_cod && !data.accepts_upi) {
+                    setPaymentMethod(data.offers_delivery !== false ? 'cod' : 'cash_pickup');
+                } else if (!data.accepts_cod && data.accepts_upi) {
+                    setPaymentMethod('upi');
+                }
             } catch (e) {
                 console.error("Failed to load retailer settings", e);
             }
@@ -297,20 +319,31 @@ export default function CheckoutPage() {
                 {/* Delivery Mode Toggle */}
                 <section className={styles.section}>
                     <h2 className={styles.sectionTitle}>Order Type</h2>
-                    <div className={styles.toggleGroup}>
-                        <button
-                            className={`${styles.toggleBtn} ${deliveryMode === 'delivery' ? styles.active : ''}`}
-                            onClick={() => setDeliveryMode('delivery')}
-                        >
-                            Home Delivery
-                        </button>
-                        <button
-                            className={`${styles.toggleBtn} ${deliveryMode === 'pickup' ? styles.active : ''}`}
-                            onClick={() => setDeliveryMode('pickup')}
-                        >
-                            Store Pickup
-                        </button>
-                    </div>
+                    {retailerSettings && !retailerSettings.offersDelivery && !retailerSettings.offersPickup ? (
+                        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium flex items-center gap-3">
+                            <span className="text-xl">🚫</span>
+                            This store is currently not accepting online orders (Delivery & Pickup disabled).
+                        </div>
+                    ) : (
+                        <div className={styles.toggleGroup}>
+                            {retailerSettings?.offersDelivery !== false && (
+                                <button
+                                    className={`${styles.toggleBtn} ${deliveryMode === 'delivery' ? styles.active : ''}`}
+                                    onClick={() => setDeliveryMode('delivery')}
+                                >
+                                    Home Delivery
+                                </button>
+                            )}
+                            {retailerSettings?.offersPickup !== false && (
+                                <button
+                                    className={`${styles.toggleBtn} ${deliveryMode === 'pickup' ? styles.active : ''}`}
+                                    onClick={() => setDeliveryMode('pickup')}
+                                >
+                                    Store Pickup
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </section>
 
                 {/* Address Selection */}
@@ -354,22 +387,33 @@ export default function CheckoutPage() {
                 {/* Payment Method */}
                 <section className={styles.section}>
                     <h2 className={styles.sectionTitle}>Payment Method</h2>
-                    <div className={styles.paymentOptions}>
-                        <div
-                            className={`${styles.paymentCard} ${paymentMethod === (deliveryMode === 'delivery' ? 'cod' : 'cash_pickup') ? styles.selected : ''}`}
-                            onClick={() => setPaymentMethod(deliveryMode === 'delivery' ? 'cod' : 'cash_pickup')}
-                        >
-                            <span className="font-bold">{deliveryMode === 'delivery' ? 'Cash on Delivery' : 'Cash on Pickup'}</span>
-                            {paymentMethod === (deliveryMode === 'delivery' ? 'cod' : 'cash_pickup') && <CheckCircle size={18} className="text-blue-600" />}
+                    {!retailerSettings?.acceptsCod && !retailerSettings?.acceptsUpi ? (
+                        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium flex items-center gap-3">
+                            <span className="text-xl">🚫</span>
+                            This retailer is not accepting any payments at the moment.
                         </div>
-                        <div
-                            className={`${styles.paymentCard} ${paymentMethod === 'upi' ? styles.selected : ''}`}
-                            onClick={() => setPaymentMethod('upi')}
-                        >
-                            <span className="font-bold">UPI / One Click</span>
-                            {paymentMethod === 'upi' && <CheckCircle size={18} className="text-blue-600" />}
+                    ) : (
+                        <div className={styles.paymentOptions}>
+                            {retailerSettings?.acceptsCod !== false && (
+                                <div
+                                    className={`${styles.paymentCard} ${['cod', 'cash_pickup'].includes(paymentMethod) ? styles.selected : ''}`}
+                                    onClick={() => setPaymentMethod(deliveryMode === 'delivery' ? 'cod' : 'cash_pickup')}
+                                >
+                                    <span className="font-bold">{deliveryMode === 'delivery' ? 'Cash on Delivery' : 'Cash on Pickup'}</span>
+                                    {['cod', 'cash_pickup'].includes(paymentMethod) && <CheckCircle size={18} className="text-blue-600" />}
+                                </div>
+                            )}
+                            {retailerSettings?.acceptsUpi !== false && (
+                                <div
+                                    className={`${styles.paymentCard} ${paymentMethod === 'upi' ? styles.selected : ''}`}
+                                    onClick={() => setPaymentMethod('upi')}
+                                >
+                                    <span className="font-bold">UPI / One Click</span>
+                                    {paymentMethod === 'upi' && <CheckCircle size={18} className="text-blue-600" />}
+                                </div>
+                            )}
                         </div>
-                    </div>
+                    )}
                 </section>
 
                 {/* Special Instructions */}
@@ -462,7 +506,11 @@ export default function CheckoutPage() {
             </main>
 
             <div className={styles.footer}>
-                <Button fullWidth onClick={handlePlaceOrder} isLoading={isLoading}>
+                <Button 
+                    fullWidth 
+                    onClick={handlePlaceOrder} 
+                    isLoading={isLoading}
+                >
                     Place Order (₹{(cartTotal + deliveryFee - discountFromPoints).toFixed(2)})
                 </Button>
             </div>
