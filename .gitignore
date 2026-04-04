@@ -40,3 +40,17 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env
+
+# android
+android/.gradle
+android/.idea
+android/build
+android/local.properties
+android/key.properties
+android/*.jks
+android/*.keystore
+
+
+android/key.properties
+android/*.jks
+android/*.keystore
