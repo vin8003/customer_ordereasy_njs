@@ -14,6 +14,7 @@ interface Product {
     image: string;
     unit?: string;
     active_offer_text?: string;
+    track_inventory?: boolean;
     minimum_order_quantity?: number;
     maximum_order_quantity?: number | null;
 }

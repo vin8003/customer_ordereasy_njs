@@ -27,6 +27,7 @@ interface Product {
     product_group?: string;
     savings?: number;
     discount_percentage?: number;
+    track_inventory: boolean;
     offers?: any[]; // flexible for now
 }
 
@@ -65,6 +66,7 @@ function ProductDetail() {
                 price: sellingPrice,
                 mrp: mrp,
                 stock_quantity: data.quantity || 0,
+                track_inventory: data.track_inventory ?? true,
                 minimum_order_quantity: data.minimum_order_quantity || 1,
                 maximum_order_quantity: data.maximum_order_quantity,
                 savings: Number(data.savings),
@@ -223,8 +225,8 @@ function ProductDetail() {
 
             <div className={styles.footer}>
                 <div className="flex-1">
-                    {product.stock_quantity === 0 ? (
-                        <Button fullWidth disabled>Out of Stock</Button>
+                    {product.track_inventory && product.stock_quantity === 0 ? (
+                        <Button fullWidth disabled className="bg-red-50 text-red-500 border-red-100">Out of Stock</Button>
                     ) : (
                         <div className="w-full h-12">
                             <AddToCartButton
