@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">ordereasy</string>
-    <string name="title_activity_main">ordereasy</string>
+    <string name="app_name">Order Easy</string>
+    <string name="title_activity_main">Order Easy</string>
     <string name="package_name">win.ordereasy.customer</string>
     <string name="custom_url_scheme">win.ordereasy.customer</string>
 </resources>

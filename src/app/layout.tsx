@@ -15,6 +15,7 @@ export const metadata: Metadata = {
 };
 
 import NotificationWrapper from "@/app/components/NotificationWrapper";
+import NativeBackButton from "@/app/components/NativeBackButton";
 import { CartProvider } from "@/context/CartContext";
 import { NotificationProvider } from "@/context/NotificationContext";
 
@@ -36,6 +37,7 @@ export default function RootLayout({
               }}
             />
             <NotificationWrapper>
+              <NativeBackButton />
               {children}
             </NotificationWrapper>
           </NotificationProvider>
