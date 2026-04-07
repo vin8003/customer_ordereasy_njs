@@ -4,6 +4,7 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { Trash2, ArrowLeft, Heart } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
@@ -26,6 +27,7 @@ interface WishlistItem {
 
 export default function WishlistPage() {
     const router = useRouter();
+    const { handleBack } = useAppNavigation();
     const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -93,7 +95,7 @@ export default function WishlistPage() {
     return (
         <div className={styles.container}>
             <header className={styles.header}>
-                <Button variant="outline" onClick={() => router.back()}>
+                <Button variant="outline" onClick={handleBack}>
                     <ArrowLeft size={20} />
                 </Button>
                 <h1>My Wishlist</h1>

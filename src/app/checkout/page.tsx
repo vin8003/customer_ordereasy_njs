@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { ArrowLeft, MapPin, CreditCard, CheckCircle } from 'lucide-react';
 import { apiService, getErrorMessage } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
@@ -20,6 +21,7 @@ interface Address {
 
 export default function CheckoutPage() {
     const router = useRouter();
+    const { handleBack } = useAppNavigation();
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
     const [paymentMethod, setPaymentMethod] = useState('cod');
@@ -296,7 +298,7 @@ export default function CheckoutPage() {
             />
 
             <header className={styles.header}>
-                <Button variant="outline" onClick={() => router.back()}>
+                <Button variant="outline" onClick={handleBack}>
                     <ArrowLeft size={20} />
                 </Button>
                 <h1>Checkout</h1>
@@ -481,7 +483,7 @@ export default function CheckoutPage() {
                     {deliveryMode === 'delivery' && retailerSettings && retailerSettings.freeDeliveryThreshold > 0 && cartTotal < retailerSettings.freeDeliveryThreshold && (
                         <div className="bg-blue-50 text-blue-800 text-sm p-2 rounded mb-2 border border-blue-200 flex justify-between items-center">
                             <span>Add items worth ₹{(retailerSettings.freeDeliveryThreshold - cartTotal).toFixed(0)} more for FREE Delivery!</span>
-                            <Button variant="ghost" className="text-blue-700 h-auto py-0 px-2 text-xs hover:bg-blue-100" onClick={() => router.back()}>
+                            <Button variant="ghost" className="text-blue-700 h-auto py-0 px-2 text-xs hover:bg-blue-100" onClick={handleBack}>
                                 Add Items
                             </Button>
                         </div>

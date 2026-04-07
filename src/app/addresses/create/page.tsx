@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { ArrowLeft } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
@@ -13,6 +14,7 @@ import { AVAILABLE_CITIES } from '@/config/cities';
 
 export default function CreateAddressPage() {
     const router = useRouter();
+    const { handleBack } = useAppNavigation();
     const [isLoading, setIsLoading] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
@@ -65,7 +67,7 @@ export default function CreateAddressPage() {
         setIsLoading(true);
         try {
             await apiService.addAddress(formData);
-            router.back();
+            handleBack();
         } catch (error) {
             console.error(error);
             // global error interceptor handles this
@@ -78,7 +80,7 @@ export default function CreateAddressPage() {
     return (
         <div className={styles.container}>
             <header className={styles.header}>
-                <Button variant="outline" onClick={() => router.back()}>
+                <Button variant="outline" onClick={handleBack}>
                     <ArrowLeft size={20} />
                 </Button>
                 <h1>Add New Address</h1>

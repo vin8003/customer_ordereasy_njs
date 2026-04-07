@@ -4,6 +4,7 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { ArrowLeft, CheckCircle, Users, Gem, History, Clock, Info, TrendingUp, TrendingDown } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
@@ -12,6 +13,7 @@ import styles from './Rewards.module.css';
 
 export default function RewardsPage() {
     const router = useRouter();
+    const { handleBack } = useAppNavigation();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<any>(null);
     const [retailers, setRetailers] = useState<any[]>([]);
@@ -80,7 +82,7 @@ export default function RewardsPage() {
     return (
         <div className={styles.container}>
             <header className={styles.header}>
-                <Button variant="ghost" onClick={() => router.back()} className="p-0">
+                <Button variant="ghost" onClick={handleBack} className="p-0">
                     <ArrowLeft size={24} />
                 </Button>
                 <h1>Rewards & Referrals</h1>

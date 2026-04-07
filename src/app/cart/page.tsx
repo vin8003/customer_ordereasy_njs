@@ -5,6 +5,7 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { ShoppingBag, Trash2, Plus, Minus, ArrowLeft, Tag, Award } from 'lucide-react';
 import { apiService, getErrorMessage } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
@@ -144,6 +145,7 @@ const CartItemRow = ({ item, updateQuantity, removeItem, toggleWishlist, isWishl
 
 export default function CartPage() {
     const router = useRouter();
+    const { handleBack } = useAppNavigation();
     const { items: contextItems, updateQuantity: updateContextQuantity, removeFromCart: removeFromContextCart } = useCartContext();
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [totalAmount, setTotalAmount] = useState(0);
@@ -308,7 +310,7 @@ export default function CartPage() {
     return (
         <div className={styles.container}>
             <header className={styles.header}>
-                <Button variant="outline" onClick={() => router.back()}>
+                <Button variant="outline" onClick={handleBack}>
                     <ArrowLeft size={20} />
                 </Button>
                 <h1>My Cart</h1>

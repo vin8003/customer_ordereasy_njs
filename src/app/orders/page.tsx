@@ -21,8 +21,11 @@ interface Order {
     expected_processing_start?: string;
 }
 
+import { useAppNavigation } from '@/hooks/useAppNavigation';
+
 export default function OrdersPage() {
     const router = useRouter();
+    const { handleBack } = useAppNavigation();
     const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -62,7 +65,7 @@ export default function OrdersPage() {
     return (
         <div className={styles.container}>
             <header className={styles.header}>
-                <Button variant="outline" onClick={() => router.back()}>
+                <Button variant="outline" onClick={handleBack}>
                     <ArrowLeft size={20} />
                 </Button>
                 <h1>My Orders</h1>

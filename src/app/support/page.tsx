@@ -2,11 +2,13 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { ArrowLeft, Mail, Phone, ChevronDown, ChevronUp, MessageCircle } from 'lucide-react';
 import { Button } from '@/app/components/ui/Button';
 
 export default function SupportPage() {
     const router = useRouter();
+    const { handleBack } = useAppNavigation();
     const [openFaq, setOpenFaq] = useState<number | null>(null);
 
     const toggleFaq = (index: number) => {
@@ -37,7 +39,7 @@ export default function SupportPage() {
             {/* Header */}
             <header className="bg-white p-4 shadow-sm sticky top-0 z-10 flex items-center gap-4">
                 <button
-                    onClick={() => router.back()}
+                    onClick={handleBack}
                     className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                 >
                     <ArrowLeft size={20} className="text-gray-600" />

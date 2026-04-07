@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { ArrowLeft, Save } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
@@ -11,6 +12,7 @@ import styles from './ProfileEdit.module.css';
 
 export default function EditProfilePage() {
     const router = useRouter();
+    const { handleBack } = useAppNavigation();
     const [isLoading, setIsLoading] = useState(false);
     const [formData, setFormData] = useState({
         first_name: '',
@@ -40,7 +42,7 @@ export default function EditProfilePage() {
         try {
             await apiService.updateUserProfile(formData);
             toast.success("Profile updated successfully!");
-            router.back();
+            handleBack();
         } catch (error) {
             console.error(error);
             // global error interceptor handles this
@@ -53,7 +55,7 @@ export default function EditProfilePage() {
     return (
         <div className={styles.container}>
             <header className={styles.header}>
-                <Button variant="outline" onClick={() => router.back()}>
+                <Button variant="outline" onClick={handleBack}>
                     <ArrowLeft size={20} />
                 </Button>
                 <h1>Edit Profile</h1>

@@ -3,6 +3,7 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { ArrowLeft, Plus, MapPin, Trash2, Edit } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
@@ -10,6 +11,7 @@ import styles from './Addresses.module.css';
 
 export default function AddressesPage() {
     const router = useRouter();
+    const { handleBack } = useAppNavigation();
     const [addresses, setAddresses] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -42,7 +44,7 @@ export default function AddressesPage() {
     return (
         <div className={styles.container}>
             <header className={styles.header}>
-                <Button variant="outline" onClick={() => router.back()}>
+                <Button variant="outline" onClick={handleBack}>
                     <ArrowLeft size={20} />
                 </Button>
                 <h1>My Addresses</h1>

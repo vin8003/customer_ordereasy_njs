@@ -4,6 +4,7 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { ArrowLeft } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
@@ -14,6 +15,7 @@ import styles from '../Addresses.module.css';
 
 function EditAddressForm() {
     const router = useRouter();
+    const { handleBack } = useAppNavigation();
     const searchParams = useSearchParams();
     const addressId = searchParams.get('id');
 
@@ -56,7 +58,7 @@ function EditAddressForm() {
             console.error(error);
             // global error interceptor handles this
             console.error(error);
-            router.back();
+            handleBack();
         } finally {
             setIsLoading(false);
         }
@@ -101,7 +103,7 @@ function EditAddressForm() {
         if (!addressId) return;
         try {
             await apiService.updateAddress(parseInt(addressId), formData);
-            router.back();
+            handleBack();
         } catch (error) {
             console.error(error);
             // global error interceptor handles this
@@ -116,7 +118,7 @@ function EditAddressForm() {
     return (
         <div className={styles.container}>
             <header className={styles.header}>
-                <Button variant="outline" onClick={() => router.back()}>
+                <Button variant="outline" onClick={handleBack}>
                     <ArrowLeft size={20} />
                 </Button>
                 <h1>Edit Address</h1>
