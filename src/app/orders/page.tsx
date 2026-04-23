@@ -19,6 +19,9 @@ interface Order {
         comment: string;
     };
     expected_processing_start?: string;
+    net_amount?: string;
+    refund_amount?: string;
+    is_returned?: boolean;
 }
 
 import { useAppNavigation } from '@/hooks/useAppNavigation';
@@ -119,10 +122,22 @@ export default function OrdersPage() {
                                 <p className="font-medium text-sm">{order.retailer_name || 'Retailer'}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-gray-500 text-right">Total Amount</p>
-                                <p className="font-bold text-primary">₹{order.total_amount}</p>
+                                <p className="text-xs text-gray-500 text-right">{order.is_returned ? 'Net Amount' : 'Total Amount'}</p>
+                                <div className="flex flex-col items-end">
+                                    {order.is_returned && (
+                                        <span className="text-[10px] line-through text-gray-400">₹{order.total_amount}</span>
+                                    )}
+                                    <p className="font-bold text-primary">₹{order.is_returned ? order.net_amount : order.total_amount}</p>
+                                </div>
                             </div>
                         </div>
+
+                        {order.is_returned && (
+                            <div className="mt-2 flex items-center gap-1.5 bg-red-50 text-red-600 px-2 py-1 rounded text-[10px] font-bold border border-red-100 w-fit">
+                                <Package size={12} />
+                                ITEMS RETURNED
+                            </div>
+                        )}
 
                         <div className="mt-4 pt-3 border-t border-gray-100 flex justify-center">
                             <span className="text-xs font-bold text-primary flex items-center gap-1">

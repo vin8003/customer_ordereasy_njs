@@ -17,6 +17,8 @@ interface OrderItem {
     product_price: string;
     quantity: number;
     total_price: string;
+    net_quantity?: number;
+    returned_quantity?: number;
 }
 
 interface OrderDetail {
@@ -31,6 +33,8 @@ interface OrderDetail {
     discount_amount: string;
     discount_from_points: string;
     total_amount: string;
+    refund_amount?: string;
+    net_amount?: string;
     delivery_mode: string;
     payment_mode: string;
     special_instructions: string;
@@ -474,9 +478,25 @@ function OrderDetails() {
                                 </div>
                                 <div className={styles.itemDetails}>
                                     <h4 className={styles.itemName}>{item.product_name}</h4>
-                                    <p className={styles.itemMeta}>₹{item.product_price} × {item.quantity}</p>
+                                    <p className={styles.itemMeta}>
+                                        ₹{item.product_price} × {item.quantity}
+                                        {item.returned_quantity && item.returned_quantity > 0 ? (
+                                            <span className="text-red-500 font-bold ml-2 text-[10px] uppercase">
+                                                ({item.returned_quantity} Returned)
+                                            </span>
+                                        ) : null}
+                                    </p>
                                 </div>
-                                <div className={styles.itemPrice}>₹{item.total_price}</div>
+                                <div className={styles.itemPrice}>
+                                    {item.returned_quantity && item.returned_quantity > 0 ? (
+                                        <div className="flex flex-col items-end">
+                                            <span className="line-through text-gray-400 text-xs">₹{item.total_price}</span>
+                                            <span className="text-green-600 font-bold">₹{(parseFloat(item.product_price) * (item.net_quantity || 0)).toFixed(0)}</span>
+                                        </div>
+                                    ) : (
+                                        `₹${item.total_price}`
+                                    )}
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -506,9 +526,21 @@ function OrderDetails() {
                             </div>
                         )}
                         <div className={styles.totalRow}>
-                            <span>Total Amount</span>
-                            <span>₹{order.total_amount}</span>
+                            <span>{parseFloat(order.refund_amount || '0') > 0 ? 'Original Total' : 'Total Amount'}</span>
+                            <span className={parseFloat(order.refund_amount || '0') > 0 ? 'line-through text-gray-400' : ''}>₹{order.total_amount}</span>
                         </div>
+                        {parseFloat(order.refund_amount || '0') > 0 && (
+                            <>
+                                <div className={styles.summaryRow}>
+                                    <span className="text-red-600 font-bold">Refund Amount</span>
+                                    <span className="text-red-600 font-bold">-₹{order.refund_amount}</span>
+                                </div>
+                                <div className={styles.totalRow + " border-t-2 border-gray-200 pt-2 mt-2"}>
+                                    <span className="text-green-700">Net Payable</span>
+                                    <span className="text-green-700 text-xl font-black">₹{order.net_amount}</span>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </section>
 
