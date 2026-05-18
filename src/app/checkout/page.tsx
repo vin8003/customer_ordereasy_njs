@@ -228,17 +228,26 @@ export default function CheckoutPage() {
         }
 
         const total = cartTotal + deliveryFee;
+        const conversionRate = parseFloat(rewardConfig.conversion_rate);
+
+        if (!conversionRate || conversionRate <= 0) {
+            setDiscountFromPoints(0);
+            return;
+        }
 
         const maxByPercent = (total * parseFloat(rewardConfig.max_reward_usage_percent)) / 100;
         const maxByFlat = parseFloat(rewardConfig.max_reward_usage_flat);
-        const maxByBalance = userRewardPoints * parseFloat(rewardConfig.conversion_rate);
 
-        const redeemable = Math.min(
-            total,
-            maxByPercent,
-            maxByFlat,
-            maxByBalance
-        );
+        // Maximum discount allowed based on order/flat limits
+        const maxDiscountAllowed = Math.min(total, maxByPercent, maxByFlat);
+
+        // Convert the allowed discount into whole points
+        const maxPointsAllowed = Math.floor(maxDiscountAllowed / conversionRate);
+
+        // Actual points to redeem must be whole number
+        const pointsToRedeem = Math.floor(Math.min(userRewardPoints, maxPointsAllowed));
+
+        const redeemable = pointsToRedeem * conversionRate;
 
         setDiscountFromPoints(redeemable);
     };
