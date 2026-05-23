@@ -178,7 +178,8 @@ function CategoryProducts() {
                 setHasMore(false);
             } else {
                 // Check total count if available
-                if (prodData.count && products.length + rawProducts.length >= prodData.count) {
+                const currentProductsLength = pageNum === 1 ? 0 : products.length;
+                if (prodData.count && currentProductsLength + rawProducts.length >= prodData.count) {
                     setHasMore(false);
                 }
             }
