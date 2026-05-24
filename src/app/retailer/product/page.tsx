@@ -29,6 +29,13 @@ interface Product {
     discount_percentage?: number;
     track_inventory: boolean;
     offers?: any[]; // flexible for now
+    group_variants?: {
+        id: number;
+        name: string;
+        unit: string;
+        price: number;
+        original_price: number | null;
+    }[];
 }
 
 function ProductDetail() {
@@ -208,6 +215,37 @@ function ProductDetail() {
                 {product.product_group && (
                     <div className={styles.groupTag}>
                         {product.product_group}
+                    </div>
+                )}
+
+                {/* Pack Sizes (Variant Selector) */}
+                {product.group_variants && product.group_variants.length > 0 && (
+                    <div className={styles.variantSection}>
+                        <span className={styles.variantTitle}>Available Pack Sizes</span>
+                        <div className={styles.variantList}>
+                            {/* Current Product variant chip */}
+                            <button className={`${styles.variantChip} ${styles.variantChipActive}`}>
+                                <span className={styles.variantUnit}>
+                                    {product.name.replace(product.product_group || '', '').trim() || product.unit || 'Current'}
+                                </span>
+                                <span className={styles.variantPrice}>₹{product.price}</span>
+                            </button>
+                            
+                            {/* Sibling variants chips */}
+                            {product.group_variants.map(variant => {
+                                const cleanLabel = variant.name.replace(product.product_group || '', '').trim() || variant.unit || 'Pack';
+                                return (
+                                    <button
+                                        key={variant.id}
+                                        className={styles.variantChip}
+                                        onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${variant.id}`)}
+                                    >
+                                        <span className={styles.variantUnit}>{cleanLabel}</span>
+                                        <span className={styles.variantPrice}>₹{variant.price}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
                 )}
 
