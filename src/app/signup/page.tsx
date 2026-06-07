@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
-import { apiService, setAuthToken } from '../../services/api';
+import { apiService } from '../../services/api';
 import styles from './Signup.module.css';
 import { Phone, Lock, User, Mail } from 'lucide-react';
 
@@ -47,7 +47,11 @@ export default function SignupPage() {
             });
 
             if (response && response.tokens) {
-                setAuthToken(response.tokens.access, response.tokens.refresh);
+                // Defer token activation to prevent overwriting guest cart
+                localStorage.setItem('temp_customer_access_token', response.tokens.access);
+                if (response.tokens.refresh) {
+                    localStorage.setItem('temp_customer_refresh_token', response.tokens.refresh);
+                }
                 router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
             } else {
                 // Handle case where tokens might not be returned immediately (verification needed)

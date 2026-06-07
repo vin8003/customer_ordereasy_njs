@@ -5,16 +5,18 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
-import { apiService, getErrorMessage } from '../../services/api';
+import { apiService, getErrorMessage, setAuthToken } from '../../services/api';
 import styles from './VerifyEmail.module.css';
 import { Key } from 'lucide-react';
 import LoadingScreen from '@/app/components/LoadingScreen';
 import { canRequestOTP, recordOTPRequest } from '@/utils/rateLimit';
+import { useCartContext } from '@/context/CartContext';
 
 function VerifyEmailContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const email = searchParams.get('email') || '';
+    const { syncGuestCart } = useCartContext();
 
     const [otp, setOtp] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -50,10 +52,33 @@ function VerifyEmailContent() {
 
         try {
             await apiService.verifyEmailOTP(email, otp);
-            setSuccess('Email verified successfully! Redirecting...');
-            setTimeout(() => {
-                router.push('/retailers');
-            }, 2000);
+            
+            // Promote temp tokens to active slots
+            const access = localStorage.getItem('temp_customer_access_token');
+            const refresh = localStorage.getItem('temp_customer_refresh_token');
+            
+            if (access) {
+                setAuthToken(access, refresh || undefined);
+                localStorage.removeItem('temp_customer_access_token');
+                localStorage.removeItem('temp_customer_refresh_token');
+                
+                // Sync guest cart to authenticated account
+                try {
+                    await syncGuestCart();
+                } catch (syncErr) {
+                    console.error("Failed to sync guest cart on verification:", syncErr);
+                }
+                
+                setSuccess('Email verified successfully! Redirecting...');
+                setTimeout(() => {
+                    router.push('/retailers');
+                }, 2000);
+            } else {
+                setSuccess('Email verified successfully! Please log in.');
+                setTimeout(() => {
+                    router.push('/login');
+                }, 2000);
+            }
         } catch (err: any) {
             console.error(err);
             setError(getErrorMessage(err));
