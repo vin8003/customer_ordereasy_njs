@@ -322,3 +322,72 @@
     align-self: center;
     /* Vertical center alignment */
 }
+
+/* Variant Pack Selector Sizing Styles (KAN-13) */
+.variantSection {
+    margin: 1.5rem 0;
+    padding: 1rem 0;
+    border-top: 1px solid #f1f5f9;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.variantTitle {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+.productsGrid {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding: 0.5rem 0 1rem;
+    scroll-behavior: smooth;
+    scrollbar-width: none; /* Hide scrollbar for Firefox */
+}
+
+.productsGrid::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for Chrome/Safari */
+}
+
+/* Style for ADD button inside footer on Product Page */
+.footer button[class*="addButton"] {
+    background: #00b251 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 24px !important;
+    font-weight: 700 !important;
+    font-size: 1.1rem !important;
+    box-shadow: 0 4px 12px rgba(0, 178, 81, 0.2) !important;
+    transition: all 0.2s ease !important;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.footer button[class*="addButton"]:active {
+    transform: scale(0.98) !important;
+    background: #009e45 !important;
+}
+
+/* Style for Quantity selector container in footer */
+.footer div[class*="quantityControl"] {
+    background-color: #00b251 !important;
+    border-radius: 24px !important;
+    width: 100% !important;
+    height: 100% !important;
+    box-shadow: 0 4px 12px rgba(0, 178, 81, 0.2) !important;
+}
+
+.footer div[class*="quantityControl"] button {
+    font-size: 20px !important;
+    font-weight: 600 !important;
+}
+
+.footer div[class*="quantityControl"] span {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+}

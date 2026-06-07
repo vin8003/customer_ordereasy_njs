@@ -10,6 +10,7 @@ import { Button } from '@/app/components/ui/Button';
 import { useWishlist } from '@/hooks/useWishlist';
 import { WishlistIcon } from '@/app/components/WishlistIcon';
 import AddToCartButton from '@/app/components/AddToCartButton';
+import { ProductCard } from '@/app/components/ProductCard';
 import styles from './ProductDetail.module.css';
 
 interface Product {
@@ -29,6 +30,19 @@ interface Product {
     discount_percentage?: number;
     track_inventory: boolean;
     offers?: any[]; // flexible for now
+    group_variants?: {
+        id: number;
+        name: string;
+        unit: string;
+        price: number;
+        original_price: number | null;
+        image?: string;
+        image_url?: string;
+        minimum_order_quantity?: number;
+        maximum_order_quantity?: number | null;
+        track_inventory?: boolean;
+        stock_quantity?: number;
+    }[];
 }
 
 function ProductDetail() {
@@ -208,6 +222,45 @@ function ProductDetail() {
                 {product.product_group && (
                     <div className={styles.groupTag}>
                         {product.product_group}
+                    </div>
+                )}
+
+                {/* Pack Sizes (Variant Selector) */}
+                {product.group_variants && product.group_variants.length > 0 && (
+                    <div className={styles.variantSection}>
+                        <span className={styles.variantTitle}>Available Pack Sizes</span>
+                        <div className={styles.productsGrid}>
+                            {product.group_variants.map(variant => {
+                                const mappedProduct = {
+                                    id: variant.id,
+                                    name: variant.name,
+                                    price: variant.price,
+                                    mrp: variant.original_price || variant.price,
+                                    image: variant.image || variant.image_url || '',
+                                    unit: variant.unit,
+                                    minimum_order_quantity: variant.minimum_order_quantity || 1,
+                                    maximum_order_quantity: variant.maximum_order_quantity,
+                                    track_inventory: variant.track_inventory ?? true,
+                                    stock_quantity: variant.stock_quantity ?? 0,
+                                };
+                                return (
+                                    <div key={variant.id} style={{ minWidth: '150px', flexShrink: 0 }}>
+                                        <ProductCard
+                                            product={mappedProduct}
+                                            isWishlisted={isWishlisted(variant.id)}
+                                            onToggleWishlist={(e: React.MouseEvent) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                toggleWishlist(variant.id);
+                                            }}
+                                            onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${variant.id}`)}
+                                            offersDelivery={retailerStatus?.offersDelivery}
+                                            offersPickup={retailerStatus?.offersPickup}
+                                        />
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 )}
 
