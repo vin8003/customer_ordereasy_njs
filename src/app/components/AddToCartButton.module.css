@@ -1,36 +1,36 @@
 .addButton {
     width: 72px;
     height: 32px;
-    border: 1px solid #00b251;
+    border: 1px solid var(--primary-color);
     border-radius: 8px;
     background-color: white;
-    color: #00b251;
+    color: var(--primary-color);
     font-weight: 700;
     font-size: 13px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .addButton:active {
-    transform: scale(0.95);
-    background-color: #f0fdf4;
+    transform: scale(0.94);
+    background-color: rgba(99, 102, 241, 0.08);
 }
 
 .quantityControl {
     width: 82px;
     height: 32px;
-    background-color: #00b251;
+    background-color: var(--primary-color);
     border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     color: white;
     font-weight: 700;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 5px rgba(99, 102, 241, 0.2);
     overflow: hidden;
 }
 

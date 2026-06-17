@@ -6,18 +6,22 @@
 }
 
 .header {
-    background: #ffffff;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     padding: 16px 20px 20px;
     position: sticky;
     top: 0;
     z-index: 50;
     box-shadow: none;
-    transition: box-shadow 0.3s ease;
+    transition: all 0.3s ease;
     border-bottom-left-radius: 24px;
     border-bottom-right-radius: 24px;
+    border-bottom: 1px solid rgba(241, 245, 249, 0.8);
 }
 
 .header.scrolled {
+    background: rgba(255, 255, 255, 0.92);
     box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05);
 }
 
@@ -437,6 +441,10 @@
     color: #64748b;
 }
 
+.rewardsTab:active {
+    transform: scale(0.95);
+}
+
 .rewardsTab.activeTab {
     background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
     color: #ffffff;
@@ -555,6 +563,8 @@
     gap: 12px;
     scrollbar-width: none;
     padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
 }
 
 /* Ensure last item has enough space for scroll affordance */
@@ -576,11 +586,12 @@
     /* Increased from 76px */
     flex-shrink: 0;
     text-decoration: none;
-    transition: transform 0.2s;
+    transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    scroll-snap-align: start;
 }
 
 .categoryItem:active {
-    transform: scale(0.95);
+    transform: scale(0.93);
 }
 
 .catIcon {
@@ -627,6 +638,8 @@
     /* Reduced gap for compact feel */
     scrollbar-width: none;
     padding-bottom: 24px;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
 }
 
 .productsScroll::after {
@@ -639,6 +652,7 @@
     flex-shrink: 0;
     width: 144px;
     /* Reduced to make it slightly smaller than original as requested */
+    scroll-snap-align: start;
 }
 
 .productsScroll::-webkit-scrollbar {

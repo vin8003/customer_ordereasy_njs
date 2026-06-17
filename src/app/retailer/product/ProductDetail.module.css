@@ -15,8 +15,10 @@
     justify-content: space-between;
     padding: 1rem;
     z-index: 50;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(241, 245, 249, 0.8);
 }
 
 /* Image Section */
@@ -348,6 +350,12 @@
     padding: 0.5rem 0 1rem;
     scroll-behavior: smooth;
     scrollbar-width: none; /* Hide scrollbar for Firefox */
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+}
+
+.productsGrid > * {
+    scroll-snap-align: start;
 }
 
 .productsGrid::-webkit-scrollbar {
@@ -356,13 +364,13 @@
 
 /* Style for ADD button inside footer on Product Page */
 .footer button[class*="addButton"] {
-    background: #00b251 !important;
+    background: var(--primary-color) !important;
     color: white !important;
     border: none !important;
     border-radius: 24px !important;
     font-weight: 700 !important;
     font-size: 1.1rem !important;
-    box-shadow: 0 4px 12px rgba(0, 178, 81, 0.2) !important;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2) !important;
     transition: all 0.2s ease !important;
     width: 100% !important;
     height: 100% !important;
@@ -370,16 +378,16 @@
 
 .footer button[class*="addButton"]:active {
     transform: scale(0.98) !important;
-    background: #009e45 !important;
+    background: var(--primary-hover) !important;
 }
 
 /* Style for Quantity selector container in footer */
 .footer div[class*="quantityControl"] {
-    background-color: #00b251 !important;
+    background-color: var(--primary-color) !important;
     border-radius: 24px !important;
     width: 100% !important;
     height: 100% !important;
-    box-shadow: 0 4px 12px rgba(0, 178, 81, 0.2) !important;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2) !important;
 }
 
 .footer div[class*="quantityControl"] button {

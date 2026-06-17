@@ -81,11 +81,10 @@
     background: #ffffff;
     border-radius: 16px;
     padding: 1.25rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03); /* Enhanced subtle shadow */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.01);
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid rgba(0, 0, 0, 0.04);
-    border-bottom: 4px solid #4f46e5; /* Accent border */
     position: relative;
     display: flex;
     flex-direction: column;
@@ -93,8 +92,12 @@
 
 .retailerCard:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04); /* More prominent hover shadow */
-    border-color: rgba(59, 130, 246, 0.2); /* Highlight border on hover */
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06), 0 4px 8px rgba(0, 0, 0, 0.02);
+    border-color: rgba(99, 102, 241, 0.15);
+}
+
+.retailerCard:active {
+    transform: scale(0.97);
 }
 
 .cardContent {
