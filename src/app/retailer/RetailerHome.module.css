@@ -73,9 +73,11 @@
 }
 
 .logo {
-    height: 56px;
-    width: 168px;
+    height: 84px;
+    width: 252px;
     object-fit: contain;
+    margin-top: -16px;
+    margin-bottom: -16px;
 }
 
 .storeHeaderInfo {
