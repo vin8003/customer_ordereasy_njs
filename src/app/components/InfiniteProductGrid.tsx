@@ -90,7 +90,7 @@ export default function InfiniteProductGrid({ retailerId, offersDelivery, offers
     }
 
     return (
-        <div className="mt-8 mb-24">
+        <div className={`${styles.section} mb-24`}>
             <div className={styles.sectionHeader}>
                 <h2 className={styles.sectionTitle}>All Products</h2>
             </div>
