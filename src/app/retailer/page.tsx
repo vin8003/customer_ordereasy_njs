@@ -14,6 +14,7 @@ import { useCartContext } from '@/context/CartContext';
 import { WishlistIcon } from '@/app/components/WishlistIcon';
 import { ProductImage } from '@/app/components/ProductImage';
 import { ProductCard } from '@/app/components/ProductCard';
+import { Button } from '@/app/components/ui/Button';
 import LazyProductLane from '@/app/components/LazyProductLane';
 import InfiniteProductGrid from '@/app/components/InfiniteProductGrid';
 import styles from './RetailerHome.module.css';
@@ -71,6 +72,10 @@ function RetailerHome() {
     const [showNotifications, setShowNotifications] = useState(false);
     const { unreadCount, refreshNotifications } = useNotification();
 
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [userName, setUserName] = useState('');
+    const [selectedCity, setSelectedCity] = useState<any>(null);
+
     // Use shared wishlist and cart hooks
     const { wishlistIds, loadWishlist, toggleWishlist, isWishlisted } = useWishlist();
     const { cartCount } = useCartContext();
@@ -117,14 +122,28 @@ function RetailerHome() {
         }
     };
 
+    const handleLogout = async () => {
+        await apiService.logout();
+        setIsAuthenticated(false);
+        setUserName('');
+        window.location.reload();
+    };
+
     useEffect(() => {
+        const storedCity = localStorage.getItem('selected_city');
+        if (storedCity) {
+            try {
+                setSelectedCity(JSON.parse(storedCity));
+            } catch (e) {
+                console.error(e);
+            }
+        }
         if (retailerId) {
             loadData();
             if (apiService.isAuthenticated()) {
                 loadWishlist(); // Load wishlist only if authenticated
                 refreshNotifications();
             }
-            // cart handled by context
         }
     }, [retailerId, loadWishlist]);
 
@@ -223,6 +242,12 @@ function RetailerHome() {
             if (userProfile && userProfile.referral_code) {
                 setReferralCode(userProfile.referral_code);
             }
+            if (apiService.isAuthenticated()) {
+                setIsAuthenticated(true);
+                if (userProfile) {
+                    setUserName(userProfile.first_name || 'User');
+                }
+            }
 
         } catch (e) {
             console.error("Failed to load retailer data", e);
@@ -283,35 +308,25 @@ function RetailerHome() {
             {/* Header */}
             <header className={`${styles.header} ${isScrolled ? styles.scrolled : ''}`}>
                 <div className={styles.topBar}>
-                    <div className="flex-1">
-                        <div className={styles.locationInfo}>
-                            <MapPin size={16} className="text-blue-500" />
-                            <span className="text-xs text-gray-500 font-medium">Shopping at</span>
-                        </div>
-                        <div className={styles.shopSelector} onClick={() => router.push('/retailers')}>
-                            <h1 className={styles.shopName}>{retailer?.shop_name || 'Loading...'}</h1>
-                            <ChevronRight size={16} className="rotate-90 text-gray-500" />
-                        </div>
-                        {retailer && !retailer.is_currently_open && (
-                            <div className="mt-1.5">
-                                <div className="inline-block text-[10px] font-medium text-indigo-800 bg-indigo-50 px-2 py-1 rounded border border-indigo-200 leading-relaxed">
-                                    🌙 <span className="font-bold">Closed.</span> Orders placed now will be processed starting at <span className="font-bold whitespace-nowrap">{retailer.next_open_time || 'next open time'}</span>.
-                                </div>
-                            </div>
-                        )}
-                        {retailer && !retailer.offers_delivery && !retailer.offers_pickup && (
-                            <div className="mt-1.5">
-                                <div className="inline-block text-[10px] font-bold text-red-800 bg-red-50 px-2 py-1 rounded border border-red-200 leading-relaxed animate-pulse">
-                                    ⚠️ <span className="uppercase">Not Accepting Orders.</span> This store is currently offline.
-                                </div>
-                            </div>
-                        )}
+                    <div
+                        className={styles.locationBar}
+                        onClick={() => router.push('/city-selection')}
+                        style={{ cursor: 'pointer' }}
+                    >
+                        <MapPin size={14} className={styles.locationIcon} />
+                        <span>{selectedCity?.name || 'Select City'} {selectedCity?.pincode ? `(${selectedCity.pincode})` : ''}</span>
                     </div>
-                    <div className="flex gap-2">
-                        <div className="relative">
+
+                    <div className={styles.authContainer}>
+                        {isAuthenticated && (
+                            <span className={styles.userName}>Hi, {userName}</span>
+                        )}
+                        
+                        <div className="relative" style={{ display: 'flex', alignItems: 'center' }}>
                             <button
                                 className={styles.actionBtn}
                                 onClick={() => setShowNotifications(!showNotifications)}
+                                style={{ marginRight: '8px' }}
                             >
                                 <div className={styles.iconWrapper}>
                                     <Bell size={20} />
@@ -324,8 +339,62 @@ function RetailerHome() {
                             />
                         </div>
 
-
+                        {isAuthenticated ? (
+                            <Button
+                                variant="ghost"
+                                onClick={handleLogout}
+                                className={styles.logoutButton}
+                                style={{ padding: '0 4px', fontSize: '0.85rem' }}
+                            >
+                                Logout
+                            </Button>
+                        ) : (
+                            <Link href="/login">
+                                <Button variant="outline" style={{ padding: '4px 10px', fontSize: '0.8rem' }}>Login</Button>
+                            </Link>
+                        )}
                     </div>
+                </div>
+
+                <div className={styles.logoContainer}>
+                    <img
+                        src="/assets/images/logo.png"
+                        alt="Order Easy Logo"
+                        className={styles.logo}
+                    />
+                </div>
+
+                <div className={styles.storeHeaderInfo}>
+                    <div className={styles.shoppingAtLabel}>Shopping at:</div>
+                    <div className={styles.storeHeaderRow}>
+                        <div className={styles.shopSelector} onClick={() => router.push('/retailers')}>
+                            <h1 className={styles.shopName}>{retailer?.shop_name || 'Loading...'}</h1>
+                            <ChevronRight size={16} className={styles.rotateIcon} />
+                        </div>
+                        {retailer?.average_rating && (
+                            <div className={styles.ratingBadge}>
+                                ★ {retailer.average_rating} stars
+                            </div>
+                        )}
+                    </div>
+                    <div className={styles.storeAddress}>
+                        {retailer?.address_line1 || `${retailer?.city || ''}, ${retailer?.state || ''}`}
+                    </div>
+
+                    {retailer && !retailer.is_currently_open && (
+                        <div className="mt-1.5">
+                            <div className="inline-block text-[10px] font-medium text-indigo-800 bg-indigo-50 px-2 py-1 rounded border border-indigo-200 leading-relaxed">
+                                🌙 <span className="font-bold">Closed.</span> Orders placed now will be processed starting at <span className="font-bold whitespace-nowrap">{retailer.next_open_time || 'next open time'}</span>.
+                            </div>
+                        </div>
+                    )}
+                    {retailer && !retailer.offers_delivery && !retailer.offers_pickup && (
+                        <div className="mt-1.5">
+                            <div className="inline-block text-[10px] font-bold text-red-800 bg-red-50 px-2 py-1 rounded border border-red-200 leading-relaxed animate-pulse">
+                                ⚠️ <span className="uppercase">Not Accepting Orders.</span> This store is currently offline.
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <form className={styles.searchBar} onSubmit={handleSearch}>

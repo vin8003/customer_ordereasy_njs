@@ -79,8 +79,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
                 <div className={styles.footer}>
                     <div className={styles.priceContainer}>
-                        {discount > 0 && <span className={styles.mrp}>₹{product.mrp}</span>}
                         <span className={styles.price}>₹{product.price}</span>
+                        {discount > 0 && (
+                            <>
+                                <span className={styles.separator}>|</span>
+                                <span className={styles.mrp}>₹{product.mrp} M.R.P.</span>
+                            </>
+                        )}
                     </div>
                     <div onClick={(e) => e.stopPropagation()}>
                         <AddToCartButton

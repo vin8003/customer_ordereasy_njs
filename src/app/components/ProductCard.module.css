@@ -149,20 +149,31 @@
 
 .priceContainer {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.separator {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 400;
+    margin: 0 2px;
 }
 
 .mrp {
-    font-size: 0.75rem;
+    font-size: 0.725rem;
     color: var(--text-muted);
     text-decoration: line-through;
+    white-space: nowrap;
 }
 
 .price {
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 700;
     color: var(--text-primary);
+    white-space: nowrap;
 }
 
 .addBtn {

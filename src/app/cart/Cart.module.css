@@ -52,14 +52,16 @@
 }
 
 .itemImage {
-    width: 70px;
-    height: 70px;
-    background: #f3f4f6;
-    border-radius: var(--radius-md);
+    width: 76px;
+    height: 76px;
+    background: #f8fafc;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    border: 1px solid #f1f5f9;
+    padding: 6px;
 }
 
 .itemInfo {
