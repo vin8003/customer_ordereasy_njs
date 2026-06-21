@@ -2,7 +2,7 @@
     min-height: 100vh;
     padding: 1rem;
     padding-bottom: 100px;
-    background: linear-gradient(to bottom, #f8fafc, #eff6ff);
+    background: linear-gradient(to bottom, #ffffff 0%, var(--bg-color) 300px, var(--bg-color) 100%);
 }
 
 .logoContainer {
