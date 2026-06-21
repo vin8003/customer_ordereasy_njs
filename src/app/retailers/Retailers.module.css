@@ -9,12 +9,17 @@
     display: flex;
     justify-content: center;
     margin-bottom: 1rem;
+    width: 100%;
+    height: 56px;
+    overflow: hidden;
+    align-items: center;
 }
 
 .logo {
-    height: 80px;
-    width: auto;
+    height: 90px;
+    width: 270px;
     object-fit: contain;
+    transform: scale(1.4);
 }
 
 .header {
