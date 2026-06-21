@@ -66,6 +66,7 @@
 }
 
 .logoContainer {
+    position: relative;
     display: flex;
     justify-content: center;
     margin-bottom: 12px;
@@ -73,6 +74,14 @@
     height: 56px;
     overflow: hidden;
     align-items: center;
+}
+
+.logoNotificationWrapper {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
 }
 
 .logo {

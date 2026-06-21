@@ -321,23 +321,6 @@ function RetailerHome() {
                         {isAuthenticated && (
                             <span className={styles.userName}>Hi, {userName}</span>
                         )}
-                        
-                        <div className="relative" style={{ display: 'flex', alignItems: 'center' }}>
-                            <button
-                                className={styles.actionBtn}
-                                onClick={() => setShowNotifications(!showNotifications)}
-                                style={{ marginRight: '8px' }}
-                            >
-                                <div className={styles.iconWrapper}>
-                                    <Bell size={20} />
-                                    {unreadCount > 0 && <span className={styles.badge}>{unreadCount}</span>}
-                                </div>
-                            </button>
-                            <NotificationDropdown
-                                isOpen={showNotifications}
-                                onClose={() => setShowNotifications(false)}
-                            />
-                        </div>
 
                         {isAuthenticated ? (
                             <Button
@@ -362,7 +345,23 @@ function RetailerHome() {
                         alt="Order Easy Logo"
                         className={styles.logo}
                     />
+                    <div className={styles.logoNotificationWrapper}>
+                        <button
+                            className={styles.actionBtn}
+                            onClick={() => setShowNotifications(!showNotifications)}
+                        >
+                            <div className={styles.iconWrapper}>
+                                <Bell size={20} />
+                                {unreadCount > 0 && <span className={styles.badge}>{unreadCount}</span>}
+                            </div>
+                        </button>
+                    </div>
                 </div>
+
+                <NotificationDropdown
+                    isOpen={showNotifications}
+                    onClose={() => setShowNotifications(false)}
+                />
 
                 <div className={styles.storeHeaderInfo}>
                     <div className={styles.shoppingAtLabel}>Shopping at:</div>
