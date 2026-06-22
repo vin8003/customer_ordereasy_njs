@@ -127,37 +127,32 @@ export default function RetailersPage() {
                         {isAuthenticated ? (
                             <div className={styles.userInfo}>
                                 <span className={styles.userName}>Hi, {userName}</span>
-                                <Button
-                                    variant="ghost"
-                                    onClick={handleLogout}
-                                    className={styles.logoutButton}
-                                >
-                                    Logout
-                                </Button>
                             </div>
                         ) : (
                             <Link href="/login">
-                                <Button variant="outline">Login / Signup</Button>
+                                <Button variant="outline" className={styles.loginButton}>Login / Signup</Button>
                             </Link>
                         )}
                     </div>
                 </div>
-                <div className={styles.logoContainer}>
+            </header>
+
+            <div className={styles.headerInstructionsCard}>
+                <div className={styles.cardLogoContainer}>
                     <img
                         src="/assets/images/logo.png"
                         alt="Order Easy Logo"
-                        className={styles.logo}
+                        className={styles.cardLogo}
                     />
                 </div>
-
                 <h1>Select a Store</h1>
-                <p>Choose a retailer to start shopping</p>
+                <p className={styles.subtext}>Choose a retailer to start shopping</p>
 
-                <div className={styles.serviceNotice}>
+                <div className={styles.cardServiceNotice}>
                     <MapPin size={16} className={styles.noticeIcon} />
                     <p>Currently serving only in <strong>{selectedCity?.name}</strong>.</p>
                 </div>
-            </header>
+            </div>
 
             {error && (
                 <div className={styles.errorContainer}>

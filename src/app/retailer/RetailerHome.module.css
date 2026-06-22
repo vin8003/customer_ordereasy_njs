@@ -5,23 +5,20 @@
 }
 
 .header {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
     padding: 16px 20px 20px;
     position: sticky;
     top: 0;
     z-index: 50;
-    box-shadow: none;
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15);
     transition: all 0.3s ease;
     border-bottom-left-radius: 24px;
     border-bottom-right-radius: 24px;
-    border-bottom: 1px solid rgba(241, 245, 249, 0.8);
 }
 
 .header.scrolled {
-    background: rgba(255, 255, 255, 0.92);
-    box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05);
+    background: linear-gradient(135deg, var(--primary-hover) 0%, #4338ca 100%);
+    box-shadow: 0 8px 30px rgba(79, 70, 229, 0.25);
 }
 
 .topBar {
@@ -35,17 +32,18 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    background-color: #f1f5f9;
+    background-color: rgba(255, 255, 255, 0.15);
     padding: 6px 12px;
     border-radius: 9999px;
     font-size: 11px;
     font-weight: 700;
-    color: #334155;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    color: #ffffff;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .locationIcon {
-    color: #3b82f6;
+    color: #ffffff;
 }
 
 .authContainer {
@@ -57,19 +55,34 @@
 .userName {
     font-weight: 700;
     font-size: 11px;
-    color: #334155;
+    color: #ffffff;
 }
 
 .logoutButton {
-    color: #64748b !important;
+    color: rgba(255, 255, 255, 0.9) !important;
     font-weight: 600 !important;
 }
 
+.logoutButton:hover {
+    color: #ffffff !important;
+}
+
+.loginBtn {
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    font-weight: 600 !important;
+}
+
+.loginBtn:hover {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border-color: #ffffff !important;
+}
+
 .logoContainer {
-    position: relative;
     display: flex;
     justify-content: center;
-    margin-bottom: 12px;
+    margin: 1.25rem auto 0 auto;
     width: 100%;
     height: 56px;
     overflow: hidden;
@@ -89,6 +102,7 @@
     width: 270px;
     object-fit: contain;
     transform: scale(1.4);
+    mix-blend-mode: multiply;
 }
 
 .storeHeaderInfo {
@@ -182,21 +196,23 @@
 }
 
 .actionBtn {
-    background: none;
-    border: none;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     padding: 8px;
     cursor: pointer;
     border-radius: 50%;
-    color: #333;
+    color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 0.2s;
+    transition: all 0.2s;
     position: relative;
+    backdrop-filter: blur(8px);
 }
 
 .actionBtn:hover {
-    background-color: #f3f4f6;
+    background-color: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
 }
 
 .iconWrapper {
@@ -228,6 +244,7 @@
 .searchBar {
     position: relative;
     height: 52px;
+    margin: 1.25rem 16px 0;
 }
 
 .searchIcon {

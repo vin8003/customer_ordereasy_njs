@@ -319,36 +319,19 @@ function RetailerHome() {
 
                     <div className={styles.authContainer}>
                         {isAuthenticated && (
-                            <span className={styles.userName}>Hi, {userName}</span>
+                            <span className={styles.userName} style={{ marginRight: '8px' }}>Hi, {userName}</span>
                         )}
 
-                        {isAuthenticated ? (
-                            <Button
-                                variant="ghost"
-                                onClick={handleLogout}
-                                className={styles.logoutButton}
-                                style={{ padding: '0 4px', fontSize: '0.85rem' }}
-                            >
-                                Logout
-                            </Button>
-                        ) : (
+                        {!isAuthenticated && (
                             <Link href="/login">
-                                <Button variant="outline" style={{ padding: '4px 10px', fontSize: '0.8rem' }}>Login</Button>
+                                <Button variant="outline" className={styles.loginBtn} style={{ padding: '4px 10px', fontSize: '0.8rem' }}>Login</Button>
                             </Link>
                         )}
-                    </div>
-                </div>
 
-                <div className={styles.logoContainer}>
-                    <img
-                        src="/assets/images/logo.png"
-                        alt="Order Easy Logo"
-                        className={styles.logo}
-                    />
-                    <div className={styles.logoNotificationWrapper}>
                         <button
                             className={styles.actionBtn}
                             onClick={() => setShowNotifications(!showNotifications)}
+                            style={{ marginLeft: '8px' }}
                         >
                             <div className={styles.iconWrapper}>
                                 <Bell size={20} />
@@ -395,49 +378,57 @@ function RetailerHome() {
                         </div>
                     )}
                 </div>
+            </header>
 
-                <form className={styles.searchBar} onSubmit={handleSearch}>
-                    <Search className={styles.searchIcon} size={20} />
-                    <input
-                        type="text"
-                        placeholder="Search for products..."
-                        className={styles.searchInput}
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onFocus={() => searchQuery.trim().length >= 2 && setShowSuggestions(true)}
-                        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                    />
+            <div className={styles.logoContainer}>
+                <img
+                    src="/assets/images/logo.png"
+                    alt="Order Easy Logo"
+                    className={styles.logo}
+                />
+            </div>
 
-                    {showSuggestions && (
-                        <div className={styles.suggestionsContainer}>
-                            {isSearching ? (
-                                <div className={styles.noSuggestions}>Searching...</div>
-                            ) : suggestions.length > 0 ? (
-                                suggestions.map((product) => (
-                                    <div
-                                        key={product.id}
-                                        className={styles.suggestionItem}
-                                        onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
-                                    >
-                                        <div className={styles.suggestionImage}>
-                                            <ProductImage src={product.image} alt={product.name} />
-                                        </div>
-                                        <div className={styles.suggestionInfo}>
-                                            <div className={styles.suggestionName}>{product.name}</div>
-                                            <div className={styles.suggestionMeta}>
-                                                <span className={styles.suggestionPrice}>₹{product.price}</span>
-                                                {product.unit && <span>• {product.unit}</span>}
-                                            </div>
+            <form className={styles.searchBar} onSubmit={handleSearch}>
+                <Search className={styles.searchIcon} size={20} />
+                <input
+                    type="text"
+                    placeholder="Search for products..."
+                    className={styles.searchInput}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => searchQuery.trim().length >= 2 && setShowSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                />
+
+                {showSuggestions && (
+                    <div className={styles.suggestionsContainer}>
+                        {isSearching ? (
+                            <div className={styles.noSuggestions}>Searching...</div>
+                        ) : suggestions.length > 0 ? (
+                            suggestions.map((product) => (
+                                <div
+                                    key={product.id}
+                                    className={styles.suggestionItem}
+                                    onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
+                                >
+                                    <div className={styles.suggestionImage}>
+                                        <ProductImage src={product.image} alt={product.name} />
+                                    </div>
+                                    <div className={styles.suggestionInfo}>
+                                        <div className={styles.suggestionName}>{product.name}</div>
+                                        <div className={styles.suggestionMeta}>
+                                            <span className={styles.suggestionPrice}>₹{product.price}</span>
+                                            {product.unit && <span>• {product.unit}</span>}
                                         </div>
                                     </div>
-                                ))
-                            ) : (
-                                <div className={styles.noSuggestions}>No products found for "{searchQuery}"</div>
-                            )}
-                        </div>
-                    )}
-                </form>
-            </header>
+                                </div>
+                            ))
+                        ) : (
+                            <div className={styles.noSuggestions}>No products found for "{searchQuery}"</div>
+                        )}
+                    </div>
+                )}
+            </form>
 
             <main className={styles.main}>
 
