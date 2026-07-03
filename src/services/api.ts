@@ -216,6 +216,21 @@ export const apiService = {
         return response.data;
     },
 
+    googleLogin: async (idToken: string, phoneNumber?: string) => {
+        const payload: any = { firebase_token: idToken };
+        if (phoneNumber) {
+            payload.phone_number = phoneNumber;
+        }
+        const response = await api.post('auth/customer/google-login/', payload);
+        
+        // If backend returned tokens (meaning signup/login successful), set them
+        if (response.data && response.data.tokens) {
+            setAuthToken(response.data.tokens.access, response.data.tokens.refresh);
+        }
+        
+        return response.data;
+    },
+
     isAuthenticated: () => {
         if (typeof window !== 'undefined') {
             return !!localStorage.getItem('customer_access_token');
