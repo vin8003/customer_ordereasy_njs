@@ -13,6 +13,8 @@
     "@capacitor/app": "^7.0.0",
     "@capacitor/cli": "^7.0.0",
     "@capacitor/core": "^7.0.0",
+    "@capacitor/geolocation": "^7.1.8",
+    "@capacitor/push-notifications": "^7.0.6",
     "@capacitor/splash-screen": "^7.0.0",
     "@react-google-maps/api": "^2.20.8",
     "axios": "^1.13.2",
