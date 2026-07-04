@@ -2,11 +2,17 @@ import { useEffect } from 'react';
 import { messaging, onMessage, requestNotificationPermission } from '@/services/firebase';
 import { apiService } from '@/services/api';
 import { useRouter } from 'next/navigation';
+import { LocalNotifications } from '@capacitor/local-notifications';
+import { Capacitor } from '@capacitor/core';
 
 export const useNotifications = () => {
     const router = useRouter();
 
     useEffect(() => {
+        let unsubscribe: (() => void) | null = null;
+        let broadcast: BroadcastChannel | null = null;
+        let nativeClickListener: any = null;
+
         const setupNotifications = async () => {
             if (typeof window === 'undefined' || !messaging) return;
 
@@ -18,14 +24,49 @@ export const useNotifications = () => {
             }
 
             // 2. Handle foreground messages
-            const broadcast = new BroadcastChannel('fcm_updates');
+            broadcast = new BroadcastChannel('fcm_updates');
 
-            const processMessage = (payload: any) => {
+            if (Capacitor.isNativePlatform()) {
+                try {
+                    nativeClickListener = await LocalNotifications.addListener(
+                        'localNotificationActionPerformed',
+                        (action) => {
+                            console.log('Local notification action performed:', action);
+                            handleNotificationClick(action.notification.extra);
+                        }
+                    );
+                } catch (e) {
+                    console.error("Failed to add native local notification listener: ", e);
+                }
+            }
+
+            const processMessage = async (payload: any) => {
                 // Show a browser notification or a custom UI toast
                 if (payload.notification) {
                     const { title, body } = payload.notification;
 
-                    if (Notification.permission === 'granted') {
+                    if (Capacitor.isNativePlatform()) {
+                        try {
+                            let permStatus = await LocalNotifications.checkPermissions();
+                            if (permStatus.display !== 'granted') {
+                                permStatus = await LocalNotifications.requestPermissions();
+                            }
+                            if (permStatus.display === 'granted') {
+                                await LocalNotifications.schedule({
+                                    notifications: [
+                                        {
+                                            title: title || 'Order Update',
+                                            body: body || '',
+                                            id: Math.floor(Math.random() * 1000000),
+                                            extra: payload.data
+                                        }
+                                    ]
+                                });
+                            }
+                        } catch (e) {
+                            console.error("Local notification schedule failed: ", e);
+                        }
+                    } else if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
                         const notification = new Notification(title || 'Order Update', {
                             body: body,
                             icon: '/logo.png',
@@ -61,11 +102,11 @@ export const useNotifications = () => {
                 }
             };
 
-            const unsubscribe = onMessage(messaging, (payload) => {
+            unsubscribe = onMessage(messaging, (payload) => {
                 console.log('Foreground message received:', payload);
                 processMessage(payload);
                 // Also broadcast to other tabs
-                broadcast.postMessage(payload);
+                if (broadcast) broadcast.postMessage(payload);
             });
 
             // Listen for broadcasts from other tabs or service worker
@@ -73,16 +114,17 @@ export const useNotifications = () => {
                 console.log('Received broadcast message:', event.data);
                 processMessage(event.data);
             };
-
-            return () => {
-                unsubscribe();
-                broadcast.close();
-            };
         };
 
         if (apiService.isAuthenticated()) {
             setupNotifications();
         }
+
+        return () => {
+            if (unsubscribe) unsubscribe();
+            if (broadcast) broadcast.close();
+            if (nativeClickListener) nativeClickListener.remove();
+        };
     }, [router]);
 
     const handleNotificationClick = (data: any) => {
