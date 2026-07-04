@@ -36,65 +36,10 @@ export default function MapPicker({ onLocationSelect, initialLat, initialLng }: 
 
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const [markerPos, setMarkerPos] = useState(defaultCenter);
+    const locationFetchedRef = useRef(false);
 
-    useEffect(() => {
-        if (initialLat && initialLng) {
-            setMarkerPos({ lat: initialLat, lng: initialLng });
-        } else {
-            const fetchLocation = async () => {
-                if (Capacitor.isNativePlatform()) {
-                    try {
-                        let permStatus = await Geolocation.checkPermissions();
-                        if (permStatus.location !== 'granted') {
-                            permStatus = await Geolocation.requestPermissions();
-                        }
-                        if (permStatus.location === 'granted') {
-                            const position = await Geolocation.getCurrentPosition();
-                            setMarkerPos({
-                                lat: position.coords.latitude,
-                                lng: position.coords.longitude
-                            });
-                        }
-                    } catch (e) {
-                        console.warn("Native geolocation failed or denied.", e);
-                    }
-                } else {
-                    // Try getting current location via browser API
-                    if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(
-                            (position) => {
-                                setMarkerPos({
-                                    lat: position.coords.latitude,
-                                    lng: position.coords.longitude
-                                });
-                            },
-                            () => {
-                                console.warn("Geolocation failed or denied.");
-                            }
-                        );
-                    }
-                }
-            };
-            fetchLocation();
-        }
-    }, [initialLat, initialLng]);
-
-    const onLoad = useCallback(function callback(map: google.maps.Map) {
-        setMap(map);
-    }, []);
-
-    const onUnmount = useCallback(function callback(map: google.maps.Map) {
-        setMap(null);
-    }, []);
-
-    const handleMapClick = async (e: google.maps.MapMouseEvent) => {
-        if (!e.latLng) return;
-        const lat = e.latLng.lat();
-        const lng = e.latLng.lng();
-
-        setMarkerPos({ lat, lng });
-
-        // Reverse Geocode
+    const reverseGeocode = useCallback(async (lat: number, lng: number) => {
+        if (typeof google === 'undefined' || !google.maps) return;
         try {
             const geocoder = new google.maps.Geocoder();
             const response = await geocoder.geocode({ location: { lat, lng } });
@@ -119,6 +64,66 @@ export default function MapPicker({ onLocationSelect, initialLat, initialLng }: 
         } catch (error) {
             console.error("Geocoding failed", error);
         }
+    }, [onLocationSelect]);
+
+    useEffect(() => {
+        if (initialLat && initialLng) {
+            setMarkerPos({ lat: initialLat, lng: initialLng });
+        } else if (isLoaded && !locationFetchedRef.current) {
+            locationFetchedRef.current = true;
+            const fetchLocation = async () => {
+                if (Capacitor.isNativePlatform()) {
+                    try {
+                        let permStatus = await Geolocation.checkPermissions();
+                        if (permStatus.location !== 'granted') {
+                            permStatus = await Geolocation.requestPermissions();
+                        }
+                        if (permStatus.location === 'granted') {
+                            const position = await Geolocation.getCurrentPosition();
+                            const lat = position.coords.latitude;
+                            const lng = position.coords.longitude;
+                            setMarkerPos({ lat, lng });
+                            await reverseGeocode(lat, lng);
+                        }
+                    } catch (e) {
+                        console.warn("Native geolocation failed or denied.", e);
+                    }
+                } else {
+                    // Try getting current location via browser API
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            async (position) => {
+                                const lat = position.coords.latitude;
+                                const lng = position.coords.longitude;
+                                setMarkerPos({ lat, lng });
+                                await reverseGeocode(lat, lng);
+                            },
+                            () => {
+                                console.warn("Geolocation failed or denied.");
+                            }
+                        );
+                    }
+                }
+            };
+            fetchLocation();
+        }
+    }, [initialLat, initialLng, isLoaded, reverseGeocode]);
+
+    const onLoad = useCallback(function callback(map: google.maps.Map) {
+        setMap(map);
+    }, []);
+
+    const onUnmount = useCallback(function callback(map: google.maps.Map) {
+        setMap(null);
+    }, []);
+
+    const handleMapClick = async (e: google.maps.MapMouseEvent) => {
+        if (!e.latLng) return;
+        const lat = e.latLng.lat();
+        const lng = e.latLng.lng();
+
+        setMarkerPos({ lat, lng });
+        await reverseGeocode(lat, lng);
     };
 
     if (!isLoaded) return <LoadingScreen message="Loading Map..." />;
