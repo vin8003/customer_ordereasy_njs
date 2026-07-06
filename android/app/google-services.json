@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "241725361064",
+    "project_id": "ordereasy-win",
+    "storage_bucket": "ordereasy-win.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:241725361064:android:3fb18e51ff7f3556a1eb9d",
+        "android_client_info": {
+          "package_name": "win.ordereasy.customer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "241725361064-2k6np1n9ecj2admv520596kvgker14hb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKvT1KXsNhLRl753g_fSQeLc0XLmu9f4A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "241725361064-2k6np1n9ecj2admv520596kvgker14hb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
