@@ -1,5 +1,6 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { Capacitor } from '@capacitor/core';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production'
     ? 'https://api.ordereasy.win/api/'
@@ -192,10 +193,11 @@ export const apiService = {
 
     registerDeviceToken: async (token: string) => {
         try {
+            const isNative = Capacitor.isNativePlatform();
             await api.post('auth/device/register/', {
                 registration_id: token,
-                type: 'web',
-                name: 'customer_web'
+                type: isNative ? 'android' : 'web',
+                name: isNative ? 'customer_android' : 'customer_web'
             });
             console.log('FCM Token registered successfully');
         } catch (error) {
