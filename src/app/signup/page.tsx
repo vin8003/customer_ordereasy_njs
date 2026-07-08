@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -11,6 +11,8 @@ import styles from './Signup.module.css';
 import { Phone, Lock, User, Mail } from 'lucide-react';
 import { auth } from '../../services/firebase';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { Capacitor } from '@capacitor/core';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 
 export default function SignupPage() {
     const router = useRouter();
@@ -25,9 +27,17 @@ export default function SignupPage() {
 
     // Google Sign-up States
     const [showPhoneModal, setShowPhoneModal] = useState(false);
+    const [showOtpModal, setShowOtpModal] = useState(false);
     const [tempToken, setTempToken] = useState('');
     const [googlePhone, setGooglePhone] = useState('');
+    const [googleOtp, setGoogleOtp] = useState('');
     const [googleError, setGoogleError] = useState('');
+
+    useEffect(() => {
+        if (!Capacitor.isNativePlatform()) {
+            GoogleAuth.initialize();
+        }
+    }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -92,12 +102,23 @@ export default function SignupPage() {
         setError('');
         setGoogleError('');
         try {
-            const provider = new GoogleAuthProvider();
-            provider.setCustomParameters({ prompt: 'select_account' });
-            
-            const result = await signInWithPopup(auth, provider);
-            const token = await result.user.getIdToken();
-            
+            let token = '';
+
+            if (Capacitor.isNativePlatform()) {
+                const user = await GoogleAuth.signIn();
+                token = user.authentication.idToken;
+            } else {
+                const provider = new GoogleAuthProvider();
+                provider.setCustomParameters({ prompt: 'select_account' });
+                
+                const result = await signInWithPopup(auth, provider);
+                token = await result.user.getIdToken();
+            }
+
+            if (!token) {
+                throw new Error('Google authentication did not return an ID token.');
+            }
+
             const res = await apiService.googleLogin(token);
             if (res.status === 'phone_required') {
                 setTempToken(token);
@@ -124,7 +145,10 @@ export default function SignupPage() {
         setGoogleError('');
         try {
             const res = await apiService.googleLogin(tempToken, googlePhone);
-            if (res.tokens) {
+            if (res.status === 'otp_required') {
+                setShowPhoneModal(false);
+                setShowOtpModal(true);
+            } else if (res.tokens) {
                 setAuthToken(res.tokens.access, res.tokens.refresh);
                 setShowPhoneModal(false);
                 router.push('/retailers');
@@ -135,6 +159,36 @@ export default function SignupPage() {
                 setGoogleError(err.response.data.error);
             } else {
                 setGoogleError('Failed to register phone number. It may already be in use.');
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleGoogleOtpSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (googleOtp.length !== 6) {
+            setGoogleError('Please enter a 6-digit verification code');
+            return;
+        }
+        setIsLoading(true);
+        setGoogleError('');
+        try {
+            const res = await apiService.googleLogin(tempToken, googlePhone, googleOtp);
+            if (res.tokens) {
+                setAuthToken(res.tokens.access, res.tokens.refresh);
+                setShowOtpModal(false);
+                setGooglePhone('');
+                setGoogleOtp('');
+                setTempToken('');
+                router.push('/retailers');
+            }
+        } catch (err: any) {
+            console.error(err);
+            if (err.response && err.response.data && err.response.data.error) {
+                setGoogleError(err.response.data.error);
+            } else {
+                setGoogleError('Verification failed. Invalid or expired OTP.');
             }
         } finally {
             setIsLoading(false);
@@ -155,16 +209,61 @@ export default function SignupPage() {
                         />
                     </div>
                     <h1 className={styles.title}>
-                        {showPhoneModal ? 'One Last Step!' : 'Create Account'}
+                        {showOtpModal 
+                            ? 'Verify Mobile Number' 
+                            : showPhoneModal 
+                                ? 'One Last Step!' 
+                                : 'Create Account'}
                     </h1>
                     <p className={styles.subtitle}>
-                        {showPhoneModal 
-                            ? 'Please enter your mobile number to complete registration' 
-                            : 'Join us and start shopping!'}
+                        {showOtpModal
+                            ? 'Enter the SMS verification code sent to your phone'
+                            : showPhoneModal 
+                                ? 'Please enter your mobile number to complete registration' 
+                                : 'Join us and start shopping!'}
                     </p>
                 </div>
 
-                {showPhoneModal ? (
+                {showOtpModal ? (
+                    <form onSubmit={handleGoogleOtpSubmit} className={styles.form}>
+                        {googleError && <div className={styles.errorAlert}>{googleError}</div>}
+
+                        <Input
+                            label="Verification Code"
+                            placeholder="Enter 6 digit OTP"
+                            value={googleOtp}
+                            onChange={(e) => setGoogleOtp(e.target.value)}
+                            type="text"
+                            maxLength={6}
+                            required
+                        />
+
+                        <Button
+                            type="submit"
+                            isLoading={isLoading}
+                            fullWidth
+                            className={styles.signupBtn}
+                            style={{ marginTop: '1.5rem' }}
+                        >
+                            Verify & Link Account
+                        </Button>
+
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => {
+                                setShowOtpModal(false);
+                                setTempToken('');
+                                setGooglePhone('');
+                                setGoogleOtp('');
+                            }}
+                            fullWidth
+                            style={{ marginTop: '0.75rem', color: 'var(--text-secondary)' }}
+                        >
+                            Cancel
+                        </Button>
+                    </form>
+                ) : showPhoneModal ? (
                     <form onSubmit={handleGooglePhoneSubmit} className={styles.form}>
                         {googleError && <div className={styles.errorAlert}>{googleError}</div>}
 

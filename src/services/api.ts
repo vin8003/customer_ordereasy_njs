@@ -216,10 +216,13 @@ export const apiService = {
         return response.data;
     },
 
-    googleLogin: async (idToken: string, phoneNumber?: string) => {
+    googleLogin: async (idToken: string, phoneNumber?: string, otpCode?: string) => {
         const payload: any = { firebase_token: idToken };
         if (phoneNumber) {
             payload.phone_number = phoneNumber;
+        }
+        if (otpCode) {
+            payload.otp_code = otpCode;
         }
         const response = await api.post('auth/customer/google-login/', payload);
         

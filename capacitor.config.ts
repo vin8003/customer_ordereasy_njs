@@ -9,6 +9,11 @@ const config: CapacitorConfig = {
     cleartext: false
   },
   plugins: {
+    GoogleAuth: {
+      scopes: ["profile", "email"],
+      clientId: "241725361064-2k6np1n9ecj2admv520596kvgker14hb.apps.googleusercontent.com",
+      forceCodeForRefreshToken: true
+    },
     SplashScreen: {
       launchShowDuration: 3000,
       launchAutoHide: true,

@@ -1,7 +1,7 @@
 'use client';
 import LoadingScreen from '@/app/components/LoadingScreen';
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, Suspense, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -13,6 +13,8 @@ import { Phone, Lock } from 'lucide-react';
 import { useCartContext } from '@/context/CartContext';
 import { auth } from '../../services/firebase';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { Capacitor } from '@capacitor/core';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 
 function LoginContent() {
     const router = useRouter();
@@ -23,12 +25,20 @@ function LoginContent() {
 
     // Google Sign-In States
     const [showPhoneModal, setShowPhoneModal] = useState(false);
+    const [showOtpModal, setShowOtpModal] = useState(false);
     const [tempToken, setTempToken] = useState('');
     const [googlePhone, setGooglePhone] = useState('');
+    const [googleOtp, setGoogleOtp] = useState('');
     const [googleError, setGoogleError] = useState('');
 
     const { syncGuestCart } = useCartContext(); // Get sync function
     const searchParams = useSearchParams();
+
+    useEffect(() => {
+        if (!Capacitor.isNativePlatform()) {
+            GoogleAuth.initialize();
+        }
+    }, []);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -79,12 +89,23 @@ function LoginContent() {
         setError('');
         setGoogleError('');
         try {
-            const provider = new GoogleAuthProvider();
-            provider.setCustomParameters({ prompt: 'select_account' });
-            
-            const result = await signInWithPopup(auth, provider);
-            const token = await result.user.getIdToken();
-            
+            let token = '';
+
+            if (Capacitor.isNativePlatform()) {
+                const user = await GoogleAuth.signIn();
+                token = user.authentication.idToken;
+            } else {
+                const provider = new GoogleAuthProvider();
+                provider.setCustomParameters({ prompt: 'select_account' });
+                
+                const result = await signInWithPopup(auth, provider);
+                token = await result.user.getIdToken();
+            }
+
+            if (!token) {
+                throw new Error('Google authentication did not return an ID token.');
+            }
+
             const res = await apiService.googleLogin(token);
             if (res.status === 'phone_required') {
                 setTempToken(token);
@@ -117,7 +138,10 @@ function LoginContent() {
         setGoogleError('');
         try {
             const res = await apiService.googleLogin(tempToken, googlePhone);
-            if (res.tokens) {
+            if (res.status === 'otp_required') {
+                setShowPhoneModal(false);
+                setShowOtpModal(true);
+            } else if (res.tokens) {
                 setAuthToken(res.tokens.access, res.tokens.refresh);
                 await syncGuestCart();
                 setShowPhoneModal(false);
@@ -140,6 +164,42 @@ function LoginContent() {
         }
     };
 
+    const handleGoogleOtpSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (googleOtp.length !== 6) {
+            setGoogleError('Please enter a 6-digit verification code');
+            return;
+        }
+        setIsLoading(true);
+        setGoogleError('');
+        try {
+            const res = await apiService.googleLogin(tempToken, googlePhone, googleOtp);
+            if (res.tokens) {
+                setAuthToken(res.tokens.access, res.tokens.refresh);
+                await syncGuestCart();
+                setShowOtpModal(false);
+                setGooglePhone('');
+                setGoogleOtp('');
+                setTempToken('');
+                const redirectPath = searchParams.get('redirect');
+                if (redirectPath) {
+                    router.push(decodeURIComponent(redirectPath));
+                } else {
+                    router.push('/retailers');
+                }
+            }
+        } catch (err: any) {
+            console.error(err);
+            if (err.response && err.response.data && err.response.data.error) {
+                setGoogleError(err.response.data.error);
+            } else {
+                setGoogleError('Verification failed. Invalid or expired OTP.');
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className={styles.container}>
             <div className={styles.card}>
@@ -155,16 +215,61 @@ function LoginContent() {
                         />
                     </div>
                     <h1 className={styles.title}>
-                        {showPhoneModal ? 'One Last Step!' : 'Welcome Back!'}
+                        {showOtpModal 
+                            ? 'Verify Mobile Number' 
+                            : showPhoneModal 
+                                ? 'One Last Step!' 
+                                : 'Welcome Back!'}
                     </h1>
                     <p className={styles.subtitle}>
-                        {showPhoneModal 
-                            ? 'Please enter your mobile number to complete registration' 
-                            : 'Sign in to continue to your account'}
+                        {showOtpModal
+                            ? 'Enter the SMS verification code sent to your phone'
+                            : showPhoneModal 
+                                ? 'Please enter your mobile number to complete registration' 
+                                : 'Sign in to continue to your account'}
                     </p>
                 </div>
 
-                {showPhoneModal ? (
+                {showOtpModal ? (
+                    <form onSubmit={handleGoogleOtpSubmit} className={styles.form}>
+                        {googleError && <div className={styles.errorAlert}>{googleError}</div>}
+
+                        <Input
+                            label="Verification Code"
+                            placeholder="Enter 6 digit OTP"
+                            value={googleOtp}
+                            onChange={(e) => setGoogleOtp(e.target.value)}
+                            type="text"
+                            maxLength={6}
+                            required
+                        />
+
+                        <Button
+                            type="submit"
+                            isLoading={isLoading}
+                            fullWidth
+                            className={styles.loginBtn}
+                            style={{ marginTop: '1.5rem' }}
+                        >
+                            Verify & Link Account
+                        </Button>
+
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => {
+                                setShowOtpModal(false);
+                                setTempToken('');
+                                setGooglePhone('');
+                                setGoogleOtp('');
+                            }}
+                            fullWidth
+                            style={{ marginTop: '0.75rem', color: 'var(--text-secondary)' }}
+                        >
+                            Cancel
+                        </Button>
+                    </form>
+                ) : showPhoneModal ? (
                     <form onSubmit={handleGooglePhoneSubmit} className={styles.form}>
                         {googleError && <div className={styles.errorAlert}>{googleError}</div>}
 
