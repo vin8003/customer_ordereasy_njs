@@ -35,9 +35,11 @@ function LoginContent() {
     const searchParams = useSearchParams();
 
     useEffect(() => {
-        if (!Capacitor.isNativePlatform()) {
-            GoogleAuth.initialize();
-        }
+        GoogleAuth.initialize({
+            clientId: '241725361064-2k6np1n9ecj2admv520596kvgker14hb.apps.googleusercontent.com',
+            scopes: ['profile', 'email'],
+            grantOfflineAccess: true,
+        });
     }, []);
 
     const handleLogin = async (e: React.FormEvent) => {
