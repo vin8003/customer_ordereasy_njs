@@ -122,3 +122,61 @@
     font-size: 0.875rem;
     text-align: center;
 }
+
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 1.5rem 0;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.divider:not(:empty)::before {
+    margin-right: .5em;
+}
+
+.divider:not(:empty)::after {
+    margin-left: .5em;
+}
+
+.googleBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.googleBtn:hover:not(:disabled) {
+    background-color: #f8fafc;
+    border-color: #94a3b8;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.googleBtn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.googleIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
