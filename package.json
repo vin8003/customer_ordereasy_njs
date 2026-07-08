@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "python -c \"import os; p='node_modules/@codetrix-studio/capacitor-google-auth/android/build.gradle'; open(p, 'w').write(open(p).read().replace('jcenter()', 'mavenCentral()').replace('proguard-android.txt', 'proguard-android-optimize.txt')) if os.path.exists(p) else None\""
+    "postinstall": "python -c \"import os; p='node_modules/@codetrix-studio/capacitor-google-auth/android/build.gradle'; (lambda c: open(p, 'w').write(c.replace('jcenter()', 'mavenCentral()').replace('proguard-android.txt', 'proguard-android-optimize.txt')))(open(p).read()) if os.path.exists(p) else None\""
   },
   "dependencies": {
     "@capacitor/android": "^7.0.0",
