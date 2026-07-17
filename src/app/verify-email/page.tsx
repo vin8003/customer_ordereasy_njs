@@ -7,7 +7,7 @@ import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { apiService, getErrorMessage, setAuthToken } from '../../services/api';
 import styles from './VerifyEmail.module.css';
-import { Key } from 'lucide-react';
+import { Key, Info } from 'lucide-react';
 import LoadingScreen from '@/app/components/LoadingScreen';
 import { canRequestOTP, recordOTPRequest } from '@/utils/rateLimit';
 import { useCartContext } from '@/context/CartContext';
@@ -178,6 +178,17 @@ function VerifyEmailContent() {
                             {isResending ? 'Sending...' : cooldown.allowed ? 'Resend OTP' : cooldown.reason === 'attempts' ? `Retry in ${Math.ceil(cooldown.remaining / 60)}m` : `Resend in ${cooldown.remaining}s`}
                         </button>
                     </p>
+                </div>
+
+                <div className={styles.infoNoteContainer}>
+                    <div className={styles.infoNoteTitle}>
+                        <Info size={16} />
+                        <span>Didn't receive the OTP?</span>
+                    </div>
+                    <ul className={styles.infoNoteList}>
+                        <li>Check your <strong>Spam or Junk folder</strong> as the email might sometimes land there.</li>
+                        <li>Ensure your email account has <strong>sufficient storage space</strong>; otherwise, emails cannot be delivered.</li>
+                    </ul>
                 </div>
             </div>
         </div>
