@@ -12,7 +12,7 @@ import styles from './Login.module.css';
 import { Phone, Lock } from 'lucide-react';
 import { useCartContext } from '@/context/CartContext';
 import { auth } from '../../services/firebase';
-import { GoogleAuthProvider, signInWithRedirect, getRedirectResult } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { Capacitor } from '@capacitor/core';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 
@@ -35,48 +35,9 @@ function LoginContent() {
     const searchParams = useSearchParams();
 
     useEffect(() => {
-        GoogleAuth.initialize({
-            clientId: '241725361064-2k6np1n9ecj2admv520596kvgker14hb.apps.googleusercontent.com',
-            scopes: ['profile', 'email'],
-            grantOfflineAccess: true,
-        });
-    }, []);
-
-    // Handle the result when Google redirects back after signInWithRedirect
-    useEffect(() => {
-        const handleRedirectResult = async () => {
-            try {
-                const result = await getRedirectResult(auth);
-                if (!result) return; // No pending redirect result
-
-                const token = await result.user.getIdToken();
-                if (!token) return;
-
-                setIsLoading(true);
-                const res = await apiService.googleLogin(token);
-                if (res.status === 'phone_required') {
-                    setTempToken(token);
-                    setShowPhoneModal(true);
-                } else if (res.tokens) {
-                    setAuthToken(res.tokens.access, res.tokens.refresh);
-                    await syncGuestCart();
-                    const redirectPath = searchParams.get('redirect');
-                    if (redirectPath) {
-                        router.push(decodeURIComponent(redirectPath));
-                    } else {
-                        router.push('/retailers');
-                    }
-                }
-            } catch (err: any) {
-                console.error('Redirect result error:', err);
-                setError(err.message || 'Google Login failed');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        handleRedirectResult();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        if (!Capacitor.isNativePlatform()) {
+            GoogleAuth.initialize();
+        }
     }, []);
 
     const handleLogin = async (e: React.FormEvent) => {
@@ -134,14 +95,11 @@ function LoginContent() {
                 const user = await GoogleAuth.signIn();
                 token = user.authentication.idToken;
             } else {
-                // Use signInWithRedirect instead of signInWithPopup:
-                // - Popups are blocked by Android WebViews
-                // - Redirect works in both browser and WebView environments
-                // The result is handled in the useEffect above via getRedirectResult()
                 const provider = new GoogleAuthProvider();
                 provider.setCustomParameters({ prompt: 'select_account' });
-                await signInWithRedirect(auth, provider);
-                return; // Page will redirect to Google; result handled in useEffect
+                
+                const result = await signInWithPopup(auth, provider);
+                token = await result.user.getIdToken();
             }
 
             if (!token) {

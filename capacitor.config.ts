@@ -4,10 +4,6 @@ const config: CapacitorConfig = {
   appId: 'win.ordereasy.customer',
   appName: 'Order Easy',
   webDir: 'out',
-  server: {
-    url: 'https://customer.ordereasy.win',
-    cleartext: false
-  },
   plugins: {
     GoogleAuth: {
       scopes: ["profile", "email"],
