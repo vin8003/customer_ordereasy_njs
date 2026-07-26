@@ -10,7 +10,7 @@ import { apiService, setAuthToken } from '../../services/api';
 import styles from './Signup.module.css';
 import { Phone, Lock, User, Mail } from 'lucide-react';
 import { auth } from '../../services/firebase';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { Capacitor } from '@capacitor/core';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 
@@ -37,6 +37,37 @@ export default function SignupPage() {
         if (!Capacitor.isNativePlatform()) {
             GoogleAuth.initialize();
         }
+    }, []);
+
+    // Handle the result when Google redirects back after signInWithRedirect
+    useEffect(() => {
+        const handleRedirectResult = async () => {
+            try {
+                const result = await getRedirectResult(auth);
+                if (!result) return; // No pending redirect result
+
+                const token = await result.user.getIdToken();
+                if (!token) return;
+
+                setIsLoading(true);
+                const res = await apiService.googleLogin(token);
+                if (res.status === 'phone_required') {
+                    setTempToken(token);
+                    setShowPhoneModal(true);
+                } else if (res.tokens) {
+                    setAuthToken(res.tokens.access, res.tokens.refresh);
+                    router.push('/retailers');
+                }
+            } catch (err: any) {
+                console.error('Redirect result error:', err);
+                setError(err.message || 'Google Login failed');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        handleRedirectResult();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -108,11 +139,14 @@ export default function SignupPage() {
                 const user = await GoogleAuth.signIn();
                 token = user.authentication.idToken;
             } else {
+                // Use signInWithRedirect instead of signInWithPopup:
+                // - Popups are blocked by Android WebViews
+                // - Redirect works in both browser and WebView environments
+                // The result is handled in the useEffect above via getRedirectResult()
                 const provider = new GoogleAuthProvider();
                 provider.setCustomParameters({ prompt: 'select_account' });
-                
-                const result = await signInWithPopup(auth, provider);
-                token = await result.user.getIdToken();
+                await signInWithRedirect(auth, provider);
+                return; // Page will redirect to Google; result handled in useEffect
             }
 
             if (!token) {
