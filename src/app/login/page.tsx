@@ -12,7 +12,7 @@ import styles from './Login.module.css';
 import { Phone, Lock } from 'lucide-react';
 import { useCartContext } from '@/context/CartContext';
 import { auth } from '../../services/firebase';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, signInWithCredential } from 'firebase/auth';
 import { Capacitor } from '@capacitor/core';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 
@@ -92,8 +92,14 @@ function LoginContent() {
             let token = '';
 
             if (Capacitor.isNativePlatform()) {
+                // Native path: GoogleAuth.signIn() returns a Google OAuth token.
+                // Convert it to a Firebase ID token so the backend can verify
+                // it the same way it verifies web tokens.
                 const user = await GoogleAuth.signIn();
-                token = user.authentication.idToken;
+                const googleIdToken = user.authentication.idToken;
+                const credential = GoogleAuthProvider.credential(googleIdToken);
+                const firebaseResult = await signInWithCredential(auth, credential);
+                token = await firebaseResult.user.getIdToken();
             } else {
                 const provider = new GoogleAuthProvider();
                 provider.setCustomParameters({ prompt: 'select_account' });
