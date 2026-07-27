@@ -34,9 +34,7 @@ export default function SignupPage() {
     const [googleError, setGoogleError] = useState('');
 
     useEffect(() => {
-        if (!Capacitor.isNativePlatform()) {
-            GoogleAuth.initialize();
-        }
+        GoogleAuth.initialize();
     }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

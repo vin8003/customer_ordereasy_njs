@@ -35,9 +35,7 @@ function LoginContent() {
     const searchParams = useSearchParams();
 
     useEffect(() => {
-        if (!Capacitor.isNativePlatform()) {
-            GoogleAuth.initialize();
-        }
+        GoogleAuth.initialize();
     }, []);
 
     const handleLogin = async (e: React.FormEvent) => {

@@ -14,6 +14,30 @@
       },
       "oauth_client": [
         {
+          "client_id": "241725361064-5u9poue7dvqmrt0h2hd6hv0k8tm6gi8t.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "win.ordereasy.customer",
+            "certificate_hash": "40e2b415fb9c7f0b9db0f6e474a590ede97e48d7"
+          }
+        },
+        {
+          "client_id": "241725361064-m9a3enooam7c5lv4vvsjn2ilegfilpub.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "win.ordereasy.customer",
+            "certificate_hash": "e3e30b71794b8ac39ba0f32cd769627efd9a6278"
+          }
+        },
+        {
+          "client_id": "241725361064-qcvrkln3n105s22sc8ns2uh6qae6j8sm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "win.ordereasy.customer",
+            "certificate_hash": "332204ce0f15af0eb76db85771319a31ec030b97"
+          }
+        },
+        {
           "client_id": "241725361064-2k6np1n9ecj2admv520596kvgker14hb.apps.googleusercontent.com",
           "client_type": 3
         }
