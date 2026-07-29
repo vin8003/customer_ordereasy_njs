@@ -90,11 +90,11 @@ function LoginContent() {
             let token = '';
 
             if (Capacitor.isNativePlatform()) {
-                // Native path: GoogleAuth.signIn() returns a Google OAuth token.
-                // Convert it to a Firebase ID token so the backend can verify
-                // it the same way it verifies web tokens.
                 const user = await GoogleAuth.signIn();
-                const googleIdToken = user.authentication.idToken;
+                const googleIdToken = user.authentication?.idToken || (user as any).idToken;
+                if (!googleIdToken) {
+                    throw new Error('Google Sign-In did not return an ID token.');
+                }
                 const credential = GoogleAuthProvider.credential(googleIdToken);
                 const firebaseResult = await signInWithCredential(auth, credential);
                 token = await firebaseResult.user.getIdToken();
@@ -126,7 +126,11 @@ function LoginContent() {
             }
         } catch (err: any) {
             console.error(err);
-            setError(err.message || 'Google Login failed');
+            const msg = err?.message || (typeof err === 'string' ? err : JSON.stringify(err));
+            setError(msg || 'Google Login failed');
+            if (Capacitor.isNativePlatform()) {
+                alert(`Google Sign-In Error: ${msg}`);
+            }
         } finally {
             setIsLoading(false);
         }
