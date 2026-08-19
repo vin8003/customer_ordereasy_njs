@@ -571,7 +571,7 @@ function OrderDetails() {
                     const isCredit = mode === 'credit' || mode === 'khata' || Number(order.credit_amount || 0) > 0;
                     const limit = order.credit_limit == null ? null : Number(order.credit_limit);
                     const used = order.current_balance == null ? null : Number(order.current_balance);
-                    if (!isCredit || limit == null || used == null) return null;
+                    if (!isCredit || limit == null || used == null || !(limit > 0)) return null;
                     const remaining = limit - used;
                     return (
                         <section className={styles.section}>
