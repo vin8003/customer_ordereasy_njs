@@ -2,48 +2,61 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { MapPin, Check } from 'lucide-react';
+import { MapPin, Check, LocateFixed } from 'lucide-react';
 import { Button } from '@/app/components/ui/Button';
 import { AVAILABLE_CITIES, City } from '@/config/cities';
+import {
+    getPersistedLocation,
+    persistManualCity,
+    requestAndPersistLocation,
+} from '@/utils/location';
 import styles from './CitySelection.module.css';
 
 export default function CitySelectionPage() {
     const router = useRouter();
-    // Default to the first available city (Bharatpur)
     const [selectedCity, setSelectedCity] = useState<City | null>(null);
+    const [isLocating, setIsLocating] = useState(false);
+    const [locateError, setLocateError] = useState('');
+
+    const handleUseLocation = async () => {
+        setIsLocating(true);
+        setLocateError('');
+        try {
+            const loc = await requestAndPersistLocation();
+            if (loc) {
+                router.replace('/retailers');
+                return;
+            }
+            setLocateError('Location permission denied. Please select your city to continue.');
+        } finally {
+            setIsLocating(false);
+        }
+    };
 
     useEffect(() => {
-        // Check if a city is already selected
-        const storedCity = localStorage.getItem('selected_city');
-        if (storedCity) {
-            // Optional: Redirect if already selected? 
-            // For now, let them re-select if they came here manually.
-            try {
-                const parsed = JSON.parse(storedCity);
-                setSelectedCity(AVAILABLE_CITIES.find(c => c.id === parsed.id) || null);
-            } catch (e) {
-                console.error("Failed to parse stored city", e);
-            }
-        } else {
-            // Auto-select Bharatpur as it's the only option
-            const defaultCity = AVAILABLE_CITIES.find(c => c.isAvailable);
-            if (defaultCity) {
-                setSelectedCity(defaultCity);
-            }
+        const stored = getPersistedLocation();
+        if (stored) {
+            const match = AVAILABLE_CITIES.find((c) => c.id === stored.id)
+                || AVAILABLE_CITIES.find((c) => c.name === stored.name);
+            setSelectedCity(match || null);
         }
+        // Do not auto-select Bharatpur. Ask GPS here if home has not already prompted.
+        if (!sessionStorage.getItem('location_prompted')) {
+            sessionStorage.setItem('location_prompted', '1');
+            handleUseLocation();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleCitySelect = (city: City) => {
         if (!city.isAvailable) return;
         setSelectedCity(city);
+        setLocateError('');
     };
 
     const handleConfirm = () => {
         if (selectedCity) {
-            localStorage.setItem('selected_city', JSON.stringify(selectedCity));
-            localStorage.setItem('selected_pincode', selectedCity.pincode);
-            // Trigger storage event to update other components if needed
-            window.dispatchEvent(new Event('storage'));
+            persistManualCity(selectedCity);
             router.push('/retailers');
         }
     };
@@ -55,9 +68,20 @@ export default function CitySelectionPage() {
                     <div className={styles.iconWrapper}>
                         <MapPin size={48} className={styles.icon} />
                     </div>
-                    <h1>Select Your City</h1>
-                    <p>Tell us where you are to find the best offers near you.</p>
+                    <h1>Where are you?</h1>
+                    <p>We use your location to show nearby stores. Pickup and delivery both work without dropping a map pin.</p>
                 </div>
+
+                <button
+                    type="button"
+                    className={styles.locateBtn}
+                    onClick={handleUseLocation}
+                    disabled={isLocating}
+                >
+                    <LocateFixed size={18} />
+                    {isLocating ? 'Detecting location...' : 'Use my current location'}
+                </button>
+                {locateError && <p className={styles.locateError}>{locateError}</p>}
 
                 <div className={styles.cityList}>
                     {AVAILABLE_CITIES.map((city) => (
@@ -80,7 +104,7 @@ export default function CitySelectionPage() {
                 </div>
 
                 <div className={styles.infoMessage}>
-                    <p>Currently, services are available only in <strong>Bharatpur</strong> city.</p>
+                    <p>Or pick a city if you prefer not to share location.</p>
                 </div>
 
                 <div className={styles.footer}>
