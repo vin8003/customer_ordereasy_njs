@@ -9,6 +9,7 @@ import { Button } from '../components/ui/Button';
 import { apiService, setAuthToken } from '../../services/api';
 import styles from './Signup.module.css';
 import { Phone, Lock, User, Mail } from 'lucide-react';
+import { useCartContext } from '@/context/CartContext';
 import { auth } from '../../services/firebase';
 import { GoogleAuthProvider, signInWithPopup, signInWithCredential } from 'firebase/auth';
 import { Capacitor } from '@capacitor/core';
@@ -16,6 +17,7 @@ import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 
 export default function SignupPage() {
     const router = useRouter();
+    const { syncGuestCart } = useCartContext();
     const [formData, setFormData] = useState({
         email: '',
         phone: '',
@@ -129,6 +131,7 @@ export default function SignupPage() {
                 setShowPhoneModal(true);
             } else if (res.tokens) {
                 setAuthToken(res.tokens.access, res.tokens.refresh);
+                await syncGuestCart();
                 router.push('/retailers');
             }
         } catch (err: any) {
@@ -158,6 +161,7 @@ export default function SignupPage() {
                 setShowOtpModal(true);
             } else if (res.tokens) {
                 setAuthToken(res.tokens.access, res.tokens.refresh);
+                await syncGuestCart();
                 setShowPhoneModal(false);
                 router.push('/retailers');
             }
@@ -185,6 +189,7 @@ export default function SignupPage() {
             const res = await apiService.googleLogin(tempToken, googlePhone, googleOtp);
             if (res.tokens) {
                 setAuthToken(res.tokens.access, res.tokens.refresh);
+                await syncGuestCart();
                 setShowOtpModal(false);
                 setGooglePhone('');
                 setGoogleOtp('');
