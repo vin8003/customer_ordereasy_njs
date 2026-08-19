@@ -34,9 +34,10 @@ export function getPersistedLocation(): StoredLocation | null {
 
 export function hasConfirmedLocation(): boolean {
     const loc = getPersistedLocation();
-    if (!loc) return false;
-    if (loc.source === 'gps' || loc.source === 'manual') return true;
-    return !!(loc.lat && loc.lng);
+    if (!loc || !loc.name || !loc.pincode) return false;
+    // Never treat lat/lng-only GPS as a listing location (live stores have no coords).
+    if (!loc.id || loc.id === 'gps') return false;
+    return AVAILABLE_CITIES.some((c) => c.id === loc.id && c.isAvailable);
 }
 
 export function persistLocation(loc: StoredLocation) {
@@ -177,27 +178,15 @@ export function buildStoredLocation(
     lat: number,
     lng: number,
     geo?: GeoAddress | null
-): StoredLocation {
+): StoredLocation | null {
     const matched = geo ? matchAvailableCity(geo.city, geo.state, geo.pincode) : null;
-    if (matched) {
-        return {
-            ...matched,
-            lat,
-            lng,
-            address: geo?.address,
-            pincode: matched.pincode || geo?.pincode || '',
-            source: 'gps',
-        };
-    }
+    if (!matched) return null;
     return {
-        id: 'gps',
-        name: geo?.city || 'Current location',
-        pincode: geo?.pincode || '',
-        state: geo?.state || '',
-        isAvailable: true,
+        ...matched,
         lat,
         lng,
         address: geo?.address,
+        pincode: matched.pincode || geo?.pincode || '',
         source: 'gps',
     };
 }
@@ -210,6 +199,7 @@ export async function requestAndPersistLocation(): Promise<StoredLocation | null
         new Promise<GeoAddress | null>((resolve) => setTimeout(() => resolve(null), 8000)),
     ]);
     const loc = buildStoredLocation(pos.lat, pos.lng, geo);
+    if (!loc) return null;
     persistLocation(loc);
     return loc;
 }
