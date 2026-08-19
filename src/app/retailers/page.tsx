@@ -36,8 +36,8 @@ export default function RetailersPage() {
         const stored = getPersistedLocation();
 
         if (!stored) {
-            // Do not silently pin Bharatpur — send the user to choose / grant location.
-            router.replace('/city-selection');
+            // Do not silently pin Bharatpur — start GPS ask, then city-selection if denied.
+            router.replace('/');
             return;
         }
 

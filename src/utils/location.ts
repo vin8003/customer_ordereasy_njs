@@ -88,7 +88,12 @@ export async function requestCurrentPosition(): Promise<{ lat: number; lng: numb
     }
 }
 
-export function matchAvailableCity(city?: string, state?: string): City | null {
+export function matchAvailableCity(city?: string, state?: string, pincode?: string): City | null {
+    if (pincode) {
+        const byPin = AVAILABLE_CITIES.find((c) => c.pincode === pincode && c.isAvailable);
+        if (byPin) return byPin;
+    }
+
     const normalize = (s: string) => s?.toLowerCase().trim() || '';
     const nCity = normalize(city || '');
     const nState = normalize(state || '');
@@ -173,7 +178,7 @@ export function buildStoredLocation(
     lng: number,
     geo?: GeoAddress | null
 ): StoredLocation {
-    const matched = geo ? matchAvailableCity(geo.city, geo.state) : null;
+    const matched = geo ? matchAvailableCity(geo.city, geo.state, geo.pincode) : null;
     if (matched) {
         return {
             ...matched,
