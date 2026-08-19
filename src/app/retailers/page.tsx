@@ -60,16 +60,9 @@ export default function RetailersPage() {
         setIsLoading(true);
         try {
             const params: Record<string, string | number> = {};
-            // Known service city: city/pincode (user_pincode-only is empty on live).
-            // Raw GPS outside the city list: existing lat/lng radius API.
-            if (loc.id === 'gps' && loc.lat && loc.lng) {
-                params.lat = loc.lat;
-                params.lng = loc.lng;
-                if (loc.pincode) params.user_pincode = loc.pincode;
-            } else {
-                if (loc.name) params.city = loc.name;
-                if (loc.pincode) params.pincode = loc.pincode;
-            }
+            // Live listing is city/pincode only. Never lat/lng-only (stores have no coords).
+            if (loc.name) params.city = loc.name;
+            if (loc.pincode) params.pincode = loc.pincode;
             const data = await apiService.getRetailers(params);
             setRetailers(data.results || []);
         } catch (err) {

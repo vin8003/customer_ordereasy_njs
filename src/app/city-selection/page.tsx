@@ -27,7 +27,7 @@ export default function CitySelectionPage() {
                 router.replace('/retailers');
                 return;
             }
-            setLocateError('Location permission denied. Please select your city to continue.');
+            setLocateError('Could not confirm a service city from GPS. Please select your city to continue.');
         } finally {
             setIsLocating(false);
         }
