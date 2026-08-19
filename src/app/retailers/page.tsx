@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { MapPin, ShoppingBag, Star, Clock, ChevronRight } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
-import { DEFAULT_CITY } from '@/config/cities';
+import { getPersistedLocation, StoredLocation } from '@/utils/location';
 import styles from './Retailers.module.css';
 
 interface Retailer {
@@ -33,32 +33,16 @@ export default function RetailersPage() {
     const [userName, setUserName] = useState('');
 
     useEffect(() => {
-        // Check for selected city
-        const storedCity = localStorage.getItem('selected_city');
-        //const storedPincode = localStorage.getItem('selected_pincode');
+        const stored = getPersistedLocation();
 
-        if (!storedCity) {
-            // No city selected, default to DEFAULT_CITY
-            const defaultCity = DEFAULT_CITY;
-            localStorage.setItem('selected_city', JSON.stringify(defaultCity));
-            localStorage.setItem('selected_pincode', defaultCity.pincode);
-            setSelectedCity(defaultCity);
-            fetchRetailers(defaultCity.pincode);
-        } else {
-            try {
-                const parsedCity = JSON.parse(storedCity);
-                setSelectedCity(parsedCity);
-                fetchRetailers(parsedCity.pincode);
-            } catch (e) {
-                console.error(e);
-                // Fallback to default if parsing fails
-                const defaultCity = DEFAULT_CITY;
-                localStorage.setItem('selected_city', JSON.stringify(defaultCity));
-                localStorage.setItem('selected_pincode', defaultCity.pincode);
-                setSelectedCity(defaultCity);
-                fetchRetailers(defaultCity.pincode);
-            }
+        if (!stored) {
+            // Do not silently pin Bharatpur — send the user to choose / grant location.
+            router.replace('/city-selection');
+            return;
         }
+
+        setSelectedCity(stored);
+        fetchRetailers(stored);
 
         // Check Auth Status
         if (apiService.isAuthenticated()) {
@@ -67,13 +51,18 @@ export default function RetailersPage() {
                 setUserName(profile.first_name || 'User');
             }).catch(e => console.error("Profile fetch failed", e));
         }
-    }, []);
+    }, [router]);
 
-    const fetchRetailers = async (pincode: string) => {
+    const fetchRetailers = async (loc: StoredLocation) => {
         setIsLoading(true);
         try {
-            // Filter by user_pincode
-            const data = await apiService.getRetailers({ user_pincode: pincode });
+            const params: Record<string, string | number> = {};
+            if (loc.pincode) params.user_pincode = loc.pincode;
+            if (loc.lat && loc.lng) {
+                params.lat = loc.lat;
+                params.lng = loc.lng;
+            }
+            const data = await apiService.getRetailers(params);
             setRetailers(data.results || []);
         } catch (err) {
             console.error(err);
@@ -120,7 +109,7 @@ export default function RetailersPage() {
                         style={{ cursor: 'pointer' }}
                     >
                         <MapPin size={16} className={styles.locationIcon} />
-                        <span>{selectedCity?.name} ({selectedCity?.pincode})</span>
+                        <span>{selectedCity?.name}{selectedCity?.pincode ? ` (${selectedCity.pincode})` : ''}</span>
                     </div>
 
                     <div className={styles.authContainer}>
@@ -157,7 +146,7 @@ export default function RetailersPage() {
             {error && (
                 <div className={styles.errorContainer}>
                     <p>{error}</p>
-                    <Button onClick={() => selectedCity && fetchRetailers(selectedCity.pincode)} variant="outline">Retry</Button>
+                    <Button onClick={() => selectedCity && fetchRetailers(selectedCity)} variant="outline">Retry</Button>
                 </div>
             )}
 

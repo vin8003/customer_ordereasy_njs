@@ -4,8 +4,7 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
 import { MapPin } from 'lucide-react';
-import { Geolocation } from '@capacitor/geolocation';
-import { Capacitor } from '@capacitor/core';
+import { requestCurrentPosition, reverseGeocode } from '@/utils/location';
 
 const containerStyle = {
     width: '100%',
@@ -38,76 +37,32 @@ export default function MapPicker({ onLocationSelect, initialLat, initialLng }: 
     const [markerPos, setMarkerPos] = useState(defaultCenter);
     const locationFetchedRef = useRef(false);
 
-    const reverseGeocode = useCallback(async (lat: number, lng: number) => {
-        if (typeof google === 'undefined' || !google.maps) return;
-        try {
-            const geocoder = new google.maps.Geocoder();
-            const response = await geocoder.geocode({ location: { lat, lng } });
-
-            if (response.results[0]) {
-                const result = response.results[0];
-                const fullAddress = result.formatted_address;
-
-                // Extract components
-                let pincode = '';
-                let city = '';
-                let state = '';
-
-                result.address_components.forEach(comp => {
-                    if (comp.types.includes('postal_code')) pincode = comp.long_name;
-                    if (comp.types.includes('locality')) city = comp.long_name;
-                    if (comp.types.includes('administrative_area_level_1')) state = comp.long_name;
-                });
-
-                onLocationSelect(lat, lng, fullAddress, pincode, city, state);
-            }
-        } catch (error) {
-            console.error("Geocoding failed", error);
+    const applyGeocode = useCallback(async (lat: number, lng: number) => {
+        const geo = await reverseGeocode(lat, lng);
+        if (geo) {
+            onLocationSelect(lat, lng, geo.address, geo.pincode, geo.city, geo.state);
         }
     }, [onLocationSelect]);
 
     useEffect(() => {
         if (initialLat && initialLng) {
             setMarkerPos({ lat: initialLat, lng: initialLng });
-        } else if (isLoaded && !locationFetchedRef.current) {
+            return;
+        }
+        if (isLoaded && !locationFetchedRef.current) {
             locationFetchedRef.current = true;
             const fetchLocation = async () => {
-                if (Capacitor.isNativePlatform()) {
-                    try {
-                        let permStatus = await Geolocation.checkPermissions();
-                        if (permStatus.location !== 'granted') {
-                            permStatus = await Geolocation.requestPermissions();
-                        }
-                        if (permStatus.location === 'granted') {
-                            const position = await Geolocation.getCurrentPosition();
-                            const lat = position.coords.latitude;
-                            const lng = position.coords.longitude;
-                            setMarkerPos({ lat, lng });
-                            await reverseGeocode(lat, lng);
-                        }
-                    } catch (e) {
-                        console.warn("Native geolocation failed or denied.", e);
-                    }
-                } else {
-                    // Try getting current location via browser API
-                    if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(
-                            async (position) => {
-                                const lat = position.coords.latitude;
-                                const lng = position.coords.longitude;
-                                setMarkerPos({ lat, lng });
-                                await reverseGeocode(lat, lng);
-                            },
-                            () => {
-                                console.warn("Geolocation failed or denied.");
-                            }
-                        );
-                    }
+                const pos = await requestCurrentPosition();
+                if (!pos) {
+                    console.warn('Geolocation failed or denied.');
+                    return;
                 }
+                setMarkerPos({ lat: pos.lat, lng: pos.lng });
+                await applyGeocode(pos.lat, pos.lng);
             };
             fetchLocation();
         }
-    }, [initialLat, initialLng, isLoaded, reverseGeocode]);
+    }, [initialLat, initialLng, isLoaded, applyGeocode]);
 
     const onLoad = useCallback(function callback(map: google.maps.Map) {
         setMap(map);
@@ -123,7 +78,7 @@ export default function MapPicker({ onLocationSelect, initialLat, initialLng }: 
         const lng = e.latLng.lng();
 
         setMarkerPos({ lat, lng });
-        await reverseGeocode(lat, lng);
+        await applyGeocode(lat, lng);
     };
 
     if (!isLoaded) return <LoadingScreen message="Loading Map..." />;
@@ -146,7 +101,7 @@ export default function MapPicker({ onLocationSelect, initialLat, initialLng }: 
             </GoogleMap>
             <div className="mt-2 text-xs text-center text-gray-500 flex items-center justify-center gap-1">
                 <MapPin size={12} />
-                <span>Tap on map to select precise location</span>
+                <span>Location is set from GPS. Tap the map only if you want to adjust the pin.</span>
             </div>
         </div>
     );
