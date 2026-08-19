@@ -11,6 +11,7 @@ import { Button } from '@/app/components/ui/Button';
 import { Input } from '@/app/components/ui/Input';
 import MapPicker from '@/app/components/MapPicker';
 import { AVAILABLE_CITIES } from '@/config/cities';
+import { matchAvailableCity } from '@/utils/location';
 import styles from '../Addresses.module.css';
 
 function EditAddressForm() {
@@ -69,23 +70,7 @@ function EditAddressForm() {
     };
 
     const handleLocationSelect = (lat: number, lng: number, address: string, pincode: string, city: string, state: string) => {
-        // Try to match city and state with available ones.
-        // Support partial matches (e.g. "Bharat" -> "Bharatpur", "Raja" -> "Rajasthan")
-        // because geocoders might return shortened names or variations.
-        const normalize = (s: string) => s?.toLowerCase().trim() || '';
-        const nCity = normalize(city);
-        const nState = normalize(state);
-
-        const matchedCity = AVAILABLE_CITIES.find(c => {
-            const cName = normalize(c.name);
-            const cState = normalize(c.state);
-
-            // Check for city match (exact or startsWith) AND state match (exact or startsWith)
-            const cityMatch = nCity && (cName === nCity || cName.startsWith(nCity) || nCity.startsWith(cName));
-            const stateMatch = nState && (cState === nState || cState.startsWith(nState) || nState.startsWith(cState));
-
-            return cityMatch && stateMatch;
-        });
+        const matchedCity = matchAvailableCity(city, state);
 
         setFormData(prev => ({
             ...prev,

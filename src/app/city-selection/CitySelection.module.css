@@ -124,3 +124,32 @@
 .footer {
     margin-top: auto;
 }
+
+.locateBtn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: white;
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 16px;
+}
+
+.locateBtn:disabled {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+.locateError {
+    color: #b45309;
+    font-size: 13px;
+    text-align: center;
+    margin: -8px 0 16px;
+}

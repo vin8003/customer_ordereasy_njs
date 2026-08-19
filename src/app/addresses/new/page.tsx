@@ -1,7 +1,7 @@
 'use client';
 import toast from 'react-hot-toast';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { ArrowLeft } from 'lucide-react';
@@ -10,6 +10,7 @@ import { Button } from '@/app/components/ui/Button';
 import { Input } from '@/app/components/ui/Input';
 import MapPicker from '@/app/components/MapPicker';
 import { AVAILABLE_CITIES } from '@/config/cities';
+import { getPersistedLocation, matchAvailableCity } from '@/utils/location';
 import styles from './AddressForm.module.css';
 
 export default function NewAddressPage() {
@@ -32,24 +33,26 @@ export default function NewAddressPage() {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleLocationSelect = (lat: number, lng: number, address: string, pincode: string, city: string, state: string) => {
-        // Try to match city and state with available ones.
-        // Support partial matches (e.g. "Bharat" -> "Bharatpur", "Raja" -> "Rajasthan")
-        // because geocoders might return shortened names or variations.
-        const normalize = (s: string) => s?.toLowerCase().trim() || '';
-        const nCity = normalize(city);
-        const nState = normalize(state);
-
-        const matchedCity = AVAILABLE_CITIES.find(c => {
-            const cName = normalize(c.name);
-            const cState = normalize(c.state);
-
-            // Check for city match (exact or startsWith) AND state match (exact or startsWith)
-            const cityMatch = nCity && (cName === nCity || cName.startsWith(nCity) || nCity.startsWith(cName));
-            const stateMatch = nState && (cState === nState || cState.startsWith(nState) || nState.startsWith(cState));
-
-            return cityMatch && stateMatch;
+    useEffect(() => {
+        const loc = getPersistedLocation();
+        if (!loc?.lat || !loc?.lng) return;
+        const matched = matchAvailableCity(loc.name, loc.state);
+        setFormData(prev => {
+            if (prev.latitude || prev.longitude) return prev;
+            return {
+                ...prev,
+                latitude: Number(loc.lat!.toFixed(8)),
+                longitude: Number(loc.lng!.toFixed(8)),
+                address_line1: loc.address || prev.address_line1,
+                pincode: matched?.pincode || loc.pincode || prev.pincode,
+                city: matched?.name || prev.city,
+                state: matched?.state || loc.state || prev.state,
+            };
         });
+    }, []);
+
+    const handleLocationSelect = (lat: number, lng: number, address: string, pincode: string, city: string, state: string) => {
+        const matchedCity = matchAvailableCity(city, state);
 
         setFormData(prev => ({
             ...prev,
@@ -90,7 +93,7 @@ export default function NewAddressPage() {
             <form className={styles.form} onSubmit={handleSubmit}>
                 <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-                    <MapPicker onLocationSelect={handleLocationSelect} />
+                    <MapPicker onLocationSelect={handleLocationSelect} initialLat={formData.latitude || undefined} initialLng={formData.longitude || undefined} />
                 </div>
 
                 <div className={styles.field}>
