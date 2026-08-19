@@ -37,6 +37,11 @@ interface OrderDetail {
     net_amount?: string;
     delivery_mode: string;
     payment_mode: string;
+    credit_amount?: string | number;
+    credit_limit?: number | string | null;
+    current_balance?: number | string | null;
+    ledger_previous_balance?: number | string | null;
+    ledger_new_balance?: number | string | null;
     special_instructions: string;
     delivery_address_text: string;
     items: OrderItem[];
@@ -560,6 +565,34 @@ function OrderDetails() {
                         )}
                     </div>
                 </section>
+
+                {(() => {
+                    const mode = (order.payment_mode || '').toLowerCase();
+                    const isCredit = mode === 'credit' || mode === 'khata' || Number(order.credit_amount || 0) > 0;
+                    const limit = order.credit_limit == null ? null : Number(order.credit_limit);
+                    const used = order.current_balance == null ? null : Number(order.current_balance);
+                    if (!isCredit || limit == null || used == null || !(limit > 0)) return null;
+                    const remaining = limit - used;
+                    return (
+                        <section className={styles.section}>
+                            <h3 className="font-bold mb-3 text-sm text-gray-500 uppercase">Credit / Khata</h3>
+                            <div className="flex flex-col gap-2 text-sm">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500">Credit limit</span>
+                                    <span className="font-medium">₹{limit.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500">Outstanding</span>
+                                    <span className="font-medium">₹{used.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between font-bold border-t border-gray-100 pt-2 mt-1">
+                                    <span>Remaining credit</span>
+                                    <span>₹{remaining.toFixed(2)}</span>
+                                </div>
+                            </div>
+                        </section>
+                    );
+                })()}
 
                 {order.special_instructions && (
                     <section className={styles.section}>
