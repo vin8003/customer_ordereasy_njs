@@ -18,22 +18,6 @@ export default function CitySelectionPage() {
     const [isLocating, setIsLocating] = useState(false);
     const [locateError, setLocateError] = useState('');
 
-    useEffect(() => {
-        const stored = getPersistedLocation();
-        if (stored) {
-            const match = AVAILABLE_CITIES.find((c) => c.id === stored.id)
-                || AVAILABLE_CITIES.find((c) => c.name === stored.name);
-            setSelectedCity(match || null);
-        }
-        // Do not auto-select Bharatpur. GPS is asked on home; here the user can retry or pick manually.
-    }, []);
-
-    const handleCitySelect = (city: City) => {
-        if (!city.isAvailable) return;
-        setSelectedCity(city);
-        setLocateError('');
-    };
-
     const handleUseLocation = async () => {
         setIsLocating(true);
         setLocateError('');
@@ -47,6 +31,27 @@ export default function CitySelectionPage() {
         } finally {
             setIsLocating(false);
         }
+    };
+
+    useEffect(() => {
+        const stored = getPersistedLocation();
+        if (stored) {
+            const match = AVAILABLE_CITIES.find((c) => c.id === stored.id)
+                || AVAILABLE_CITIES.find((c) => c.name === stored.name);
+            setSelectedCity(match || null);
+        }
+        // Do not auto-select Bharatpur. Ask GPS here if home has not already prompted.
+        if (!sessionStorage.getItem('location_prompted')) {
+            sessionStorage.setItem('location_prompted', '1');
+            handleUseLocation();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const handleCitySelect = (city: City) => {
+        if (!city.isAvailable) return;
+        setSelectedCity(city);
+        setLocateError('');
     };
 
     const handleConfirm = () => {

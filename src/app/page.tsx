@@ -18,6 +18,7 @@ export default function Home() {
                 return;
             }
 
+            sessionStorage.setItem('location_prompted', '1');
             const loc = await requestAndPersistLocation();
             if (cancelled) return;
 

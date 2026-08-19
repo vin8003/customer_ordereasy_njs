@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { MapPin, ShoppingBag, Star, Clock, ChevronRight } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
-import { getPersistedLocation, StoredLocation } from '@/utils/location';
+import { getPersistedLocation, hasConfirmedLocation, StoredLocation } from '@/utils/location';
 import styles from './Retailers.module.css';
 
 interface Retailer {
@@ -33,11 +33,14 @@ export default function RetailersPage() {
     const [userName, setUserName] = useState('');
 
     useEffect(() => {
+        if (!hasConfirmedLocation()) {
+            // Do not silently pin Bharatpur — send the user to choose / grant location.
+            router.replace('/city-selection');
+            return;
+        }
         const stored = getPersistedLocation();
-
         if (!stored) {
-            // Do not silently pin Bharatpur — start GPS ask, then city-selection if denied.
-            router.replace('/');
+            router.replace('/city-selection');
             return;
         }
 
@@ -57,10 +60,15 @@ export default function RetailersPage() {
         setIsLoading(true);
         try {
             const params: Record<string, string | number> = {};
-            if (loc.pincode) params.user_pincode = loc.pincode;
-            if (loc.lat && loc.lng) {
+            // Known service city: city/pincode (user_pincode-only is empty on live).
+            // Raw GPS outside the city list: existing lat/lng radius API.
+            if (loc.id === 'gps' && loc.lat && loc.lng) {
                 params.lat = loc.lat;
                 params.lng = loc.lng;
+                if (loc.pincode) params.user_pincode = loc.pincode;
+            } else {
+                if (loc.name) params.city = loc.name;
+                if (loc.pincode) params.pincode = loc.pincode;
             }
             const data = await apiService.getRetailers(params);
             setRetailers(data.results || []);

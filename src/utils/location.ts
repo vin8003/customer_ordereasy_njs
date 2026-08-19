@@ -205,7 +205,10 @@ export function buildStoredLocation(
 export async function requestAndPersistLocation(): Promise<StoredLocation | null> {
     const pos = await requestCurrentPosition();
     if (!pos) return null;
-    const geo = await reverseGeocode(pos.lat, pos.lng);
+    const geo = await Promise.race([
+        reverseGeocode(pos.lat, pos.lng),
+        new Promise<GeoAddress | null>((resolve) => setTimeout(() => resolve(null), 8000)),
+    ]);
     const loc = buildStoredLocation(pos.lat, pos.lng, geo);
     persistLocation(loc);
     return loc;
