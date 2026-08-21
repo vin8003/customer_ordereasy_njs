@@ -284,6 +284,21 @@ export const apiService = {
         });
     },
 
+    /** Distinct city/state where active retailers operate. Call on empty list only. */
+    getOperationalCities: async (): Promise<{ results: { city: string; state: string }[] }> => {
+        const key = 'operational_cities';
+        return fetchWithDedupe(key, async () => {
+            const response = await api.get('retailers/cities/');
+            return response.data;
+        });
+    },
+
+    /** Backend IP→city fallback when browser IP providers fail (no GPS). */
+    geoEstimate: async (): Promise<{ city: string | null; state: string | null; pincode: string | null }> => {
+        const response = await api.get('retailers/geo-estimate/');
+        return response.data;
+    },
+
     getRetailerDetails: async (retailerId: string) => {
         const key = `retailer_${retailerId}`;
         return fetchWithDedupe(key, async () => {

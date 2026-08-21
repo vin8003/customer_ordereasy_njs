@@ -2,63 +2,153 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { MapPin, Check, LocateFixed } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { Button } from '@/app/components/ui/Button';
-import { AVAILABLE_CITIES, City } from '@/config/cities';
+import { City } from '@/config/cities';
 import {
-    getPersistedLocation,
-    persistManualCity,
-    requestAndPersistLocation,
-} from '@/utils/location';
+    INDIA_STATES,
+    getCitiesForState,
+    cityId,
+    matchCity,
+    matchState,
+} from '@/config/india-locations';
+import { estimateCityFromIp } from '@/services/geoEstimate';
+import { apiService } from '@/services/api';
 import styles from './CitySelection.module.css';
 
 export default function CitySelectionPage() {
     const router = useRouter();
-    const [selectedCity, setSelectedCity] = useState<City | null>(null);
-    const [isLocating, setIsLocating] = useState(false);
-    const [locateError, setLocateError] = useState('');
+    const [selectedState, setSelectedState] = useState('');
+    const [selectedCityName, setSelectedCityName] = useState('');
+    const [extraCity, setExtraCity] = useState<string | null>(null);
+    const [pincode, setPincode] = useState<string | undefined>();
+    /** City name the IP estimate attached a pincode to — cleared when user overrides. */
+    const [estimatedCityForPin, setEstimatedCityForPin] = useState<string | null>(null);
+    const [detectHint, setDetectHint] = useState('');
+    const [isDetecting, setIsDetecting] = useState(false);
 
-    const handleUseLocation = async () => {
-        setIsLocating(true);
-        setLocateError('');
-        try {
-            const loc = await requestAndPersistLocation();
-            if (loc) {
-                router.replace('/retailers');
-                return;
-            }
-            setLocateError('Could not confirm a service city from GPS. Please select your city to continue.');
-        } finally {
-            setIsLocating(false);
-        }
-    };
+    const citiesForState = (() => {
+        if (!selectedState) return [];
+        const base = getCitiesForState(selectedState);
+        if (extraCity && !base.includes(extraCity)) return [...base, extraCity];
+        return base;
+    })();
 
     useEffect(() => {
-        const stored = getPersistedLocation();
-        if (stored) {
-            const match = AVAILABLE_CITIES.find((c) => c.id === stored.id)
-                || AVAILABLE_CITIES.find((c) => c.name === stored.name);
-            setSelectedCity(match || null);
+        const storedCity = localStorage.getItem('selected_city');
+        if (storedCity) {
+            try {
+                const parsed: City = JSON.parse(storedCity);
+                const state = matchState(parsed.state) || parsed.state;
+                const city =
+                    matchCity(parsed.name, state) || parsed.name;
+                setSelectedState(state);
+                setSelectedCityName(city);
+                if (city && !getCitiesForState(state).includes(city)) {
+                    setExtraCity(city);
+                }
+                if (parsed.pincode) setPincode(parsed.pincode);
+                return;
+            } catch (e) {
+                console.error('Failed to parse stored city', e);
+            }
         }
-        // Do not auto-select Bharatpur. Ask GPS here if home has not already prompted.
-        if (!sessionStorage.getItem('location_prompted')) {
-            sessionStorage.setItem('location_prompted', '1');
-            handleUseLocation();
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+
+        let cancelled = false;
+        (async () => {
+            setIsDetecting(true);
+            try {
+                let estimate = await estimateCityFromIp();
+                if (!estimate) {
+                    try {
+                        const be = await apiService.geoEstimate();
+                        if (be?.city || be?.state) {
+                            estimate = {
+                                city: matchCity(be.city, matchState(be.state) || be.state),
+                                state: matchState(be.state) || be.state,
+                                pincode: be.pincode,
+                                guessedCityName: be.city,
+                                source: 'backend',
+                            };
+                        }
+                    } catch {
+                        // silent
+                    }
+                }
+                if (cancelled || !estimate) return;
+
+                const state = estimate.state || '';
+                let city = estimate.city;
+                if (!city && estimate.guessedCityName && state) {
+                    city = estimate.guessedCityName;
+                    setExtraCity(estimate.guessedCityName);
+                }
+                if (state) setSelectedState(state);
+                if (city) setSelectedCityName(city);
+                if (estimate.pincode && city) {
+                    setPincode(estimate.pincode);
+                    setEstimatedCityForPin(city);
+                }
+
+                const labelCity = city || estimate.guessedCityName;
+                if (labelCity && state) {
+                    setDetectHint(
+                        `Detected near ${labelCity}, ${state} — change if needed.`
+                    );
+                } else if (state) {
+                    setDetectHint(
+                        `Detected near ${state} — select your city.`
+                    );
+                }
+            } finally {
+                if (!cancelled) setIsDetecting(false);
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
-    const handleCitySelect = (city: City) => {
-        if (!city.isAvailable) return;
-        setSelectedCity(city);
-        setLocateError('');
+    const clearEstimatedPincode = () => {
+        setPincode(undefined);
+        setEstimatedCityForPin(null);
+    };
+
+    const handleStateChange = (state: string) => {
+        setSelectedState(state);
+        setSelectedCityName('');
+        setExtraCity(null);
+        setDetectHint('');
+        clearEstimatedPincode();
+    };
+
+    const handleCityChange = (cityName: string) => {
+        setSelectedCityName(cityName);
+        setDetectHint('');
+        if (!cityName || cityName !== estimatedCityForPin) {
+            clearEstimatedPincode();
+        }
     };
 
     const handleConfirm = () => {
-        if (selectedCity) {
-            persistManualCity(selectedCity);
-            router.push('/retailers');
+        if (!selectedState || !selectedCityName) return;
+        const pin =
+            pincode && selectedCityName === estimatedCityForPin ? pincode : undefined;
+        const city: City = {
+            id: cityId(selectedCityName, selectedState),
+            name: selectedCityName,
+            state: selectedState,
+            ...(pin ? { pincode: pin } : {}),
+        };
+        localStorage.setItem('selected_city', JSON.stringify(city));
+        if (pin) {
+            localStorage.setItem('selected_pincode', pin);
+        } else {
+            localStorage.removeItem('selected_pincode');
         }
+        window.dispatchEvent(new Event('storage'));
+        router.push('/retailers');
     };
 
     return (
@@ -68,50 +158,61 @@ export default function CitySelectionPage() {
                     <div className={styles.iconWrapper}>
                         <MapPin size={48} className={styles.icon} />
                     </div>
-                    <h1>Where are you?</h1>
-                    <p>We use your location to show nearby stores. Pickup and delivery both work without dropping a map pin.</p>
+                    <h1>Select Your City</h1>
+                    <p>Tell us where you are to find the best offers near you.</p>
                 </div>
 
-                <button
-                    type="button"
-                    className={styles.locateBtn}
-                    onClick={handleUseLocation}
-                    disabled={isLocating}
-                >
-                    <LocateFixed size={18} />
-                    {isLocating ? 'Detecting location...' : 'Use my current location'}
-                </button>
-                {locateError && <p className={styles.locateError}>{locateError}</p>}
-
-                <div className={styles.cityList}>
-                    {AVAILABLE_CITIES.map((city) => (
-                        <div
-                            key={city.id}
-                            className={`${styles.cityCard} ${selectedCity?.id === city.id ? styles.selected : ''} ${!city.isAvailable ? styles.disabled : ''}`}
-                            onClick={() => handleCitySelect(city)}
+                <div className={styles.formFields}>
+                    <div className={styles.field}>
+                        <label htmlFor="state">State</label>
+                        <select
+                            id="state"
+                            value={selectedState}
+                            onChange={(e) => handleStateChange(e.target.value)}
+                            className={styles.select}
                         >
-                            <div className={styles.cityInfo}>
-                                <h2>{city.name}</h2>
-                                <p>{city.state} - {city.pincode}</p>
-                            </div>
-                            {selectedCity?.id === city.id && (
-                                <div className={styles.checkIcon}>
-                                    <Check size={20} />
-                                </div>
-                            )}
-                        </div>
-                    ))}
+                            <option value="">Select State</option>
+                            {INDIA_STATES.map((state) => (
+                                <option key={state} value={state}>
+                                    {state}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className={styles.field}>
+                        <label htmlFor="city">City</label>
+                        <select
+                            id="city"
+                            value={selectedCityName}
+                            onChange={(e) => handleCityChange(e.target.value)}
+                            disabled={!selectedState}
+                            className={styles.select}
+                        >
+                            <option value="">
+                                {selectedState ? 'Select City' : 'Select state first'}
+                            </option>
+                            {citiesForState.map((city) => (
+                                <option key={city} value={city}>
+                                    {city}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
-                <div className={styles.infoMessage}>
-                    <p>Or pick a city if you prefer not to share location.</p>
-                </div>
+                {isDetecting && (
+                    <p className={styles.detectHint}>Detecting your city…</p>
+                )}
+                {!isDetecting && detectHint && (
+                    <p className={styles.detectHint}>{detectHint}</p>
+                )}
 
                 <div className={styles.footer}>
                     <Button
                         fullWidth
                         onClick={handleConfirm}
-                        disabled={!selectedCity}
+                        disabled={!selectedState || !selectedCityName}
                     >
                         Continue
                     </Button>
