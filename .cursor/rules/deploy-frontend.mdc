@@ -1,0 +1,22 @@
+---
+description: Customer FE deploy — build out/ → sibling customer_web_build → PR to main (approved) → Cloudflare Pages; only when asked
+alwaysApply: true
+---
+
+# Deploy frontend (customer)
+
+Production static site is served from sibling repo `../customer_web_build` via Cloudflare Pages. `main` there is production.
+
+## Flow (only when user explicitly asks to deploy)
+
+1. In this repo: `npm run build` (Next `output: 'export'` → `out/`).
+2. Replace contents of sibling `../customer_web_build` with `out/` — **keep** `customer_web_build/.git`.
+3. In `customer_web_build`: secret-scan → `review-before-push` → commit on a **feature branch** → open PR into **`main`** → wait for review → merge **only with ≥1 approval** → Cloudflare Pages goes live.
+4. Never push `main` directly. Summarize PR URL / merge SHA and Pages implication.
+
+## Hard rules
+
+- Never deploy unless the user explicitly requests it.
+- Never commit/push/merge directly onto build-repo `main`.
+- Never merge a deploy PR with zero approvals.
+- Feature work stays in this source repo on feature branches → PR; live FE only via approved merge to build-repo `main` when asked.

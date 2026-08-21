@@ -1,0 +1,18 @@
+---
+description: Customer FE engineering standards — surgical, phased, lint/tests if present; Vitest not wired
+alwaysApply: true
+---
+
+# Engineering standards (customer FE)
+
+- **Ask, don’t guess** — stop on ambiguous requirements, missing env, unclear deploy target, or conflicting acceptance criteria.
+- **Surgical changes** — smallest diff; no drive-by refactors or unrelated files.
+- **Phased delivery** — break tickets into ordered phases when more than one concern is involved. One isolated change at a time; after each step: write/update tests for that step when feasible, run checks, mini-review, then proceed. Do not pile up a large multi-file change and only test/review at the end.
+- **Readable code** — match existing patterns; clear names; no cleverness.
+- **Unit tests with the change** — Vitest is **not wired** in this repo yet. When introducing non-trivial logic, prefer small pure helpers and add tests if/when a runner exists; until then, keep logic extractable and run `npm run lint` (and any tests if added later).
+- **Full checks before merge readiness / push / PR** — always run `npm run lint` green before marking a phase done for merge, and before push/`review-before-push`. If a test script is present, run it too. Fix failures before continuing.
+- **Negative QA before “done”** — list/run failure cases (auth missing, empty states, invalid IDs, permission denied, network errors, race/double-submit). Prefer at least one negative/edge case check on critical paths.
+- **No silent deploy** — never update sibling `customer_web_build` `main` unless the user explicitly asks to deploy (and only via approved PR — see `pr-workflow`).
+- **PR-only protected branches** — never commit/merge directly on `main` / `master` / `deploy/dev`; wait for review; never merge without ≥1 approval.
+- **Review before push** — before any `git push`, present a short review (what changed, risks, checks run, negative cases); wait for explicit go-ahead unless the user already said push/deploy.
+- **Secret leakage on commit** — before every `git commit`, scan staged files; never stage `.env`, `*.pem`, `*.key`, service-account JSON, Firebase/Oracle keys, or hardcoded tokens/passwords. If sensitive, stop, unstage, and warn.

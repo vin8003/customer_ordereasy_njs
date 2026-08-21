@@ -1,0 +1,23 @@
+---
+description: Break work into phases; checks + mini-review each step; never batch large diffs
+alwaysApply: true
+---
+
+# Phased delivery
+
+## When starting non-trivial work
+
+1. Split into phases (e.g. API wiring → UI → edge cases → docs). Prefer phases that each leave the tree green.
+2. Share the phase list with the user when useful; adjust if they reorder/cut scope.
+
+## Per phase (hard loop)
+
+1. Implement only that phase’s files/behavior.
+2. Add/update **tests for that phase** when feasible (happy + at least one negative/edge when relevant). Vitest is not wired yet — prefer small pure helpers; add colocated tests once a runner exists.
+3. Run **focused checks** for the touched area, then **repo checks** before calling the phase done: `npm run lint` (and tests if present).
+4. **Mini-review** the phase diff (correctness, readability, secrets) — present a short summary; do not start the next phase until this phase is verified.
+5. Optionally commit the phase alone (easier bisect/review) when the user wants commits.
+
+## Forbidden
+
+- Implementing everything, then one giant lint/test run and one giant review at the end.
