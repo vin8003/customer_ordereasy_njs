@@ -59,7 +59,7 @@ export default function NewAddressPage() {
             latitude: Number(lat.toFixed(8)),
             longitude: Number(lng.toFixed(8)),
             address_line1: address,
-            pincode: matchedCity ? matchedCity.pincode : (pincode || prev.pincode),
+            pincode: matchedCity?.pincode || pincode || prev.pincode,
             city: matchedCity ? matchedCity.name : prev.city,
             state: matchedCity ? matchedCity.state : prev.state
         }));
@@ -154,7 +154,7 @@ export default function NewAddressPage() {
                                 setFormData({
                                     ...formData,
                                     city: e.target.value,
-                                    pincode: city ? city.pincode : formData.pincode
+                                    pincode: city?.pincode || formData.pincode
                                 });
                             }}
                             className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
