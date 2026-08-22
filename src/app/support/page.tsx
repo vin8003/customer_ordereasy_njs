@@ -1,13 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { ArrowLeft, Mail, Phone, ChevronDown, ChevronUp, MessageCircle } from 'lucide-react';
-import { Button } from '@/app/components/ui/Button';
 
 export default function SupportPage() {
-    const router = useRouter();
     const { handleBack } = useAppNavigation();
     const [openFaq, setOpenFaq] = useState<number | null>(null);
 
@@ -53,8 +50,8 @@ export default function SupportPage() {
                 <section className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
                     <h2 className="text-base font-semibold text-gray-800 mb-4">Contact Us</h2>
                     <div className="space-y-3">
-                        <a href="mailto:support@ordereasy.com" className="flex items-center gap-4 p-3 rounded-lg border border-gray-100 hover:bg-blue-50 transition-colors group">
-                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 group-hover:bg-blue-200">
+                        <a href="mailto:support@ordereasy.com" className="flex items-center gap-4 p-3 rounded-lg border border-gray-100 hover:bg-primary/5 transition-colors group">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary/20">
                                 <Mail size={20} />
                             </div>
                             <div className="flex-1">
@@ -63,8 +60,8 @@ export default function SupportPage() {
                             </div>
                         </a>
 
-                        <a href="tel:+919876543210" className="flex items-center gap-4 p-3 rounded-lg border border-gray-100 hover:bg-green-50 transition-colors group">
-                            <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 group-hover:bg-green-200">
+                        <a href="tel:+919876543210" className="flex items-center gap-4 p-3 rounded-lg border border-gray-100 hover:bg-primary/5 transition-colors group">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary/20">
                                 <Phone size={20} />
                             </div>
                             <div className="flex-1">
@@ -73,9 +70,9 @@ export default function SupportPage() {
                             </div>
                         </a>
 
-                        <div className="bg-blue-50 p-4 rounded-lg mt-4 flex items-start gap-3">
-                            <MessageCircle size={20} className="text-blue-600 mt-1 shrink-0" />
-                            <p className="text-sm text-blue-800">
+                        <div className="bg-primary/5 p-4 rounded-lg mt-4 flex items-start gap-3">
+                            <MessageCircle size={20} className="text-primary mt-1 shrink-0" />
+                            <p className="text-sm text-foreground">
                                 For urgent issues with an ongoing order, please contact the Retailer directly from the Order Details page.
                             </p>
                         </div>

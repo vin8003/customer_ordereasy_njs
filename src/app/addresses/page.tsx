@@ -7,6 +7,7 @@ import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { ArrowLeft, Plus, MapPin, Trash2, Edit } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
+import { EmptyState } from '@/app/components/EmptyState';
 import styles from './Addresses.module.css';
 
 export default function AddressesPage() {
@@ -49,7 +50,7 @@ export default function AddressesPage() {
                 </Button>
                 <h1>My Addresses</h1>
                 <Button variant="ghost" onClick={() => router.push('/addresses/create')}>
-                    <Plus size={24} className="text-blue-600" />
+                    <Plus size={24} className="text-primary" />
                 </Button>
             </header>
 
@@ -57,20 +58,20 @@ export default function AddressesPage() {
                 {isLoading ? (
                     <LoadingScreen message="Loading addresses..." />
                 ) : addresses.length === 0 ? (
-                    <div className="text-center p-12 text-gray-400">
-                        <MapPin size={48} className="mx-auto mb-4 text-gray-300" />
-                        <p>No addresses found.</p>
-                        <Button className="mt-4" onClick={() => router.push('/addresses/create')}>
-                            Add New Address
-                        </Button>
-                    </div>
+                    <EmptyState
+                        icon={MapPin}
+                        title="No addresses yet"
+                        description="Add a delivery address to check out faster next time."
+                        actionLabel="Add New Address"
+                        onAction={() => router.push('/addresses/create')}
+                    />
                 ) : (
                     addresses.map(addr => (
                         <div key={addr.id} className={styles.card}>
                             <div className={styles.cardHeader}>
                                 <span className={styles.tag}>{addr.address_type}</span>
                                 <div className={styles.actions}>
-                                    <button onClick={() => router.push(`/addresses/edit?id=${addr.id}`)} className="text-blue-500 p-2">
+                                    <button onClick={() => router.push(`/addresses/edit?id=${addr.id}`)} className="text-primary p-2">
                                         <Edit size={16} />
                                     </button>
                                     <button onClick={() => handleDelete(addr.id)} className="text-red-500 p-2">

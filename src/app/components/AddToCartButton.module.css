@@ -1,36 +1,49 @@
 .addButton {
-    width: 72px;
-    height: 32px;
-    border: 1px solid var(--primary-color);
-    border-radius: 8px;
-    background-color: white;
-    color: var(--primary-color);
+    width: 84px;
+    height: 34px;
+    border: none;
+    border-radius: 999px;
+    background-color: var(--primary-color);
+    color: white;
     font-weight: 700;
-    font-size: 13px;
+    font-size: 12px;
+    letter-spacing: 0.02em;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    gap: 4px;
+    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.25);
+}
+
+.addButton:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
 }
 
 .addButton:active {
     transform: scale(0.94);
-    background-color: rgba(99, 102, 241, 0.08);
+}
+
+.addButton:disabled,
+.disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    box-shadow: none;
 }
 
 .quantityControl {
-    width: 82px;
-    height: 32px;
+    width: 88px;
+    height: 34px;
     background-color: var(--primary-color);
-    border-radius: 8px;
+    border-radius: 999px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     color: white;
     font-weight: 700;
-    box-shadow: 0 2px 5px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.25);
     overflow: hidden;
 }
 
@@ -46,7 +59,6 @@
     align-items: center;
     justify-content: center;
     padding-bottom: 2px;
-    /* Visual alignment for + - */
 }
 
 .controlBtn:active {

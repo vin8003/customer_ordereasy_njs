@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Package, ChevronRight, Clock, Star } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
+import { EmptyState } from '@/app/components/EmptyState';
 import styles from './Orders.module.css';
 
 interface Order {
@@ -77,10 +78,11 @@ export default function OrdersPage() {
 
             <div className={styles.list}>
                 {orders.length === 0 && !isLoading && (
-                    <div className="flex flex-col items-center justify-center flex-1 py-20 text-gray-500">
-                        <Package size={48} className="mb-4 text-gray-300" />
-                        <p>No orders found.</p>
-                    </div>
+                    <EmptyState
+                        icon={Package}
+                        title="No orders yet"
+                        description="When you place an order, it will show up here."
+                    />
                 )}
 
                 {orders.map(order => (

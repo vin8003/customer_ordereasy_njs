@@ -1,6 +1,6 @@
 'use client';
 import LoadingScreen from '@/app/components/LoadingScreen';
-import toast from 'react-hot-toast';
+import toast from '@/lib/toast';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';

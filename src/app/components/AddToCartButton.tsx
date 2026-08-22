@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import toast from 'react-hot-toast';
+import toast from '@/lib/toast';
+import { ShoppingCart } from 'lucide-react';
 import { useCartContext } from '@/context/CartContext';
 import styles from './AddToCartButton.module.css';
 
@@ -38,7 +39,7 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
         if (retailerId && currentRetailerId && retailerId !== currentRetailerId) {
             toast.error(
                 <span>
-                    Switch to <span style={{ color: '#007bff', fontWeight: '600' }}>{retailerName || 'its'}</span> store to add this item.
+                    Switch to <span className="font-semibold text-primary">{retailerName || 'its'}</span> store to add this item.
                 </span>,
                 { duration: 4000 }
             );
@@ -103,7 +104,12 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
                 onClick={handleAdd}
                 disabled={loading || (!offersDelivery && !offersPickup)}
             >
-                {loading ? '...' : (!offersDelivery && !offersPickup ? 'OFFLINE' : 'ADD')}
+                {loading ? '...' : (!offersDelivery && !offersPickup ? 'OFFLINE' : (
+                    <>
+                        <ShoppingCart size={14} />
+                        ADD
+                    </>
+                ))}
             </button>
         );
     }

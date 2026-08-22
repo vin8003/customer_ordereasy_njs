@@ -5,6 +5,8 @@ import styles from '../retailer/RetailerHome.module.css';
 import { useRouter } from 'next/navigation';
 
 import { Product } from '../retailer/page';
+import { EmptyState } from './EmptyState';
+import { Package } from 'lucide-react';
 
 interface LazyProductLaneProps {
     title: string;
@@ -48,7 +50,19 @@ export default function LazyProductLane({ title, fetchFn, retailerId, offersDeli
 
     // Don't render the section at all if there's no data AND we've already fetched
     if (hasFetched && !isLoading && products.length === 0) {
-        return null; // Empty state graceful handling
+        return (
+            <div className={styles.section}>
+                <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle}>{title}</h2>
+                </div>
+                <EmptyState
+                    icon={Package}
+                    title="Nothing in this lane"
+                    description="Check back later or browse all products below."
+                    className="min-h-[160px] py-8"
+                />
+            </div>
+        );
     }
 
     return (

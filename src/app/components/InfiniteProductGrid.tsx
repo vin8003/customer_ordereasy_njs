@@ -8,6 +8,9 @@ import { useWishlist } from '@/hooks/useWishlist';
 import { useRouter } from 'next/navigation';
 import styles from '../retailer/RetailerHome.module.css';
 import { Product } from '../retailer/page';
+import { EmptyState } from '@/app/components/EmptyState';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Package } from 'lucide-react';
 
 interface InfiniteProductGridProps {
     retailerId: string | number;
@@ -86,7 +89,18 @@ export default function InfiniteProductGrid({ retailerId, offersDelivery, offers
     }, [inView, hasMore, isLoading, fetchProducts, page, products.length]);
 
     if (products.length === 0 && !isLoading) {
-        return null; // Empty state
+        return (
+            <div className={`${styles.section} mb-24`}>
+                <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle}>All Products</h2>
+                </div>
+                <EmptyState
+                    icon={Package}
+                    title="No products here yet"
+                    description="This shop has not listed catalog items in this section. Try another category or store."
+                />
+            </div>
+        );
     }
 
     return (
@@ -123,7 +137,7 @@ export default function InfiniteProductGrid({ retailerId, offersDelivery, offers
             {isLoading && (
                 <div className={`${styles.productsGrid} mt-4`}>
                     {Array(4).fill(0).map((_, i) => (
-                        <div key={`skeleton-${i}`} className={styles.skeletonCard} />
+                        <Skeleton key={`skeleton-${i}`} className="h-48 w-full rounded-xl" />
                     ))}
                 </div>
             )}
