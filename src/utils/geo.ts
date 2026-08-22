@@ -74,7 +74,7 @@ export function partitionByLocation(
     return { located, unlocated };
 }
 
-/** Nearest first. Retailers we could not place always sink to the bottom. */
+/** Nearest first. Shops with no distance sink to the bottom. */
 export function sortByDistance<T extends RetailerSummary>(retailers: T[]): T[] {
     return [...retailers].sort((a, b) => {
         const aDist = toDistance(a.distance);

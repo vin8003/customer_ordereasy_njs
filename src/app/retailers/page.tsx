@@ -101,9 +101,14 @@ export default function RetailersPage() {
             // pins vanish as soon as one shop is in range. Merge the city-wide
             // list until the serializer exposes `latitude`.
             if (at && isOldListPayload(results)) {
-                const cityWide = await apiService.getRetailers(listParams(null));
-                if (gen !== fetchGen.current) return;
-                results = unionById(results, cityWide.results || []);
+                try {
+                    const cityWide = await apiService.getRetailers(listParams(null));
+                    if (gen !== fetchGen.current) return;
+                    results = unionById(results, cityWide.results || []);
+                } catch (e) {
+                    console.error('Failed to load city-wide retailers', e);
+                    if (results.length === 0) throw e;
+                }
             }
 
             setRetailers(results);
