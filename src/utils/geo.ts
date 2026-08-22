@@ -60,7 +60,8 @@ export function partitionByLocation(
     retailers.forEach((retailer) => {
         const coords = getRetailerLatLng(retailer);
         if (!coords) {
-            unlocated.push({ ...retailer, distance: null });
+            // Keep API distance (radius-filtered lists can still send it without pins).
+            unlocated.push({ ...retailer, distance: toDistance(retailer.distance) });
             return;
         }
         located.push({

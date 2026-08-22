@@ -44,6 +44,23 @@ function samePoint(a: LatLng | null, b: LatLng | null) {
     );
 }
 
+/** KAN-69 list always includes `latitude` (null if unlocated). Live API omits the key. */
+function isOldListPayload(results: RetailerSummary[]): boolean {
+    return results.every((shop) => !Object.prototype.hasOwnProperty.call(shop, 'latitude'));
+}
+
+function unionById(
+    withDistance: RetailerSummary[],
+    cityWide: RetailerSummary[]
+): RetailerSummary[] {
+    const byId = new Map<number, RetailerSummary>();
+    withDistance.forEach((shop) => byId.set(shop.id, shop));
+    cityWide.forEach((shop) => {
+        if (!byId.has(shop.id)) byId.set(shop.id, shop);
+    });
+    return [...byId.values()];
+}
+
 export default function RetailersPage() {
     const router = useRouter();
     const [retailers, setRetailers] = useState<RetailerSummary[]>([]);
@@ -76,17 +93,17 @@ export default function RetailersPage() {
         });
 
         try {
-            let data = await apiService.getRetailers(listParams(at));
+            const data = await apiService.getRetailers(listParams(at));
             if (gen !== fetchGen.current) return;
             let results: RetailerSummary[] = data.results || [];
 
-            // Deployed list API still drops unlocated shops when lat/lng are sent
-            // (filter_by_radius is ignored until KAN-69 is live). That empty
-            // payload means "none in range", not "this city has no stores".
-            if (results.length === 0 && at) {
-                data = await apiService.getRetailers(listParams(null));
+            // Live list still radius-filters (KAN-69 not deployed): shops without
+            // pins vanish as soon as one shop is in range. Merge the city-wide
+            // list until the serializer exposes `latitude`.
+            if (at && isOldListPayload(results)) {
+                const cityWide = await apiService.getRetailers(listParams(null));
                 if (gen !== fetchGen.current) return;
-                results = data.results || [];
+                results = unionById(results, cityWide.results || []);
             }
 
             setRetailers(results);
