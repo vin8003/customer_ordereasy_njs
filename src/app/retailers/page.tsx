@@ -66,18 +66,29 @@ export default function RetailersPage() {
         setIsLoading(true);
         setError('');
         setOperationalCities([]);
+
+        const listParams = (coords: LatLng | null) => ({
+            city: city.name,
+            state: city.state,
+            ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
+            filter_by_radius: 'false' as const,
+            page_size: 100,
+        });
+
         try {
-            const data = await apiService.getRetailers({
-                city: city.name,
-                state: city.state,
-                ...(at ? { lat: at.lat, lng: at.lng } : {}),
-                // A city map must show every store, not only those whose
-                // delivery radius already covers the customer.
-                filter_by_radius: 'false',
-                page_size: 100,
-            });
+            let data = await apiService.getRetailers(listParams(at));
             if (gen !== fetchGen.current) return;
-            const results: RetailerSummary[] = data.results || [];
+            let results: RetailerSummary[] = data.results || [];
+
+            // Deployed list API still drops unlocated shops when lat/lng are sent
+            // (filter_by_radius is ignored until KAN-69 is live). That empty
+            // payload means "none in range", not "this city has no stores".
+            if (results.length === 0 && at) {
+                data = await apiService.getRetailers(listParams(null));
+                if (gen !== fetchGen.current) return;
+                results = data.results || [];
+            }
+
             setRetailers(results);
 
             if (results.length === 0) {
