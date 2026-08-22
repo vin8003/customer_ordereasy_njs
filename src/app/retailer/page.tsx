@@ -17,6 +17,10 @@ import { ProductCard } from '@/app/components/ProductCard';
 import { Button } from '@/app/components/ui/Button';
 import LazyProductLane from '@/app/components/LazyProductLane';
 import InfiniteProductGrid from '@/app/components/InfiniteProductGrid';
+import { LocationPickerSheet } from '@/app/components/map/LocationPickerSheet';
+import type { City } from '@/config/cities';
+import { persistLocation } from '@/utils/location';
+import { loadSavedAddresses, type MapCenter, type SavedAddress } from '@/utils/mapCenter';
 import styles from './RetailerHome.module.css';
 
 interface Category {
@@ -74,7 +78,9 @@ function RetailerHome() {
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userName, setUserName] = useState('');
-    const [selectedCity, setSelectedCity] = useState<any>(null);
+    const [selectedCity, setSelectedCity] = useState<City | null>(null);
+    const [addresses, setAddresses] = useState<SavedAddress[]>([]);
+    const [sheetOpen, setSheetOpen] = useState(false);
 
     // Use shared wishlist and cart hooks
     const { wishlistIds, loadWishlist, toggleWishlist, isWishlisted } = useWishlist();
@@ -137,6 +143,9 @@ function RetailerHome() {
             } catch (e) {
                 console.error(e);
             }
+        }
+        if (apiService.isAuthenticated()) {
+            loadSavedAddresses().then(setAddresses).catch((e) => console.error(e));
         }
         if (retailerId) {
             loadData();
@@ -310,7 +319,7 @@ function RetailerHome() {
                 <div className={styles.topBar}>
                     <div
                         className={styles.locationBar}
-                        onClick={() => router.push('/city-selection')}
+                        onClick={() => setSheetOpen(true)}
                         style={{ cursor: 'pointer' }}
                     >
                         <MapPin size={14} className={styles.locationIcon} />
@@ -769,6 +778,28 @@ function RetailerHome() {
                 )}
 
             </main>
+
+            <LocationPickerSheet
+                open={sheetOpen}
+                onOpenChange={setSheetOpen}
+                city={selectedCity}
+                addresses={addresses}
+                onApply={({ city, center }: { city: City; center: MapCenter | null }) => {
+                    persistLocation({
+                        ...city,
+                        lat: center?.lat,
+                        lng: center?.lng,
+                        addressId: center?.addressId,
+                        source: center?.source ?? 'manual',
+                    });
+                    const cityChanged =
+                        city.name !== selectedCity?.name || city.state !== selectedCity?.state;
+                    setSelectedCity(city);
+                    // A different city means a different store map; stay here only
+                    // when they swapped addresses inside the same city.
+                    if (cityChanged) router.push('/retailers');
+                }}
+            />
 
         </div>
     );

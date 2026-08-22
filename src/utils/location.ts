@@ -9,7 +9,9 @@ export interface StoredLocation extends City {
     lat?: number;
     lng?: number;
     address?: string;
-    source?: 'gps' | 'manual';
+    /** Saved delivery address the customer is browsing from, when they picked one. */
+    addressId?: number;
+    source?: 'gps' | 'manual' | 'address' | 'city';
 }
 
 export interface GeoAddress {
@@ -126,6 +128,9 @@ function extractAddress(result: google.maps.GeocoderResult): GeoAddress {
     };
 }
 
+/** Give up rather than leave callers awaiting a script that will never arrive. */
+const MAPS_LOAD_TIMEOUT_MS = 8000;
+
 function loadGoogleMaps(): Promise<boolean> {
     if (typeof window === 'undefined') return Promise.resolve(false);
     if (typeof google !== 'undefined' && google.maps && google.maps.Geocoder) {
@@ -136,14 +141,21 @@ function loadGoogleMaps(): Promise<boolean> {
     if (!key) return Promise.resolve(false);
 
     return new Promise((resolve) => {
+        let settled = false;
+        const settle = (loaded: boolean) => {
+            if (settled) return;
+            settled = true;
+            window.clearTimeout(timer);
+            resolve(loaded);
+        };
+        // A script tag that already errored fires nothing when we subscribe
+        // late, so the timeout is the only thing that can end that wait.
+        const timer = window.setTimeout(() => settle(false), MAPS_LOAD_TIMEOUT_MS);
+
         const existing = document.getElementById('google-map-script') as HTMLScriptElement | null;
         if (existing) {
-            if (typeof google !== 'undefined' && google.maps && google.maps.Geocoder) {
-                resolve(true);
-                return;
-            }
-            existing.addEventListener('load', () => resolve(true), { once: true });
-            existing.addEventListener('error', () => resolve(false), { once: true });
+            existing.addEventListener('load', () => settle(true), { once: true });
+            existing.addEventListener('error', () => settle(false), { once: true });
             return;
         }
 
@@ -152,8 +164,8 @@ function loadGoogleMaps(): Promise<boolean> {
         script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
         script.async = true;
         script.defer = true;
-        script.onload = () => resolve(true);
-        script.onerror = () => resolve(false);
+        script.addEventListener('load', () => settle(true), { once: true });
+        script.addEventListener('error', () => settle(false), { once: true });
         document.head.appendChild(script);
     });
 }
@@ -172,6 +184,27 @@ export async function reverseGeocode(lat: number, lng: number): Promise<GeoAddre
         console.error('Geocoding failed', error);
     }
     return null;
+}
+
+/** Approximate centre of a city, used when we have no address and no GPS fix. */
+export async function geocodeCityCenter(
+    city: string,
+    state: string
+): Promise<{ lat: number; lng: number } | null> {
+    const loaded = await loadGoogleMaps();
+    if (!loaded || typeof google === 'undefined' || !google.maps) return null;
+    try {
+        const geocoder = new google.maps.Geocoder();
+        const response = await geocoder.geocode({
+            address: `${city}, ${state}, India`,
+        });
+        const location = response.results[0]?.geometry?.location;
+        if (!location) return null;
+        return { lat: location.lat(), lng: location.lng() };
+    } catch (error) {
+        console.error('City geocoding failed', error);
+        return null;
+    }
 }
 
 export function buildStoredLocation(

@@ -1,28 +1,36 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { MapPin, ShoppingBag, Star, ChevronRight } from 'lucide-react';
+import { ChevronDown, Loader2, MapPin, ShoppingBag } from 'lucide-react';
 import { apiService } from '@/services/api';
-import { Button } from '@/app/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/app/components/EmptyState';
 import { City } from '@/config/cities';
 import { cityId } from '@/config/india-locations';
-import styles from './Retailers.module.css';
+import { cn } from '@/lib/utils';
+import { persistLocation } from '@/utils/location';
+import { partitionByLocation, sortByDistance, type LatLng } from '@/utils/geo';
+import {
+    cityCenter,
+    loadSavedAddresses,
+    resolveMapCenter,
+    type MapCenter,
+    type SavedAddress,
+} from '@/utils/mapCenter';
+import type { RetailerSummary } from '@/types/retailer';
+import { isMapConfigured } from '@/app/components/map/RetailerDiscoveryMap';
+import { RetailerListPanel } from '@/app/components/map/RetailerListPanel';
+import { SelectedStoreCard } from '@/app/components/map/SelectedStoreCard';
+import { LocationPickerSheet } from '@/app/components/map/LocationPickerSheet';
 
-interface Retailer {
-    id: number;
-    shop_name: string;
-    business_type: string;
-    city: string;
-    state: string;
-    average_rating: number;
-    offers_delivery: boolean;
-    offers_pickup: boolean;
-    shop_image?: string;
-    distance?: number;
-    categories?: any[];
-}
+// Google Maps must not run during the static export prerender.
+const RetailerDiscoveryMap = dynamic(
+    () => import('@/app/components/map/RetailerDiscoveryMap'),
+    { ssr: false }
+);
 
 interface OperationalCity {
     city: string;
@@ -31,37 +39,43 @@ interface OperationalCity {
 
 export default function RetailersPage() {
     const router = useRouter();
-    const [retailers, setRetailers] = useState<Retailer[]>([]);
+    const [retailers, setRetailers] = useState<RetailerSummary[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const [selectedCity, setSelectedCity] = useState<City | null>(null);
+    const [center, setCenter] = useState<MapCenter | null>(null);
+    const [addresses, setAddresses] = useState<SavedAddress[]>([]);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userName, setUserName] = useState('');
     const [operationalCities, setOperationalCities] = useState<OperationalCity[]>([]);
-    const [loadingOpsCities, setLoadingOpsCities] = useState(false);
+    const [selectedId, setSelectedId] = useState<number | null>(null);
+    const [listExpanded, setListExpanded] = useState(false);
+    const [sheetOpen, setSheetOpen] = useState(false);
+    const [mapBroken, setMapBroken] = useState(false);
 
-    const fetchRetailers = useCallback(async (city: City) => {
+    const fetchRetailers = useCallback(async (city: City, at: LatLng | null) => {
         setIsLoading(true);
         setError('');
         setOperationalCities([]);
         try {
-            const params: Record<string, string> = {
+            const data = await apiService.getRetailers({
                 city: city.name,
                 state: city.state,
-            };
-            const data = await apiService.getRetailers(params);
-            const results = data.results || [];
+                ...(at ? { lat: at.lat, lng: at.lng } : {}),
+                // A city map must show every store, not only those whose
+                // delivery radius already covers the customer.
+                filter_by_radius: 'false',
+                page_size: 100,
+            });
+            const results: RetailerSummary[] = data.results || [];
             setRetailers(results);
 
             if (results.length === 0) {
-                setLoadingOpsCities(true);
                 try {
                     const ops = await apiService.getOperationalCities();
                     setOperationalCities(ops.results || []);
                 } catch (e) {
                     console.error('Failed to load operational cities', e);
-                } finally {
-                    setLoadingOpsCities(false);
                 }
             }
         } catch (err) {
@@ -74,237 +88,312 @@ export default function RetailersPage() {
 
     useEffect(() => {
         const storedCity = localStorage.getItem('selected_city');
-
         if (!storedCity) {
             router.replace('/city-selection');
             return;
         }
 
+        let city: City;
         try {
-            const parsedCity: City = JSON.parse(storedCity);
-            if (!parsedCity?.name || !parsedCity?.state) {
-                router.replace('/city-selection');
-                return;
-            }
-            setSelectedCity(parsedCity);
-            fetchRetailers(parsedCity);
+            city = JSON.parse(storedCity);
         } catch (e) {
             console.error(e);
             router.replace('/city-selection');
             return;
         }
-
-        if (apiService.isAuthenticated()) {
-            setIsAuthenticated(true);
-            apiService.fetchUserProfile().then(profile => {
-                setUserName(profile.first_name || 'User');
-            }).catch(e => console.error('Profile fetch failed', e));
+        if (!city?.name || !city?.state) {
+            router.replace('/city-selection');
+            return;
         }
+
+        setSelectedCity(city);
+
+        const authed = apiService.isAuthenticated();
+        setIsAuthenticated(authed);
+        if (authed) {
+            apiService
+                .fetchUserProfile()
+                .then((profile) => setUserName(profile.first_name || 'there'))
+                .catch((e) => console.error('Profile fetch failed', e));
+        }
+
+        (async () => {
+            const saved = await loadSavedAddresses();
+            setAddresses(saved);
+            const resolved = await resolveMapCenter(city, saved);
+            setCenter(resolved);
+            await fetchRetailers(city, resolved);
+        })();
     }, [fetchRetailers, router]);
 
+    const applyLocation = useCallback(
+        async ({ city, center: nextCenter }: { city: City; center: MapCenter | null }) => {
+            setSelectedCity(city);
+            setSelectedId(null);
+            // Resolving a centre can take a geocode round trip. Drop the old
+            // city's stores now so we never show them against the new centre.
+            setRetailers([]);
+            setIsLoading(true);
+
+            // Picking a city means "show me this city", so it centres there
+            // rather than on a saved address that may be somewhere else.
+            const resolved = nextCenter ?? (await cityCenter(city));
+            persistLocation({
+                ...city,
+                lat: resolved?.lat,
+                lng: resolved?.lng,
+                addressId: resolved?.addressId,
+                source: resolved?.source ?? 'manual',
+            });
+            setCenter(resolved);
+            await fetchRetailers(city, resolved);
+        },
+        [fetchRetailers]
+    );
+
     const handleOperationalCitySelect = (ops: OperationalCity) => {
-        const city: City = {
-            id: cityId(ops.city, ops.state),
-            name: ops.city,
-            state: ops.state,
-        };
-        localStorage.setItem('selected_city', JSON.stringify(city));
-        localStorage.removeItem('selected_pincode');
-        window.dispatchEvent(new Event('storage'));
-        setSelectedCity(city);
-        fetchRetailers(city);
+        applyLocation({
+            city: { id: cityId(ops.city, ops.state), name: ops.city, state: ops.state },
+            center: null,
+        });
     };
 
-    const handleRetailerSelect = (id: number) => {
-        router.push(`/retailer?id=${id}`);
-    };
+    const openRetailer = useCallback(
+        (id: number) => {
+            router.push(`/retailer?id=${id}`);
+        },
+        [router]
+    );
 
-    const getImageUrl = (path?: string) => {
-        if (!path) return null;
-        if (path.startsWith('http')) return path;
-        return `https://api.ordereasy.win${path.startsWith('/') ? '' : '/'}${path}`;
-    };
+    const { located, unlocated } = useMemo(
+        () => partitionByLocation(retailers, center),
+        [retailers, center]
+    );
 
-    const locationLabel = selectedCity
-        ? selectedCity.pincode
-            ? `${selectedCity.name} (${selectedCity.pincode})`
-            : `${selectedCity.name}, ${selectedCity.state}`
-        : 'Select city';
+    const sorted = useMemo(
+        () => sortByDistance<RetailerSummary>([...located, ...unlocated]),
+        [located, unlocated]
+    );
 
-    if (isLoading) {
+    const selectedRetailer = useMemo(
+        () => sorted.find((r) => r.id === selectedId) ?? null,
+        [sorted, selectedId]
+    );
+
+    const showMap = isMapConfigured() && !mapBroken && center !== null;
+
+    const locationLabel = center?.source === 'address' ? center.label : selectedCity?.name ?? 'Set location';
+    const locationSubLabel =
+        center?.source === 'address'
+            ? `${selectedCity?.name ?? ''}${selectedCity?.state ? `, ${selectedCity.state}` : ''}`
+            : center?.source === 'gps'
+              ? 'Current location'
+              : selectedCity?.state ?? '';
+
+    if (isLoading && retailers.length === 0) {
         return (
-            <div className={styles.loadingContainer}>
-                <div className={styles.spinner}></div>
-                <p>Finding stores in {selectedCity ? selectedCity.name : 'your area'}...</p>
+            <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-3 px-6">
+                <Loader2 className="size-6 animate-spin text-primary" />
+                <p className="text-sm font-medium text-muted-foreground">
+                    Finding stores in {selectedCity?.name ?? 'your area'}…
+                </p>
             </div>
         );
     }
 
-    return (
-        <div className={styles.container}>
-            <header className={styles.header}>
-                <div className={styles.topBar}>
-                    <div
-                        className={styles.locationBar}
-                        onClick={() => router.push('/city-selection')}
-                        style={{ cursor: 'pointer' }}
-                    >
-                        <MapPin size={16} className={styles.locationIcon} />
-                        <span>{locationLabel}</span>
-                    </div>
+    const header = (
+        <header className="pointer-events-auto flex items-center gap-2 px-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-3">
+            <button
+                type="button"
+                onClick={() => setSheetOpen(true)}
+                className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-border/60 bg-card/95 px-3 py-2.5 text-left shadow-lg shadow-black/5 backdrop-blur transition-colors hover:border-primary/40"
+            >
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <MapPin className="size-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                    <span className="block text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
+                        Shopping from
+                    </span>
+                    <span className="flex items-center gap-1">
+                        <span className="truncate text-sm font-semibold text-foreground">
+                            {locationLabel}
+                        </span>
+                        <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
+                    </span>
+                </span>
+                {locationSubLabel && (
+                    <span className="hidden max-w-[35%] truncate text-xs text-muted-foreground sm:block">
+                        {locationSubLabel}
+                    </span>
+                )}
+            </button>
 
-                    <div className={styles.authContainer}>
-                        {isAuthenticated ? (
-                            <div className={styles.userInfo}>
-                                <span className={styles.userName}>Hi, {userName}</span>
-                            </div>
-                        ) : (
-                            <Link href="/login">
-                                <Button variant="outline" className={styles.loginButton}>Login / Signup</Button>
-                            </Link>
-                        )}
-                    </div>
-                </div>
-            </header>
-
-            <div className={styles.headerInstructionsCard}>
-                <div className={styles.cardLogoContainer}>
-                    <img
-                        src="/assets/images/logo.png"
-                        alt="Order Easy Logo"
-                        className={styles.cardLogo}
-                    />
-                </div>
-                <h1>Select a Store</h1>
-                <p className={styles.subtext}>Choose a retailer to start shopping</p>
-            </div>
-
-            {error && (
-                <div className={styles.errorContainer}>
-                    <p>{error}</p>
-                    <Button onClick={() => selectedCity && fetchRetailers(selectedCity)} variant="outline">Retry</Button>
-                </div>
+            {isAuthenticated ? (
+                <span className="shrink-0 rounded-2xl border border-border/60 bg-card/95 px-3 py-2.5 text-sm font-semibold text-foreground shadow-lg shadow-black/5 backdrop-blur">
+                    Hi, {userName || 'there'}
+                </span>
+            ) : (
+                <Button
+                    asChild
+                    variant="outline"
+                    className="h-[46px] shrink-0 rounded-2xl bg-card/95 backdrop-blur"
+                >
+                    <Link href="/login">Login</Link>
+                </Button>
             )}
+        </header>
+    );
 
-            {retailers.length === 0 && !error ? (
-                <div className={styles.emptyState}>
-                    <ShoppingBag size={48} />
-                    <p>
-                        No retailers found in {selectedCity?.name}
-                        {selectedCity?.state ? `, ${selectedCity.state}` : ''}.
-                    </p>
-                    {loadingOpsCities && (
-                        <p className={styles.opsCitiesHint}>Loading cities we serve…</p>
-                    )}
-                    {!loadingOpsCities && operationalCities.length > 0 && (
-                        <div className={styles.opsCitiesBlock}>
-                            <p className={styles.opsCitiesHint}>We currently serve these cities:</p>
-                            <div className={styles.opsCitiesList}>
-                                {operationalCities.map((ops) => (
-                                    <button
-                                        key={`${ops.state}-${ops.city}`}
-                                        type="button"
-                                        className={styles.opsCityChip}
-                                        onClick={() => handleOperationalCitySelect(ops)}
-                                    >
-                                        {ops.city}, {ops.state}
-                                    </button>
-                                ))}
-                            </div>
+    const hasStores = sorted.length > 0;
+
+    return (
+        <div className="fixed inset-0 flex flex-col overflow-hidden bg-background pb-[calc(64px+env(safe-area-inset-bottom))]">
+            {showMap && center ? (
+                // Everything floats over a full-bleed map: expanding the list
+                // must not resize the map underneath it.
+                <div className="relative min-h-0 flex-1">
+                    {/* The map stops where the collapsed list starts so Google's
+                        attribution stays visible and expanding never resizes it. */}
+                    <div
+                        className={cn(
+                            'absolute inset-x-0 top-0',
+                            hasStores ? 'bottom-[118px]' : 'bottom-0'
+                        )}
+                    >
+                        <RetailerDiscoveryMap
+                            center={center}
+                            centerLabel={center.label}
+                            located={located}
+                            unlocated={unlocated}
+                            selectedId={selectedId}
+                            onSelect={setSelectedId}
+                            onShowAllUnlocated={() => setListExpanded(true)}
+                            onUnavailable={() => setMapBroken(true)}
+                        />
+                    </div>
+
+                    <div className="pointer-events-none absolute inset-x-0 top-0 z-30">
+                        {header}
+                    </div>
+
+                    {!hasStores && !isLoading && (
+                        <div className="pointer-events-auto absolute inset-x-4 top-1/2 z-20 -translate-y-1/2">
+                            <EmptyState
+                                icon={ShoppingBag}
+                                title={`No stores in ${selectedCity?.name ?? 'this city'} yet`}
+                                description={
+                                    operationalCities.length > 0
+                                        ? 'We are live in these cities — tap one to switch.'
+                                        : 'Try a different city while we onboard more shops here.'
+                                }
+                                actionLabel={operationalCities.length > 0 ? undefined : 'Change city'}
+                                onAction={
+                                    operationalCities.length > 0 ? undefined : () => setSheetOpen(true)
+                                }
+                                className="bg-card/95 backdrop-blur"
+                            />
+                            {operationalCities.length > 0 && (
+                                <div className="mt-3 flex flex-wrap justify-center gap-2">
+                                    {operationalCities.map((ops) => (
+                                        <button
+                                            key={`${ops.state}-${ops.city}`}
+                                            type="button"
+                                            onClick={() => handleOperationalCitySelect(ops)}
+                                            className="rounded-full border border-primary/30 bg-card px-3 py-1.5 text-xs font-semibold text-primary shadow-sm transition-transform active:scale-95"
+                                        >
+                                            {ops.city}, {ops.state}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
-                    {!loadingOpsCities && operationalCities.length === 0 && (
-                        <Button
-                            variant="outline"
-                            onClick={() => router.push('/city-selection')}
-                        >
-                            Change city
-                        </Button>
+
+                    {selectedRetailer && !listExpanded && (
+                        <div className="absolute inset-x-0 bottom-[118px] z-30">
+                            <SelectedStoreCard
+                                retailer={selectedRetailer}
+                                onOpen={openRetailer}
+                                onDismiss={() => setSelectedId(null)}
+                            />
+                        </div>
+                    )}
+
+                    {hasStores && (
+                        <div className="absolute inset-x-0 bottom-0 z-30">
+                            <RetailerListPanel
+                                retailers={sorted}
+                                selectedId={selectedId}
+                                expanded={listExpanded}
+                                onToggle={() => setListExpanded((value) => !value)}
+                                onSelect={setSelectedId}
+                                onOpen={openRetailer}
+                            />
+                        </div>
                     )}
                 </div>
             ) : (
-                <div className={styles.retailerList}>
-                    {retailers.map((retailer) => (
-                        <div
-                            key={retailer.id}
-                            className={styles.retailerCard}
-                            onClick={() => handleRetailerSelect(retailer.id)}
-                        >
-                            <div className={styles.cardContent}>
-                                <div className={styles.retailerIconContainer}>
-                                    {retailer.shop_image ? (
-                                        <img
-                                            src={getImageUrl(retailer.shop_image) || ''}
-                                            alt={retailer.shop_name}
-                                            className={styles.retailerImage}
-                                        />
-                                    ) : (
-                                        <div className={styles.retailerIconFallback}>
-                                            <ShoppingBag size={28} color="#2563eb" />
-                                        </div>
-                                    )}
-                                </div>
-                                <div className={styles.retailerInfo}>
-                                    <div className={styles.retailerHeader}>
-                                        <h2>{retailer.shop_name}</h2>
-                                    </div>
-
-                                    {retailer.categories && retailer.categories.length > 0 ? (
-                                        <div className={styles.categoriesWrapper}>
-                                            {retailer.categories.map((cat: any) => (
-                                                <span key={cat.id} className={styles.categoryBadge}>{cat.name}</span>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <p className={styles.type}>{retailer.business_type}</p>
-                                    )}
-
-                                    <div className={styles.metaRow}>
-                                        <span className={styles.metaItem}>
-                                            <MapPin size={14} />
-                                            {retailer.city}, {retailer.state}
-                                        </span>
-                                        <span className={styles.metaItem}>
-                                            <Star size={14} className={styles.starIcon} />
-                                            {retailer.average_rating}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className={styles.cardFooter}>
-                                <div className={styles.tags}>
-                                    {retailer.offers_delivery && (
-                                        <span className={styles.tagDelivery}>● Delivery</span>
-                                    )}
-                                    {retailer.offers_pickup && (
-                                        <span className={styles.tagPickup}>● Pickup</span>
-                                    )}
-                                </div>
-
-                                <div className={styles.shopNowCTA}>
-                                    Shop Now <ChevronRight size={16} />
-                                </div>
-                            </div>
+                <div className="flex min-h-0 flex-1 flex-col">
+                    {header}
+                    {error && (
+                        <div className="mx-4 mb-3 flex items-center justify-between gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-3">
+                            <p className="text-sm text-destructive">{error}</p>
+                            <Button
+                                variant="outline"
+                                onClick={() => selectedCity && fetchRetailers(selectedCity, center)}
+                            >
+                                Retry
+                            </Button>
                         </div>
-                    ))}
+                    )}
+
+                    {hasStores ? (
+                        <RetailerListPanel
+                            retailers={sorted}
+                            selectedId={selectedId}
+                            expanded
+                            onToggle={() => undefined}
+                            onSelect={setSelectedId}
+                            onOpen={openRetailer}
+                            isOnlyView
+                        />
+                    ) : (
+                        <div className="px-4 pt-6">
+                            <EmptyState
+                                icon={ShoppingBag}
+                                title={`No stores in ${selectedCity?.name ?? 'this city'} yet`}
+                                description="Pick another city and we will show what is open around you."
+                                actionLabel="Change location"
+                                onAction={() => setSheetOpen(true)}
+                            />
+                            {operationalCities.length > 0 && (
+                                <div className="mt-3 flex flex-wrap justify-center gap-2">
+                                    {operationalCities.map((ops) => (
+                                        <button
+                                            key={`${ops.state}-${ops.city}`}
+                                            type="button"
+                                            onClick={() => handleOperationalCitySelect(ops)}
+                                            className="rounded-full border border-primary/30 bg-card px-3 py-1.5 text-xs font-semibold text-primary shadow-sm transition-transform active:scale-95"
+                                        >
+                                            {ops.city}, {ops.state}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
 
-            <div className={styles.partnerBanner}>
-                <div className={styles.partnerBannerContent}>
-                    <h2>Grow Your Store With Order Easy</h2>
-                    <p>Apni Dukaan Ko Online Banaiye</p>
-                </div>
-                <a
-                    href="https://forms.gle/5e8PdMXTqVfK6os17"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.partnerBannerLink}
-                >
-                    Join us as Retail Partner
-                </a>
-            </div>
+            <LocationPickerSheet
+                open={sheetOpen}
+                onOpenChange={setSheetOpen}
+                city={selectedCity}
+                addresses={addresses}
+                activeAddressId={center?.addressId}
+                onApply={applyLocation}
+            />
         </div>
     );
 }
