@@ -77,7 +77,7 @@ export default function ProfilePage() {
                     <div className={styles.section}>
                         <button onClick={() => setShowHelp(true)} className={styles.menuItem}>
                             <div className="flex items-center gap-3">
-                                <HelpCircle size={20} className="text-blue-500" />
+                                <HelpCircle size={20} className="text-primary" />
                                 <span>Help & Support</span>
                             </div>
                             <ChevronRight size={16} className="text-gray-400" />
@@ -175,7 +175,7 @@ export default function ProfilePage() {
 
                     <button onClick={() => setShowHelp(true)} className={styles.menuItem}>
                         <div className="flex items-center gap-3">
-                            <HelpCircle size={20} className="text-blue-500" />
+                            <HelpCircle size={20} className="text-primary" />
                             <span>Help & Support</span>
                         </div>
                         <ChevronRight size={16} className="text-gray-400" />

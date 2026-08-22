@@ -2,12 +2,12 @@
 import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { Trash2, ArrowLeft, Heart } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
+import { EmptyState } from '@/app/components/EmptyState';
 import { ProductImage } from '@/app/components/ProductImage';
 import AddToCartButton from '@/app/components/AddToCartButton';
 import styles from './Wishlist.module.css';
@@ -71,23 +71,28 @@ export default function WishlistPage() {
 
     if (isGuest) {
         return (
-            <div className={styles.emptyState}>
-                <Heart size={48} className="text-gray-300" />
-                <p>Please login to view your wishlist.</p>
-                <div className="flex gap-2">
-                    <Button onClick={() => router.push('/login?redirect=/wishlist')}>Login</Button>
-                    <Button variant="outline" onClick={() => router.push('/retailers')}>Continue Shopping</Button>
-                </div>
+            <div className="flex min-h-[80vh] items-center justify-center p-6">
+                <EmptyState
+                    icon={Heart}
+                    title="Login to see your wishlist"
+                    description="Save products you love and find them here later."
+                    actionLabel="Login"
+                    onAction={() => router.push('/login?redirect=/wishlist')}
+                />
             </div>
         );
     }
 
     if (wishlistItems.length === 0) {
         return (
-            <div className={styles.emptyState}>
-                <Heart size={48} className="text-gray-300" />
-                <p>Your wishlist is empty.</p>
-                <Button onClick={() => router.push('/retailers')}>Explore Products</Button>
+            <div className="flex min-h-[80vh] items-center justify-center p-6">
+                <EmptyState
+                    icon={Heart}
+                    title="Your wishlist is empty"
+                    description="Tap the heart on products to save them for later."
+                    actionLabel="Explore Products"
+                    onAction={() => router.push('/retailers')}
+                />
             </div>
         );
     }

@@ -18,16 +18,15 @@
     width: 64px;
     height: 64px;
     border-radius: 50%;
-    background: #e0f2fe;
-    /* light blue */
-    color: #0284c7;
-    /* darker blue */
+    background: color-mix(in srgb, var(--primary-color) 12%, white);
+    color: var(--primary-color);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 24px;
     font-weight: 700;
     margin-bottom: 12px;
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.15);
 }
 
 .name {
@@ -129,7 +128,7 @@
 .pointsSmall {
     font-size: 13px;
     font-weight: 700;
-    color: #0284c7;
+    color: var(--primary-color);
 }
 
 .morePoints {

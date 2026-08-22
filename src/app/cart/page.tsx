@@ -1,5 +1,5 @@
 'use client';
-import toast from 'react-hot-toast';
+import toast from '@/lib/toast';
 import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect } from 'react';
@@ -9,6 +9,7 @@ import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { ShoppingBag, Trash2, Plus, Minus, ArrowLeft, Tag, Award } from 'lucide-react';
 import { apiService, getErrorMessage } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
+import { EmptyState } from '@/app/components/EmptyState';
 import { useWishlist } from '@/hooks/useWishlist';
 import { WishlistIcon } from '@/app/components/WishlistIcon';
 import { ProductImage } from '@/app/components/ProductImage';
@@ -287,10 +288,14 @@ export default function CartPage() {
 
     if (!retailerId && !isLoading) {
         return (
-            <div className={styles.emptyState}>
-                <ShoppingBag size={48} />
-                <p>Please select a retailer first.</p>
-                <Button onClick={() => router.push('/retailers')}>Select Retailer</Button>
+            <div className="flex min-h-[80vh] items-center justify-center p-6">
+                <EmptyState
+                    icon={ShoppingBag}
+                    title="Select a store first"
+                    description="Pick a nearby retailer to start adding items to your cart."
+                    actionLabel="Select Retailer"
+                    onAction={() => router.push('/retailers')}
+                />
             </div>
         );
     }
@@ -299,10 +304,14 @@ export default function CartPage() {
 
     if (cartItems.length === 0) {
         return (
-            <div className={styles.emptyState}>
-                <ShoppingBag size={48} />
-                <p>Your cart is empty.</p>
-                <Button onClick={() => router.push(`/retailer?id=${retailerId}`)}>Start Shopping</Button>
+            <div className="flex min-h-[80vh] items-center justify-center p-6">
+                <EmptyState
+                    icon={ShoppingBag}
+                    title="Your cart is empty"
+                    description="Browse the catalog and add items to check out."
+                    actionLabel="Start Shopping"
+                    onAction={() => router.push(`/retailer?id=${retailerId}`)}
+                />
             </div>
         );
     }

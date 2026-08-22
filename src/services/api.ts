@@ -1,5 +1,5 @@
 import axios from 'axios';
-import toast from 'react-hot-toast';
+import toast from '@/lib/toast';
 import { Capacitor } from '@capacitor/core';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production'
