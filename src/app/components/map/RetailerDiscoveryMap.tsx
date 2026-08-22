@@ -18,10 +18,6 @@ const MAX_INITIAL_ZOOM = 16;
 /** Keeps pins clear of the floating header, the zoom stack and the unlocated rail. */
 const VIEW_PADDING = { top: 92, right: 168, bottom: 56, left: 40 };
 
-export function isMapConfigured(): boolean {
-    return Boolean(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY);
-}
-
 interface RetailerDiscoveryMapProps {
     center: LatLng;
     centerLabel: string;
@@ -54,6 +50,7 @@ export default function RetailerDiscoveryMap({
     /** True once the customer has panned away from the framing we chose. */
     const hasPannedRef = useRef(false);
     const framedForRef = useRef('');
+    const idleListenerRef = useRef<google.maps.MapsEventListener | null>(null);
 
     const initialZoom = useMemo(
         () => zoomForNearest(located.map((r) => r.distance ?? Number.NaN)),
@@ -81,29 +78,46 @@ export default function RetailerDiscoveryMap({
     }, [loadError, onUnavailable]);
 
     /**
-     * Frame the customer plus their closest shops. A fixed zoom cannot know how
-     * spread out a city is, so it either buries the pins or shows only one.
+     * Keep the customer in the middle. Only fit bounds when the nearest shops
+     * sit outside that opening view — otherwise they get pushed to the edge.
      */
     const frameStores = useCallback(() => {
         const map = mapRef.current;
         if (!map) return;
         hasPannedRef.current = false;
 
-        if (nearestFew.length === 0) {
-            map.setCenter(centerLiteral);
-            map.setZoom(initialZoom);
-            return;
+        if (idleListenerRef.current) {
+            google.maps.event.removeListener(idleListenerRef.current);
+            idleListenerRef.current = null;
         }
 
-        const bounds = new google.maps.LatLngBounds();
-        bounds.extend(centerLiteral);
-        nearestFew.forEach((retailer) => {
-            bounds.extend({ lat: retailer.lat, lng: retailer.lng });
-        });
-        map.fitBounds(bounds, VIEW_PADDING);
-        google.maps.event.addListenerOnce(map, 'idle', () => {
-            // A single very close shop would otherwise slam us to street level.
+        const capZoom = () => {
             if ((map.getZoom() ?? 0) > MAX_INITIAL_ZOOM) map.setZoom(MAX_INITIAL_ZOOM);
+        };
+
+        map.setCenter(centerLiteral);
+        map.setZoom(initialZoom);
+
+        if (nearestFew.length === 0) return;
+
+        idleListenerRef.current = google.maps.event.addListenerOnce(map, 'idle', () => {
+            idleListenerRef.current = null;
+            capZoom();
+            const view = map.getBounds();
+            const nearest = nearestFew[0];
+            if (!view || !nearest) return;
+            if (view.contains({ lat: nearest.lat, lng: nearest.lng })) return;
+
+            const bounds = new google.maps.LatLngBounds();
+            bounds.extend(centerLiteral);
+            nearestFew.forEach((retailer) => {
+                bounds.extend({ lat: retailer.lat, lng: retailer.lng });
+            });
+            map.fitBounds(bounds, VIEW_PADDING);
+            idleListenerRef.current = google.maps.event.addListenerOnce(map, 'idle', () => {
+                idleListenerRef.current = null;
+                capZoom();
+            });
         });
     }, [centerLiteral, initialZoom, nearestFew]);
 
@@ -116,6 +130,10 @@ export default function RetailerDiscoveryMap({
     );
 
     const handleUnmount = useCallback(() => {
+        if (idleListenerRef.current) {
+            google.maps.event.removeListener(idleListenerRef.current);
+            idleListenerRef.current = null;
+        }
         mapRef.current = null;
     }, []);
 

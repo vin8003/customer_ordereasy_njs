@@ -2,15 +2,12 @@
  * Local-only stand-in for the retailer list API while the KAN-69 backend
  * (lat/lng on the list serializer + `filter_by_radius`) is not deployed yet.
  *
- * Enable with `NEXT_PUBLIC_MOCK_RETAILERS=1` in `.env.local`. It is compiled
- * out of production builds by the NODE_ENV guard in `isMockApiEnabled`.
+ * Enable with `NEXT_PUBLIC_MOCK_RETAILERS=1` in `.env.local`. `api.ts` loads
+ * this module only behind an inlined NODE_ENV guard, so production builds do
+ * not statically import it.
  */
 import { haversineKm, toDistance, type LatLng } from '@/utils/geo';
 import type { RetailerListParams, RetailerSummary } from '@/types/retailer';
-
-export function isMockApiEnabled(): boolean {
-    return process.env.NODE_ENV !== 'production' && process.env.NEXT_PUBLIC_MOCK_RETAILERS === '1';
-}
 
 /** Just enough centroids to make the mock feel like a real city. */
 const CITY_CENTROIDS: Record<string, LatLng> = {
@@ -39,10 +36,14 @@ const CITY_PINCODES: Record<string, string> = {
     agra: '282001',
 };
 
-/** Same truthy set as `retailers.views._parse_bool`. */
+/** Same rules as `retailers.views._parse_bool`. */
 function parseQueryBool(value: unknown, defaultValue: boolean): boolean {
-    if (value === undefined || value === null || value === '') return defaultValue;
-    return ['true', '1', 'yes'].includes(String(value).trim().toLowerCase());
+    if (value === undefined || value === null) return defaultValue;
+    const token = String(value).trim().toLowerCase();
+    if (token === '') return defaultValue;
+    if (['true', '1', 'yes'].includes(token)) return true;
+    if (['false', '0', 'no'].includes(token)) return false;
+    return defaultValue;
 }
 
 /** Last city the mock list was asked for, so catalog details match the map. */

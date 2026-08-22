@@ -45,6 +45,7 @@ export function UnlocatedStoresRail({
                     type="button"
                     onClick={() => onSelect(retailer.id)}
                     title={retailer.shop_name}
+                    aria-label={retailer.shop_name}
                     className={cn(
                         'pointer-events-auto flex w-full items-center gap-2 rounded-l-full border border-r-0 border-dashed py-2 pr-3 pl-3 text-left shadow-lg backdrop-blur transition-all duration-200 active:scale-95',
                         selectedId === retailer.id

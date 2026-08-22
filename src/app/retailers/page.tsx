@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -11,7 +11,7 @@ import { EmptyState } from '@/app/components/EmptyState';
 import { City } from '@/config/cities';
 import { cityId } from '@/config/india-locations';
 import { cn } from '@/lib/utils';
-import { persistLocation } from '@/utils/location';
+import { getPersistedLocation, persistLocation } from '@/utils/location';
 import { partitionByLocation, sortByDistance, type LatLng } from '@/utils/geo';
 import {
     cityCenter,
@@ -20,8 +20,8 @@ import {
     type MapCenter,
     type SavedAddress,
 } from '@/utils/mapCenter';
+import { isMapConfigured } from '@/utils/mapConfig';
 import type { RetailerSummary } from '@/types/retailer';
-import { isMapConfigured } from '@/app/components/map/RetailerDiscoveryMap';
 import { RetailerListPanel } from '@/app/components/map/RetailerListPanel';
 import { SelectedStoreCard } from '@/app/components/map/SelectedStoreCard';
 import { LocationPickerSheet } from '@/app/components/map/LocationPickerSheet';
@@ -35,6 +35,13 @@ const RetailerDiscoveryMap = dynamic(
 interface OperationalCity {
     city: string;
     state: string;
+}
+
+function samePoint(a: LatLng | null, b: LatLng | null) {
+    if (!a && !b) return true;
+    return Boolean(
+        a && b && Math.abs(a.lat - b.lat) < 1e-5 && Math.abs(a.lng - b.lng) < 1e-5
+    );
 }
 
 export default function RetailersPage() {
@@ -52,8 +59,10 @@ export default function RetailersPage() {
     const [listExpanded, setListExpanded] = useState(false);
     const [sheetOpen, setSheetOpen] = useState(false);
     const [mapBroken, setMapBroken] = useState(false);
+    const fetchGen = useRef(0);
 
     const fetchRetailers = useCallback(async (city: City, at: LatLng | null) => {
+        const gen = ++fetchGen.current;
         setIsLoading(true);
         setError('');
         setOperationalCities([]);
@@ -67,12 +76,14 @@ export default function RetailersPage() {
                 filter_by_radius: 'false',
                 page_size: 100,
             });
+            if (gen !== fetchGen.current) return;
             const results: RetailerSummary[] = data.results || [];
             setRetailers(results);
 
             if (results.length === 0) {
                 try {
                     const ops = await apiService.getOperationalCities();
+                    if (gen !== fetchGen.current) return;
                     setOperationalCities(ops.results || []);
                 } catch (e) {
                     console.error('Failed to load operational cities', e);
@@ -80,9 +91,10 @@ export default function RetailersPage() {
             }
         } catch (err) {
             console.error(err);
+            if (gen !== fetchGen.current) return;
             setError('Failed to load retailers. Please try again.');
         } finally {
-            setIsLoading(false);
+            if (gen === fetchGen.current) setIsLoading(false);
         }
     }, []);
 
@@ -118,11 +130,26 @@ export default function RetailersPage() {
         }
 
         (async () => {
+            const persisted = getPersistedLocation();
+            const persistedAt: LatLng | null =
+                persisted &&
+                persisted.name === city.name &&
+                persisted.state === city.state &&
+                Number.isFinite(persisted.lat) &&
+                Number.isFinite(persisted.lng)
+                    ? { lat: persisted.lat as number, lng: persisted.lng as number }
+                    : null;
+
+            // List fetch does not wait on city geocode (up to ~8s).
+            void fetchRetailers(city, persistedAt);
+
             const saved = await loadSavedAddresses();
             setAddresses(saved);
             const resolved = await resolveMapCenter(city, saved);
             setCenter(resolved);
-            await fetchRetailers(city, resolved);
+            if (!samePoint(persistedAt, resolved)) {
+                await fetchRetailers(city, resolved);
+            }
         })();
     }, [fetchRetailers, router]);
 
@@ -190,12 +217,16 @@ export default function RetailersPage() {
               ? 'Current location'
               : selectedCity?.state ?? '';
 
-    if (isLoading && retailers.length === 0) {
+    const hasStores = sorted.length > 0;
+    const showFetchError = Boolean(error) && !hasStores;
+    const showEmptyCity = !isLoading && !error && !hasStores;
+
+    if (!selectedCity) {
         return (
             <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-3 px-6">
                 <Loader2 className="size-6 animate-spin text-primary" />
                 <p className="text-sm font-medium text-muted-foreground">
-                    Finding stores in {selectedCity?.name ?? 'your area'}…
+                    Finding stores in your area…
                 </p>
             </div>
         );
@@ -245,8 +276,6 @@ export default function RetailersPage() {
         </header>
     );
 
-    const hasStores = sorted.length > 0;
-
     return (
         <div className="fixed inset-0 flex flex-col overflow-hidden bg-background pb-[calc(64px+env(safe-area-inset-bottom))]">
             {showMap && center ? (
@@ -277,11 +306,33 @@ export default function RetailersPage() {
                         {header}
                     </div>
 
-                    {!hasStores && !isLoading && (
+                    {isLoading && !hasStores && (
+                        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
+                            <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-card/95 px-4 py-3 text-sm font-medium text-muted-foreground shadow-lg backdrop-blur">
+                                <Loader2 className="size-4 animate-spin text-primary" />
+                                Finding stores in {selectedCity.name}…
+                            </div>
+                        </div>
+                    )}
+
+                    {showFetchError && (
+                        <div className="pointer-events-auto absolute inset-x-4 top-1/2 z-20 -translate-y-1/2 rounded-2xl border border-destructive/30 bg-card/95 p-4 shadow-lg backdrop-blur">
+                            <p className="text-sm text-destructive">{error}</p>
+                            <Button
+                                className="mt-3"
+                                variant="outline"
+                                onClick={() => fetchRetailers(selectedCity, center)}
+                            >
+                                Retry
+                            </Button>
+                        </div>
+                    )}
+
+                    {showEmptyCity && (
                         <div className="pointer-events-auto absolute inset-x-4 top-1/2 z-20 -translate-y-1/2">
                             <EmptyState
                                 icon={ShoppingBag}
-                                title={`No stores in ${selectedCity?.name ?? 'this city'} yet`}
+                                title={`No stores in ${selectedCity.name} yet`}
                                 description={
                                     operationalCities.length > 0
                                         ? 'We are live in these cities — tap one to switch.'
@@ -336,15 +387,24 @@ export default function RetailersPage() {
             ) : (
                 <div className="flex min-h-0 flex-1 flex-col">
                     {header}
-                    {error && (
+                    {showFetchError && (
                         <div className="mx-4 mb-3 flex items-center justify-between gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-3">
                             <p className="text-sm text-destructive">{error}</p>
                             <Button
                                 variant="outline"
-                                onClick={() => selectedCity && fetchRetailers(selectedCity, center)}
+                                onClick={() => fetchRetailers(selectedCity, center)}
                             >
                                 Retry
                             </Button>
+                        </div>
+                    )}
+
+                    {isLoading && !hasStores && !error && (
+                        <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6">
+                            <Loader2 className="size-6 animate-spin text-primary" />
+                            <p className="text-sm font-medium text-muted-foreground">
+                                Finding stores in {selectedCity.name}…
+                            </p>
                         </div>
                     )}
 
@@ -358,11 +418,11 @@ export default function RetailersPage() {
                             onOpen={openRetailer}
                             isOnlyView
                         />
-                    ) : (
+                    ) : showEmptyCity ? (
                         <div className="px-4 pt-6">
                             <EmptyState
                                 icon={ShoppingBag}
-                                title={`No stores in ${selectedCity?.name ?? 'this city'} yet`}
+                                title={`No stores in ${selectedCity.name} yet`}
                                 description="Pick another city and we will show what is open around you."
                                 actionLabel="Change location"
                                 onAction={() => setSheetOpen(true)}
@@ -382,7 +442,7 @@ export default function RetailersPage() {
                                 </div>
                             )}
                         </div>
-                    )}
+                    ) : null}
                 </div>
             )}
 

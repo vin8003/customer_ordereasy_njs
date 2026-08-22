@@ -62,8 +62,8 @@ NEXT_PUBLIC_MOCK_RETAILERS=1
 before backend changes are deployed. The mock returns shops anchored to the
 selected city — some outside a 5 km delivery radius, some with no coordinates at
 all — which is what the map's edge rail and nearest-first list are built to
-handle. `isMockApiEnabled()` also checks `NODE_ENV`, so the mock is compiled out
-of `npm run build`.
+handle. Production builds (`NODE_ENV === 'production'`) never import
+`mockRetailers.ts` into the client bundle.
 
 ### 4. Run Development Server
 

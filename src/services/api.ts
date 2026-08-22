@@ -1,19 +1,18 @@
 import axios from 'axios';
 import toast from '@/lib/toast';
 import { Capacitor } from '@capacitor/core';
-import {
-    isMockApiEnabled,
-    mockAddresses,
-    mockCustomerProfile,
-    mockEmptyList,
-    mockNotifications,
-    mockOperationalCities,
-    mockRetailerDetails,
-    mockRetailerList,
-} from '@/services/mockRetailers';
 import type { RetailerListParams } from '@/types/retailer';
 
 export type { RetailerListParams };
+
+/** Inlined env checks so production builds do not statically import mockRetailers. */
+function isDevMockRetailers(): boolean {
+    return process.env.NODE_ENV !== 'production' && process.env.NEXT_PUBLIC_MOCK_RETAILERS === '1';
+}
+
+async function loadMockRetailers() {
+    return import('@/services/mockRetailers');
+}
 
 const API_BASE_URL = process.env.NODE_ENV === 'production'
     ? 'https://api.ordereasy.win/api/'
@@ -292,7 +291,7 @@ export const apiService = {
     getRetailers: async (params?: RetailerListParams) => {
         const key = `retailers_${JSON.stringify(params || {})}`;
         return fetchWithDedupe(key, async () => {
-            if (isMockApiEnabled()) return mockRetailerList(params ?? {});
+            if (isDevMockRetailers()) return (await loadMockRetailers()).mockRetailerList(params ?? {});
             const response = await api.get('retailers/', { params });
             return response.data;
         });
@@ -302,7 +301,7 @@ export const apiService = {
     getOperationalCities: async (): Promise<{ results: { city: string; state: string }[] }> => {
         const key = 'operational_cities';
         return fetchWithDedupe(key, async () => {
-            if (isMockApiEnabled()) return mockOperationalCities();
+            if (isDevMockRetailers()) return (await loadMockRetailers()).mockOperationalCities();
             const response = await api.get('retailers/cities/');
             return response.data;
         });
@@ -317,7 +316,7 @@ export const apiService = {
     getRetailerDetails: async (retailerId: string) => {
         const key = `retailer_${retailerId}`;
         return fetchWithDedupe(key, async () => {
-            if (isMockApiEnabled()) return mockRetailerDetails(retailerId);
+            if (isDevMockRetailers()) return (await loadMockRetailers()).mockRetailerDetails(retailerId);
             const response = await api.get(`retailers/${retailerId}/`);
             return response.data;
         });
@@ -327,7 +326,7 @@ export const apiService = {
     getRetailerCategories: async (retailerId: string | number, params?: any) => {
         const key = `categories_${retailerId}_${JSON.stringify(params || {})}`;
         return fetchWithDedupe(key, async () => {
-            if (isMockApiEnabled()) return mockEmptyList();
+            if (isDevMockRetailers()) return (await loadMockRetailers()).mockEmptyList();
             const response = await api.get(`products/retailer/${retailerId}/categories/`, { params });
             return response.data;
         });
@@ -344,7 +343,7 @@ export const apiService = {
     getFeaturedProducts: async (retailerId: string) => {
         const key = `featured_${retailerId}`;
         return fetchWithDedupe(key, async () => {
-            if (isMockApiEnabled()) return mockEmptyList();
+            if (isDevMockRetailers()) return (await loadMockRetailers()).mockEmptyList();
             const response = await api.get(`products/retailer/${retailerId}/featured/`);
             return response.data;
         });
@@ -353,7 +352,7 @@ export const apiService = {
     getBestSellingProducts: async (retailerId: string) => {
         const key = `best_selling_${retailerId}`;
         return fetchWithDedupe(key, async () => {
-            if (isMockApiEnabled()) return mockEmptyList();
+            if (isDevMockRetailers()) return (await loadMockRetailers()).mockEmptyList();
             const response = await api.get(`products/retailer/${retailerId}/best-selling/`);
             return response.data;
         });
@@ -362,7 +361,7 @@ export const apiService = {
     getBuyAgainProducts: async (retailerId: string) => {
         const key = `buy_again_${retailerId}`;
         return fetchWithDedupe(key, async () => {
-            if (isMockApiEnabled()) return mockEmptyList();
+            if (isDevMockRetailers()) return (await loadMockRetailers()).mockEmptyList();
             const response = await api.get(`products/retailer/${retailerId}/buy-again/`);
             return response.data;
         });
@@ -371,7 +370,7 @@ export const apiService = {
     getRecommendedProducts: async (retailerId: string) => {
         const key = `recommended_${retailerId}`;
         return fetchWithDedupe(key, async () => {
-            if (isMockApiEnabled()) return mockEmptyList();
+            if (isDevMockRetailers()) return (await loadMockRetailers()).mockEmptyList();
             const response = await api.get(`products/retailer/${retailerId}/recommended/`);
             return response.data;
         });
@@ -381,7 +380,7 @@ export const apiService = {
     getDealsOfTheDay: async (retailerId: string | number) => {
         const key = `deals_${retailerId}`;
         return fetchWithDedupe(key, async () => {
-            if (isMockApiEnabled()) return [];
+            if (isDevMockRetailers()) return [];
             const response = await api.get(`products/retailer/${retailerId}/deals-of-the-day/`);
             return response.data;
         });
@@ -390,7 +389,7 @@ export const apiService = {
     getBudgetBuys: async (retailerId: string | number) => {
         const key = `budget_${retailerId}`;
         return fetchWithDedupe(key, async () => {
-            if (isMockApiEnabled()) return [];
+            if (isDevMockRetailers()) return [];
             const response = await api.get(`products/retailer/${retailerId}/budget-buys/`);
             return response.data;
         });
@@ -399,7 +398,7 @@ export const apiService = {
     getTrendingProducts: async (retailerId: string | number) => {
         const key = `trending_${retailerId}`;
         return fetchWithDedupe(key, async () => {
-            if (isMockApiEnabled()) return [];
+            if (isDevMockRetailers()) return [];
             const response = await api.get(`products/retailer/${retailerId}/trending-now/`);
             return response.data;
         });
@@ -408,7 +407,7 @@ export const apiService = {
     getNewArrivals: async (retailerId: string | number) => {
         const key = `new_arrivals_${retailerId}`;
         return fetchWithDedupe(key, async () => {
-            if (isMockApiEnabled()) return [];
+            if (isDevMockRetailers()) return [];
             const response = await api.get(`products/retailer/${retailerId}/new-arrivals/`);
             return response.data;
         });
@@ -417,7 +416,7 @@ export const apiService = {
     getSeasonalPicks: async (retailerId: string | number) => {
         const key = `seasonal_${retailerId}`;
         return fetchWithDedupe(key, async () => {
-            if (isMockApiEnabled()) return [];
+            if (isDevMockRetailers()) return [];
             const response = await api.get(`products/retailer/${retailerId}/seasonal-picks/`);
             return response.data;
         });
@@ -426,7 +425,7 @@ export const apiService = {
     getRetailerProducts: async (retailerId: string | number, params?: any) => {
         const key = `products_${retailerId}_${JSON.stringify(params || {})}`;
         return fetchWithDedupe(key, async () => {
-            if (isMockApiEnabled()) return mockEmptyList();
+            if (isDevMockRetailers()) return (await loadMockRetailers()).mockEmptyList();
             const response = await api.get(`products/retailer/${retailerId}/`, { params });
             return response.data;
         });
@@ -451,7 +450,7 @@ export const apiService = {
     getRetailerOffers: async (retailerId: string | number) => {
         const key = `offers_${retailerId}`;
         return fetchWithDedupe(key, async () => {
-            if (isMockApiEnabled()) return mockEmptyList();
+            if (isDevMockRetailers()) return (await loadMockRetailers()).mockEmptyList();
             const response = await api.get(`offers/public/retailer/${retailerId}/`);
             return response.data;
         });
@@ -465,7 +464,7 @@ export const apiService = {
         // Note: Cart changes frequently, so ensure we invalidate or rely on short cache duration.
         // For now, rely on 5 min cache BUT invalidate on add/update.
         return fetchWithDedupe(key, async () => {
-            if (isMockApiEnabled()) return { items: [], item_count: 0, total: '0.00' };
+            if (isDevMockRetailers()) return { items: [], item_count: 0, total: '0.00' };
             const response = await api.get('cart/', { params: { retailer_id: retailerId } });
             return response.data;
         });
@@ -526,7 +525,7 @@ export const apiService = {
     fetchUserProfile: async () => {
         const key = 'user_profile';
         return fetchWithDedupe(key, async () => {
-            if (isMockApiEnabled()) return mockCustomerProfile();
+            if (isDevMockRetailers()) return (await loadMockRetailers()).mockCustomerProfile();
             const response = await api.get('customer/profile/');
             return response.data;
         });
@@ -548,7 +547,7 @@ export const apiService = {
     getAddresses: async () => {
         const key = 'addresses';
         return fetchWithDedupe(key, async () => {
-            if (isMockApiEnabled()) return mockAddresses();
+            if (isDevMockRetailers()) return (await loadMockRetailers()).mockAddresses();
             const response = await api.get('customer/addresses/');
             return response.data;
         });
@@ -646,7 +645,7 @@ export const apiService = {
     getCustomerLoyalty: async (retailerId: string | number, force: boolean = false) => {
         const key = `loyalty_${retailerId}`;
         return fetchWithDedupe(key, async () => {
-            if (isMockApiEnabled()) return { points: 0 };
+            if (isDevMockRetailers()) return { points: 0 };
             const response = await api.get('customer/loyalty/', { params: { retailer_id: retailerId } });
             return response.data;
         }, force);
@@ -721,7 +720,7 @@ export const apiService = {
 
     // Notifications
     getNotifications: async (params?: any) => {
-        if (isMockApiEnabled()) return mockNotifications();
+        if (isDevMockRetailers()) return (await loadMockRetailers()).mockNotifications();
         const key = `notifications_${JSON.stringify(params || {})}`;
         return fetchWithDedupe(key, async () => {
             const response = await api.get('customer/notifications/', { params });

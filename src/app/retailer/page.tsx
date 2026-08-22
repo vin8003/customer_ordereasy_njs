@@ -19,7 +19,7 @@ import LazyProductLane from '@/app/components/LazyProductLane';
 import InfiniteProductGrid from '@/app/components/InfiniteProductGrid';
 import { LocationPickerSheet } from '@/app/components/map/LocationPickerSheet';
 import type { City } from '@/config/cities';
-import { persistLocation } from '@/utils/location';
+import { getPersistedLocation, persistLocation } from '@/utils/location';
 import { loadSavedAddresses, type MapCenter, type SavedAddress } from '@/utils/mapCenter';
 import styles from './RetailerHome.module.css';
 
@@ -81,6 +81,7 @@ function RetailerHome() {
     const [selectedCity, setSelectedCity] = useState<City | null>(null);
     const [addresses, setAddresses] = useState<SavedAddress[]>([]);
     const [sheetOpen, setSheetOpen] = useState(false);
+    const [activeAddressId, setActiveAddressId] = useState<number | undefined>();
 
     // Use shared wishlist and cart hooks
     const { wishlistIds, loadWishlist, toggleWishlist, isWishlisted } = useWishlist();
@@ -139,7 +140,10 @@ function RetailerHome() {
         const storedCity = localStorage.getItem('selected_city');
         if (storedCity) {
             try {
-                setSelectedCity(JSON.parse(storedCity));
+                const parsed = JSON.parse(storedCity);
+                setSelectedCity(parsed);
+                if (typeof parsed?.addressId === 'number') setActiveAddressId(parsed.addressId);
+                else setActiveAddressId(getPersistedLocation()?.addressId);
             } catch (e) {
                 console.error(e);
             }
@@ -317,14 +321,14 @@ function RetailerHome() {
             {/* Header */}
             <header className={`${styles.header} ${isScrolled ? styles.scrolled : ''}`}>
                 <div className={styles.topBar}>
-                    <div
+                    <button
+                        type="button"
                         className={styles.locationBar}
                         onClick={() => setSheetOpen(true)}
-                        style={{ cursor: 'pointer' }}
                     >
                         <MapPin size={14} className={styles.locationIcon} />
                         <span>{selectedCity?.name || 'Select City'} {selectedCity?.pincode ? `(${selectedCity.pincode})` : ''}</span>
-                    </div>
+                    </button>
 
                     <div className={styles.authContainer}>
                         {isAuthenticated && (
@@ -784,6 +788,7 @@ function RetailerHome() {
                 onOpenChange={setSheetOpen}
                 city={selectedCity}
                 addresses={addresses}
+                activeAddressId={activeAddressId}
                 onApply={({ city, center }: { city: City; center: MapCenter | null }) => {
                     persistLocation({
                         ...city,
@@ -792,6 +797,7 @@ function RetailerHome() {
                         addressId: center?.addressId,
                         source: center?.source ?? 'manual',
                     });
+                    setActiveAddressId(center?.addressId);
                     const cityChanged =
                         city.name !== selectedCity?.name || city.state !== selectedCity?.state;
                     setSelectedCity(city);
