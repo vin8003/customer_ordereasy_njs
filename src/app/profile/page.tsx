@@ -47,6 +47,7 @@ export default function ProfilePage() {
             })
             .catch(err => {
                 console.error(err);
+                // If 401, maybe token expired or invalid
                 setIsGuest(true);
             })
             .finally(() => setLoading(false));
