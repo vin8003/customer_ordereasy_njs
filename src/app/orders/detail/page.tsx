@@ -37,11 +37,6 @@ interface OrderDetail {
     net_amount?: string;
     delivery_mode: string;
     payment_mode: string;
-    credit_amount?: string | number;
-    credit_limit?: number | string | null;
-    current_balance?: number | string | null;
-    ledger_previous_balance?: number | string | null;
-    ledger_new_balance?: number | string | null;
     special_instructions: string;
     delivery_address_text: string;
     items: OrderItem[];
@@ -100,8 +95,7 @@ function OrderDetails() {
     }, [orderId]);
 
     const loadOrderDetails = async (force: boolean = false) => {
-        setIsLoading(force && !order ? true : !order); // Only show overlay loading if we don't have order data or explicitly loading first time
-        // Actually, let's keep it simple:
+        setIsLoading(force && !order ? true : !order);
         if (!order) setIsLoading(true);
 
         try {
@@ -125,7 +119,6 @@ function OrderDetails() {
             loadOrderDetails(true);
         } catch (error) {
             console.error(error);
-            // global error interceptor handles this
             console.error(error);
         } finally {
             setIsActionLoading(false);
@@ -140,7 +133,6 @@ function OrderDetails() {
             loadOrderDetails(true);
         } catch (error) {
             console.error(error);
-            // global error interceptor handles this
             console.error(error);
         } finally {
             setIsActionLoading(false);
@@ -160,11 +152,9 @@ function OrderDetails() {
                 comment: comment
             });
             setShowRatingModal(false);
-            // Refresh order details to show "You rated this order" state
             loadOrderDetails(true);
         } catch (error) {
             console.error('Rating failed:', error);
-            // global error interceptor handles this
         } finally {
             setIsRatingSubmitting(false);
         }
@@ -179,7 +169,6 @@ function OrderDetails() {
             return;
         }
 
-        // 12-digit numeric validation
         if (!/^\d{12}$/.test(cleanRefId)) {
             toast.error("Invalid ID format. Please enter exactly 12 digits from your UPI app.");
             return;
@@ -279,7 +268,6 @@ function OrderDetails() {
                     </div>
                 </div>
 
-                {/* UPI Payment Section */}
                 {order.payment_mode === 'upi' && order.status !== 'cancelled' && (
                     <div className={styles.upipaymentSection}>
                         <div className={styles.upipaymentHeader}>
@@ -566,34 +554,6 @@ function OrderDetails() {
                     </div>
                 </section>
 
-                {(() => {
-                    const mode = (order.payment_mode || '').toLowerCase();
-                    const isCredit = mode === 'credit' || mode === 'khata' || Number(order.credit_amount || 0) > 0;
-                    const limit = order.credit_limit == null ? null : Number(order.credit_limit);
-                    const used = order.current_balance == null ? null : Number(order.current_balance);
-                    if (!isCredit || limit == null || used == null || !(limit > 0)) return null;
-                    const remaining = limit - used;
-                    return (
-                        <section className={styles.section}>
-                            <h3 className="font-bold mb-3 text-sm text-gray-500 uppercase">Credit / Khata</h3>
-                            <div className="flex flex-col gap-2 text-sm">
-                                <div className="flex justify-between">
-                                    <span className="text-gray-500">Credit limit</span>
-                                    <span className="font-medium">₹{limit.toFixed(2)}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-500">Outstanding</span>
-                                    <span className="font-medium">₹{used.toFixed(2)}</span>
-                                </div>
-                                <div className="flex justify-between font-bold border-t border-gray-100 pt-2 mt-1">
-                                    <span>Remaining credit</span>
-                                    <span>₹{remaining.toFixed(2)}</span>
-                                </div>
-                            </div>
-                        </section>
-                    );
-                })()}
-
                 {order.special_instructions && (
                     <section className={styles.section}>
                         <h3 className="font-bold mb-2 text-sm text-gray-500 uppercase">Notes</h3>
@@ -601,7 +561,6 @@ function OrderDetails() {
                     </section>
                 )}
 
-                {/* Cancel Button */}
                 {['pending', 'confirmed', 'processing'].includes(order.status.toLowerCase()) && (
                     <div className="px-4 mt-6">
                         <Button
@@ -619,7 +578,6 @@ function OrderDetails() {
                     </div>
                 )}
 
-                {/* Rating Button */}
                 {order.status.toLowerCase() === 'delivered' && (
                     <div className="px-4 mt-6 mb-8">
                         {!order.has_customer_feedback ? (
@@ -664,7 +622,6 @@ function OrderDetails() {
                     </div>
                 )}
 
-                {/* Rating Modal */}
                 {showRatingModal && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
                         <div className="bg-white rounded-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
