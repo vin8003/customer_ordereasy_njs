@@ -1,8 +1,8 @@
 .container {
     min-height: 100vh;
     background-color: #ffffff;
-    padding-bottom: 100px;
-    /* Space for fixed footer on mobile */
+    padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+    /* Space for fixed footer + Android/iOS system navigation */
     font-family: var(--font-inter), sans-serif;
 }
 
@@ -164,7 +164,7 @@
     left: 0;
     right: 0;
     background: #ffffff;
-    padding: 1rem 1.5rem;
+    padding: 1rem 1.5rem calc(1rem + env(safe-area-inset-bottom, 0px));
     border-top: 1px solid #f1f5f9;
     box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
     /* Softer shadow */
