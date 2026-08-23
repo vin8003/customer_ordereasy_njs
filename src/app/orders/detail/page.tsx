@@ -95,7 +95,8 @@ function OrderDetails() {
     }, [orderId]);
 
     const loadOrderDetails = async (force: boolean = false) => {
-        setIsLoading(force && !order ? true : !order);
+        setIsLoading(force && !order ? true : !order); // Only show overlay loading if we don't have order data or explicitly loading first time
+        // Actually, let's keep it simple:
         if (!order) setIsLoading(true);
 
         try {
@@ -119,6 +120,7 @@ function OrderDetails() {
             loadOrderDetails(true);
         } catch (error) {
             console.error(error);
+            // global error interceptor handles this
             console.error(error);
         } finally {
             setIsActionLoading(false);
@@ -133,6 +135,7 @@ function OrderDetails() {
             loadOrderDetails(true);
         } catch (error) {
             console.error(error);
+            // global error interceptor handles this
             console.error(error);
         } finally {
             setIsActionLoading(false);
@@ -152,9 +155,11 @@ function OrderDetails() {
                 comment: comment
             });
             setShowRatingModal(false);
+            // Refresh order details to show "You rated this order" state
             loadOrderDetails(true);
         } catch (error) {
             console.error('Rating failed:', error);
+            // global error interceptor handles this
         } finally {
             setIsRatingSubmitting(false);
         }
@@ -169,6 +174,7 @@ function OrderDetails() {
             return;
         }
 
+        // 12-digit numeric validation
         if (!/^\d{12}$/.test(cleanRefId)) {
             toast.error("Invalid ID format. Please enter exactly 12 digits from your UPI app.");
             return;
@@ -268,6 +274,7 @@ function OrderDetails() {
                     </div>
                 </div>
 
+                {/* UPI Payment Section */}
                 {order.payment_mode === 'upi' && order.status !== 'cancelled' && (
                     <div className={styles.upipaymentSection}>
                         <div className={styles.upipaymentHeader}>
@@ -561,6 +568,7 @@ function OrderDetails() {
                     </section>
                 )}
 
+                {/* Cancel Button */}
                 {['pending', 'confirmed', 'processing'].includes(order.status.toLowerCase()) && (
                     <div className="px-4 mt-6">
                         <Button
@@ -578,6 +586,7 @@ function OrderDetails() {
                     </div>
                 )}
 
+                {/* Rating Button */}
                 {order.status.toLowerCase() === 'delivered' && (
                     <div className="px-4 mt-6 mb-8">
                         {!order.has_customer_feedback ? (
@@ -622,6 +631,7 @@ function OrderDetails() {
                     </div>
                 )}
 
+                {/* Rating Modal */}
                 {showRatingModal && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
                         <div className="bg-white rounded-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
