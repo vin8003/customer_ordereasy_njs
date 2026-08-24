@@ -14,6 +14,7 @@ import { useWishlist } from '@/hooks/useWishlist';
 import { WishlistIcon } from '@/app/components/WishlistIcon';
 import { ProductImage } from '@/app/components/ProductImage';
 import { useCartContext } from '@/context/CartContext';
+import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
 import styles from './Cart.module.css';
 
 interface CartItem {
@@ -326,6 +327,7 @@ export default function CartPage() {
                 <div className="h-5" />
             </header>
 
+            <div className={styles.layout}>
             <div className={styles.cartList}>
                 {cartItems.map(item => (
                     <CartItemRow
@@ -337,6 +339,15 @@ export default function CartPage() {
                         isWishlisted={isWishlisted}
                     />
                 ))}
+            </div>
+            {retailerId && (
+                <aside className={styles.fbtSidebar}>
+                    <FrequentlyBoughtTogether
+                        retailerId={retailerId}
+                        productIds={cartItems.map(item => item.product_id)}
+                    />
+                </aside>
+            )}
             </div>
 
             <div className={styles.footer}>

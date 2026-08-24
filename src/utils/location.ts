@@ -34,10 +34,10 @@ export function getPersistedLocation(): StoredLocation | null {
 
 export function hasConfirmedLocation(): boolean {
     const loc = getPersistedLocation();
-    if (!loc || !loc.name || !loc.pincode) return false;
+    if (!loc || !loc.name || !loc.state) return false;
     // Never treat lat/lng-only GPS as a listing location (live stores have no coords).
     if (!loc.id || loc.id === 'gps') return false;
-    return AVAILABLE_CITIES.some((c) => c.id === loc.id && c.isAvailable);
+    return true;
 }
 
 export function persistLocation(loc: StoredLocation) {
