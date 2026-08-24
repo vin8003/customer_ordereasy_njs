@@ -11,6 +11,7 @@ import { useWishlist } from '@/hooks/useWishlist';
 import { WishlistIcon } from '@/app/components/WishlistIcon';
 import AddToCartButton from '@/app/components/AddToCartButton';
 import { ProductCard } from '@/app/components/ProductCard';
+import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
 import styles from './ProductDetail.module.css';
 
 interface Product {
@@ -273,7 +274,12 @@ function ProductDetail() {
 
                 <div className={styles.divider} />
 
-                {/* Optional: Similar Products or Reviews could go here */}
+                <FrequentlyBoughtTogether
+                    retailerId={retailerId}
+                    productIds={product.id ? [product.id] : []}
+                    offersDelivery={retailerStatus?.offersDelivery}
+                    offersPickup={retailerStatus?.offersPickup}
+                />
             </div>
 
             <div className={styles.footer}>

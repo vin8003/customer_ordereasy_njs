@@ -356,6 +356,15 @@ export const apiService = {
         });
     },
 
+    getFrequentlyBoughtTogether: async (retailerId: string, productIds: number[] = []) => {
+        const params = productIds.length ? { product_ids: productIds.join(',') } : {};
+        const response = await api.get(
+            `products/retailer/${retailerId}/frequently-bought-together/`,
+            { params }
+        );
+        return response.data;
+    },
+
     // New Discovery Lanes
     getDealsOfTheDay: async (retailerId: string | number) => {
         const key = `deals_${retailerId}`;
