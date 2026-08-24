@@ -558,6 +558,7 @@ export const apiService = {
         Object.keys(CACHE).forEach(k => { if (k.startsWith('cart_')) delete CACHE[k]; });
         // Clear loyalty cache
         delete CACHE['loyalty_all'];
+        delete CACHE['credit_all'];
         if (data.retailer_id) delete CACHE[`loyalty_${data.retailer_id}`];
         return response.data;
     },
@@ -628,6 +629,14 @@ export const apiService = {
         }, force);
     },
 
+    getAllCustomerCredit: async (force: boolean = false) => {
+        const key = 'credit_all';
+        return fetchWithDedupe(key, async () => {
+            const response = await api.get('customer/credit/all/');
+            return response.data;
+        }, force);
+    },
+
     getLoyaltyTransactions: async (retailerId?: string | number, force: boolean = false) => {
         const key = `loyalty_transactions_${retailerId || 'all'}`;
         return fetchWithDedupe(key, async () => {
@@ -643,6 +652,7 @@ export const apiService = {
         delete CACHE['orders_current'];
         // Clear all loyalty cache to be sure
         delete CACHE['loyalty_all'];
+        delete CACHE['credit_all'];
         Object.keys(CACHE).forEach(k => { if (k.startsWith('loyalty_')) delete CACHE[k]; });
         return response.data;
     },
@@ -660,6 +670,7 @@ export const apiService = {
         delete CACHE['orders_current'];
         // Clear all loyalty cache to be sure
         delete CACHE['loyalty_all'];
+        delete CACHE['credit_all'];
         Object.keys(CACHE).forEach(k => { if (k.startsWith('loyalty_')) delete CACHE[k]; });
         return response.data;
     },

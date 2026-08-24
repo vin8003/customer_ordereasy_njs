@@ -4,7 +4,7 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { User, Mail, Phone, Settings, LogOut, Package, MapPin, ChevronRight, Gift, HelpCircle } from 'lucide-react';
+import { User, Settings, LogOut, Package, MapPin, ChevronRight, Gift, HelpCircle, Wallet } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import HelpModal from '@/app/components/HelpModal';
@@ -15,6 +15,7 @@ export default function ProfilePage() {
     const [profile, setProfile] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [loyaltyPoints, setLoyaltyPoints] = useState<any[]>([]);
+    const [creditBalances, setCreditBalances] = useState<any[]>([]);
 
     const [initials, setInitials] = useState('U');
     const [isGuest, setIsGuest] = useState(false);
@@ -30,13 +31,19 @@ export default function ProfilePage() {
         setLoading(true);
         Promise.all([
             apiService.fetchUserProfile(),
-            apiService.getAllCustomerLoyalty()
+            apiService.getAllCustomerLoyalty(),
         ])
             .then(([profileData, loyaltyData]) => {
                 setProfile(profileData);
                 setLoyaltyPoints(loyaltyData);
                 const init = `${profileData.first_name?.[0] || ''}${profileData.last_name?.[0] || ''}`.toUpperCase() || 'U';
                 setInitials(init);
+                return apiService.getAllCustomerCredit().catch(() => []);
+            })
+            .then((creditData) => {
+                if (creditData) {
+                    setCreditBalances(Array.isArray(creditData) ? creditData : []);
+                }
             })
             .catch(err => {
                 console.error(err);
@@ -132,6 +139,43 @@ export default function ProfilePage() {
                 </div>
 
                 <div className={styles.section}>
+                    <h2 className={styles.sectionTitle}>Credit / Khata</h2>
+                    {creditBalances.length === 0 ? (
+                        <div className={styles.creditEmpty}>
+                            No store credit accounts yet. Balances appear here after you shop on credit.
+                        </div>
+                    ) : (
+                        <div className={styles.creditList}>
+                            {creditBalances.map((row: any) => {
+                                const limit = Number(row.credit_limit ?? 0);
+                                const outstanding = Number(row.current_balance ?? 0);
+                                const remaining = Number(row.remaining_credit ?? (limit - outstanding));
+                                return (
+                                    <div key={row.retailer_id} className={styles.creditItem}>
+                                        <div className={styles.creditShop}>
+                                            <Wallet size={18} className="text-amber-600" />
+                                            <span>{row.retailer_name}</span>
+                                        </div>
+                                        <div className={styles.creditRow}>
+                                            <span className="text-gray-500">Outstanding</span>
+                                            <span className="font-semibold">₹{outstanding.toFixed(2)}</span>
+                                        </div>
+                                        <div className={styles.creditRow}>
+                                            <span className="text-gray-500">Credit limit</span>
+                                            <span className="font-medium">₹{limit.toFixed(2)}</span>
+                                        </div>
+                                        <div className={styles.creditRow + ' ' + styles.creditRemaining}>
+                                            <span>Remaining credit</span>
+                                            <span>₹{remaining.toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+
+                <div className={styles.section}>
                     <h2 className={styles.sectionTitle}>Rewards</h2>
                     <div className={styles.pointsSummary}>
                         {(() => {
@@ -193,4 +237,3 @@ export default function ProfilePage() {
         </div>
     );
 }
-
