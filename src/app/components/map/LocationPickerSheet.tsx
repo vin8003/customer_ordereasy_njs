@@ -81,8 +81,10 @@ export function LocationPickerSheet({
                 return;
             }
             const geo = await reverseGeocode(position.lat, position.lng);
-            const name = geo?.city || city?.name;
-            const geoState = geo?.state || city?.state;
+            // Abort on geocode miss — never keep the previous city under new GPS coords
+            // (that would leak shops from the wrong city on /retailers).
+            const name = geo?.city;
+            const geoState = geo?.state;
             if (!name || !geoState) {
                 toast.error('Found your position but not your city. Pick it below.');
                 return;
