@@ -49,7 +49,21 @@ NEXT_PUBLIC_API_URL=https://api.ordereasy.win/api/
 
 # Google Maps API Key for Location Picker
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
+
+# Optional: serve retailers, addresses and profile from local mock data
+# instead of the API. Ignored in production builds.
+NEXT_PUBLIC_MOCK_RETAILERS=1
 ```
+
+#### Local mock data
+
+`NEXT_PUBLIC_MOCK_RETAILERS=1` makes `apiService` answer from
+`src/services/mockRetailers.ts` so the store map on `/retailers` can be worked on
+before backend changes are deployed. The mock returns shops anchored to the
+selected city — some outside a 5 km delivery radius, some with no coordinates at
+all — which is what the map's edge rail and nearest-first list are built to
+handle. Production builds (`NODE_ENV === 'production'`) never import
+`mockRetailers.ts` into the client bundle.
 
 ### 4. Run Development Server
 

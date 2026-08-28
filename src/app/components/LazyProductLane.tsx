@@ -35,7 +35,10 @@ export default function LazyProductLane({ title, fetchFn, retailerId, offersDeli
                 try {
                     setIsLoading(true);
                     const data = await fetchFn();
-                    setProducts(data);
+                    const list = Array.isArray(data)
+                        ? data
+                        : ((data as { results?: Product[] } | null)?.results ?? []);
+                    setProducts(list);
                 } catch (err) {
                     console.error(`Error fetching products for ${title}:`, err);
                     setError('Failed to load products');

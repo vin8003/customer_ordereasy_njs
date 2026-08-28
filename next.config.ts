@@ -15,6 +15,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  ...(process.env.NODE_ENV === 'production'
+    ? {
+        turbopack: {
+          resolveAlias: {
+            '@/services/mockRetailers': './src/services/emptyMockRetailers.ts',
+          },
+        },
+      }
+    : {}),
 };
 
 export default nextConfig;
