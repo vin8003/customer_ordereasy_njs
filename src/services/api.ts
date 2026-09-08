@@ -558,6 +558,35 @@ export const apiService = {
         return response.data;
     },
 
+    // Fulfillment slots (OE-240 / RCP OE-243)
+    getFulfillmentSlots: async (
+        retailerId: string | number,
+        params: { delivery_mode: 'pickup' | 'delivery'; days?: number },
+        force: boolean = false
+    ) => {
+        const days = params.days ?? 7;
+        const key = `fulfillment_slots_${retailerId}_${params.delivery_mode}_${days}`;
+        return fetchWithDedupe(key, async () => {
+            const response = await api.get(`retailers/${retailerId}/fulfillment-slots/`, {
+                params: { delivery_mode: params.delivery_mode, days },
+            });
+            return response.data;
+        }, force);
+    },
+
+    rescheduleFulfillmentSlot: async (orderId: number | string, fulfillmentSlotStart: string) => {
+        const response = await api.patch(`orders/${orderId}/fulfillment-slot/`, {
+            fulfillment_slot_start: fulfillmentSlotStart,
+        });
+        delete CACHE[`order_${orderId}`];
+        delete CACHE['orders_history'];
+        delete CACHE['orders_current'];
+        Object.keys(CACHE).forEach((k) => {
+            if (k.startsWith('fulfillment_slots_')) delete CACHE[k];
+        });
+        return response.data;
+    },
+
     // Orders
     placeOrder: async (data: any) => {
         const response = await api.post('orders/place/', data);
@@ -569,6 +598,9 @@ export const apiService = {
         delete CACHE['loyalty_all'];
         delete CACHE['credit_all'];
         if (data.retailer_id) delete CACHE[`loyalty_${data.retailer_id}`];
+        Object.keys(CACHE).forEach((k) => {
+            if (k.startsWith('fulfillment_slots_')) delete CACHE[k];
+        });
         return response.data;
     },
 
