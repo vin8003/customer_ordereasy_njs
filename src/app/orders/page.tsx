@@ -6,6 +6,7 @@ import { ArrowLeft, Package, ChevronRight, Clock, Star } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { EmptyState } from '@/app/components/EmptyState';
+import { formatFulfillmentWindow } from '@/lib/fulfillmentSlots';
 import styles from './Orders.module.css';
 
 interface Order {
@@ -14,7 +15,10 @@ interface Order {
     total_amount: string;
     status: string;
     created_at: string;
+    delivery_mode?: string;
     retailer_name?: string;
+    fulfillment_slot_start?: string | null;
+    fulfillment_slot_end?: string | null;
     feedback?: {
         overall_rating: number;
         comment: string;
@@ -102,6 +106,13 @@ export default function OrdersPage() {
                                     <div className="text-xs text-orange-600 flex items-center gap-1 mt-1 font-medium bg-orange-50 px-2 py-0.5 rounded-md w-fit border border-orange-100">
                                         <Clock size={12} />
                                         Processing starts later
+                                    </div>
+                                )}
+                                {order.fulfillment_slot_start && (
+                                    <div className="text-xs text-indigo-700 flex items-center gap-1 mt-1 font-medium bg-indigo-50 px-2 py-0.5 rounded-md w-fit border border-indigo-100">
+                                        <Clock size={12} />
+                                        {order.delivery_mode === 'pickup' ? 'Pickup' : 'Delivery'}:{' '}
+                                        {formatFulfillmentWindow(order.fulfillment_slot_start, order.fulfillment_slot_end)}
                                     </div>
                                 )}
                             </div>

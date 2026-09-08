@@ -9,7 +9,7 @@ import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { ProductImage } from '@/app/components/ProductImage';
 import FulfillmentSlotPicker from '@/app/components/FulfillmentSlotPicker';
-import { FulfillmentSlot, RESCHEDULABLE_ORDER_STATUSES } from '@/lib/fulfillmentSlots';
+import { FulfillmentSlot, OrderDeliveryInfo, RESCHEDULABLE_ORDER_STATUSES, formatFulfillmentWindow } from '@/lib/fulfillmentSlots';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -41,6 +41,9 @@ interface OrderDetail {
     retailer?: number;
     fulfillment_slot_start?: string | null;
     fulfillment_slot_end?: string | null;
+    pickup_code?: string | null;
+    pickup_ready_at?: string | null;
+    delivery_info?: OrderDeliveryInfo | null;
     payment_mode: string;
     special_instructions: string;
     delivery_address_text: string;
@@ -158,17 +161,7 @@ function OrderDetails() {
         }
     };
 
-    const formatFulfillmentWindow = (start?: string | null, end?: string | null) => {
-        if (!start) return null;
-        const startDate = new Date(start);
-        const endDate = end ? new Date(end) : null;
-        const datePart = startDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-        const startTime = startDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: true });
-        const endTime = endDate
-            ? endDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: true })
-            : null;
-        return endTime ? `${datePart}, ${startTime} – ${endTime}` : `${datePart}, ${startTime}`;
-    };
+    const fulfillmentWindow = order ? formatFulfillmentWindow(order.fulfillment_slot_start, order.fulfillment_slot_end) : null;
 
     const handleApproval = async (action: 'accept' | 'reject') => {
         if (!order) return;
@@ -601,14 +594,41 @@ function OrderDetails() {
                                 <span className="text-gray-500">Address:</span> <p className="mt-1">{order.delivery_address_text}</p>
                             </div>
                         )}
-                        {order.fulfillment_slot_start && (
+                        {fulfillmentWindow && (
                             <div className="text-sm mt-2 p-3 bg-indigo-50 border border-indigo-100 rounded-lg">
                                 <span className="text-gray-500 block mb-1">
                                     {order.delivery_mode === 'pickup' ? 'Pickup window:' : 'Delivery window:'}
                                 </span>
-                                <span className="font-semibold text-indigo-900">
-                                    {formatFulfillmentWindow(order.fulfillment_slot_start, order.fulfillment_slot_end)}
-                                </span>
+                                <span className="font-semibold text-indigo-900">{fulfillmentWindow}</span>
+                            </div>
+                        )}
+                        {order.delivery_mode === 'pickup' && order.pickup_code && (
+                            <div className="text-sm mt-2 p-3 bg-green-50 border border-green-100 rounded-lg">
+                                <span className="text-gray-500 block mb-1">Pickup code</span>
+                                <span className="font-bold text-lg tracking-widest text-green-900">{order.pickup_code}</span>
+                                {order.pickup_ready_at && (
+                                    <p className="text-xs text-green-700 mt-1">
+                                        Ready from {new Date(order.pickup_ready_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                        {order.delivery_mode === 'delivery' && order.delivery_info && (
+                            <div className="text-sm mt-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                                <span className="text-gray-500 block mb-1">Courier</span>
+                                {order.delivery_info.delivery_person_name && (
+                                    <p className="font-medium">{order.delivery_info.delivery_person_name}</p>
+                                )}
+                                {order.delivery_info.delivery_person_phone && (
+                                    <a href={`tel:${order.delivery_info.delivery_person_phone}`} className="text-blue-600 hover:underline">
+                                        {order.delivery_info.delivery_person_phone}
+                                    </a>
+                                )}
+                                {order.delivery_info.delivery_status && (
+                                    <p className="text-xs text-gray-600 mt-1 capitalize">
+                                        Status: {order.delivery_info.delivery_status.replace(/_/g, ' ')}
+                                    </p>
+                                )}
                             </div>
                         )}
                     </div>

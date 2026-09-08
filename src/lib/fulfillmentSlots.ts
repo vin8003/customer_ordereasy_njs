@@ -1,5 +1,23 @@
 /** Helpers for RCP fulfillment-slot API (OE-240 / OE-243). */
 
+/**
+ * Order list (`orders/history/`, `orders/current/`) includes fulfillment_slot_* only.
+ * pickup_code and delivery_info require orders/{id}/ detail fetch (RCP #82).
+ */
+export interface OrderListFulfillmentFields {
+    fulfillment_slot_start?: string | null;
+    fulfillment_slot_end?: string | null;
+}
+
+/** Detail-only courier fields (not on list serializers). */
+export interface OrderDeliveryInfo {
+    delivery_person_name?: string | null;
+    delivery_person_phone?: string | null;
+    estimated_delivery_time?: string | null;
+    delivery_status?: string | null;
+    actual_delivery_time?: string | null;
+}
+
 export interface FulfillmentSlot {
     slot_start: string;
     slot_end: string;
@@ -30,6 +48,19 @@ export function formatSlotWindow(slot: FulfillmentSlot): string {
     const startTime = start.toLocaleTimeString(undefined, timeOpts);
     const endTime = end.toLocaleTimeString(undefined, timeOpts);
     return `${datePart}, ${startTime} – ${endTime}`;
+}
+
+/** Format booked slot window from order list/detail ISO fields. */
+export function formatFulfillmentWindow(start?: string | null, end?: string | null): string | null {
+    if (!start) return null;
+    const startDate = new Date(start);
+    const endDate = end ? new Date(end) : null;
+    const datePart = startDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+    const startTime = startDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: true });
+    const endTime = endDate
+        ? endDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: true })
+        : null;
+    return endTime ? `${datePart}, ${startTime} – ${endTime}` : `${datePart}, ${startTime}`;
 }
 
 export function formatSlotTimeOnly(isoLocal: string): string {

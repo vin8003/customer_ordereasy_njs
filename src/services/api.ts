@@ -558,7 +558,10 @@ export const apiService = {
         return response.data;
     },
 
-    // Fulfillment slots (OE-240 / RCP OE-243)
+    // Fulfillment slots (OE-240 / RCP OE-243, PR #82)
+    // Mounts: GET /api/retailers/{id}/fulfillment-slots/
+    //        POST /api/orders/place/  PATCH /api/orders/{id}/fulfillment-slot/
+    // List endpoints expose fulfillment_slot_* only; pickup_code / delivery_info need detail.
     getFulfillmentSlots: async (
         retailerId: string | number,
         params: { delivery_mode: 'pickup' | 'delivery'; days?: number },
