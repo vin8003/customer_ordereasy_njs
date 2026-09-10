@@ -12,6 +12,7 @@ import {
     matchCity,
     matchState,
 } from '@/config/india-locations';
+import { persistManualCity } from '@/utils/location';
 import { estimateCityFromIp } from '@/services/geoEstimate';
 import { apiService } from '@/services/api';
 import styles from './CitySelection.module.css';
@@ -139,9 +140,10 @@ export default function CitySelectionPage() {
             id: cityId(selectedCityName, selectedState),
             name: selectedCityName,
             state: selectedState,
+            isAvailable: true,
             ...(pin ? { pincode: pin } : {}),
         };
-        localStorage.setItem('selected_city', JSON.stringify(city));
+        persistManualCity(city);
         if (pin) {
             localStorage.setItem('selected_pincode', pin);
         } else {

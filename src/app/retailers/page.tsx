@@ -8,6 +8,7 @@ import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { City } from '@/config/cities';
 import { cityId } from '@/config/india-locations';
+import { getPersistedLocation, hasConfirmedLocation } from '@/utils/location';
 import styles from './Retailers.module.css';
 
 interface Retailer {
@@ -73,26 +74,17 @@ export default function RetailersPage() {
     }, []);
 
     useEffect(() => {
-        const storedCity = localStorage.getItem('selected_city');
-
-        if (!storedCity) {
-            router.replace('/city-selection');
+        if (!hasConfirmedLocation()) {
             return;
         }
 
-        try {
-            const parsedCity: City = JSON.parse(storedCity);
-            if (!parsedCity?.name || !parsedCity?.state) {
-                router.replace('/city-selection');
-                return;
-            }
-            setSelectedCity(parsedCity);
-            fetchRetailers(parsedCity);
-        } catch (e) {
-            console.error(e);
-            router.replace('/city-selection');
+        const parsedCity = getPersistedLocation();
+        if (!parsedCity?.name || !parsedCity?.state) {
             return;
         }
+
+        setSelectedCity(parsedCity);
+        fetchRetailers(parsedCity);
 
         if (apiService.isAuthenticated()) {
             setIsAuthenticated(true);
