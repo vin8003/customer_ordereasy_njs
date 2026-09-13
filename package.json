@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "node --test --experimental-strip-types \"src/**/*.test.ts\"",
     "postinstall": "python -c \"import os; p='node_modules/@codetrix-studio/capacitor-google-auth/android/build.gradle'; (lambda c: open(p, 'w').write(c.replace('jcenter()', 'mavenCentral()').replace('proguard-android.txt', 'proguard-android-optimize.txt')))(open(p).read()) if os.path.exists(p) else None\""
   },
   "dependencies": {
@@ -28,6 +29,7 @@
     "firebase": "^12.8.0",
     "lucide-react": "^0.562.0",
     "next": "16.1.3",
+    "qrcode.react": "^4.2.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-intersection-observer": "^10.0.3",
