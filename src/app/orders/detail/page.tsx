@@ -8,6 +8,8 @@ import { ArrowLeft, MapPin, Phone, Package, Clock, CheckCircle, XCircle, AlertCi
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { ProductImage } from '@/app/components/ProductImage';
+import FulfillmentSlotPicker from '@/app/components/FulfillmentSlotPicker';
+import { FulfillmentSlot, OrderDeliveryInfo, RESCHEDULABLE_ORDER_STATUSES, formatFulfillmentWindow } from '@/lib/fulfillmentSlots';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -36,6 +38,12 @@ interface OrderDetail {
     refund_amount?: string;
     net_amount?: string;
     delivery_mode: string;
+    retailer?: number;
+    fulfillment_slot_start?: string | null;
+    fulfillment_slot_end?: string | null;
+    pickup_code?: string | null;
+    pickup_ready_at?: string | null;
+    delivery_info?: OrderDeliveryInfo | null;
     payment_mode: string;
     special_instructions: string;
     delivery_address_text: string;
@@ -72,6 +80,12 @@ function OrderDetails() {
     const [referenceId, setReferenceId] = useState('');
     const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
     const [isEditingPayment, setIsEditingPayment] = useState(false);
+
+    // Fulfillment slot reschedule (OE-240)
+    const [showReschedule, setShowReschedule] = useState(false);
+    const [rescheduleSlot, setRescheduleSlot] = useState<FulfillmentSlot | null>(null);
+    const [slotRefreshKey, setSlotRefreshKey] = useState(0);
+    const [isRescheduling, setIsRescheduling] = useState(false);
 
 
     useEffect(() => {
@@ -120,12 +134,34 @@ function OrderDetails() {
             loadOrderDetails(true);
         } catch (error) {
             console.error(error);
-            // global error interceptor handles this
-            console.error(error);
         } finally {
             setIsActionLoading(false);
         }
     };
+
+    const handleRescheduleSlot = async () => {
+        if (!order || !rescheduleSlot) return;
+        setIsRescheduling(true);
+        try {
+            await apiService.rescheduleFulfillmentSlot(order.id, rescheduleSlot.slot_start);
+            setShowReschedule(false);
+            setRescheduleSlot(null);
+            loadOrderDetails(true);
+            toast.success('Pickup/delivery time updated.');
+        } catch (error) {
+            console.error(error);
+            const slotError = (error as { response?: { data?: { fulfillment_slot_start?: unknown } } })
+                ?.response?.data?.fulfillment_slot_start;
+            if (slotError) {
+                setRescheduleSlot(null);
+                setSlotRefreshKey((k) => k + 1);
+            }
+        } finally {
+            setIsRescheduling(false);
+        }
+    };
+
+    const fulfillmentWindow = order ? formatFulfillmentWindow(order.fulfillment_slot_start, order.fulfillment_slot_end) : null;
 
     const handleApproval = async (action: 'accept' | 'reject') => {
         if (!order) return;
@@ -558,8 +594,91 @@ function OrderDetails() {
                                 <span className="text-gray-500">Address:</span> <p className="mt-1">{order.delivery_address_text}</p>
                             </div>
                         )}
+                        {fulfillmentWindow && (
+                            <div className="text-sm mt-2 p-3 bg-indigo-50 border border-indigo-100 rounded-lg">
+                                <span className="text-gray-500 block mb-1">
+                                    {order.delivery_mode === 'pickup' ? 'Pickup window:' : 'Delivery window:'}
+                                </span>
+                                <span className="font-semibold text-indigo-900">{fulfillmentWindow}</span>
+                            </div>
+                        )}
+                        {order.delivery_mode === 'pickup' && order.pickup_code && (
+                            <div className="text-sm mt-2 p-3 bg-green-50 border border-green-100 rounded-lg">
+                                <span className="text-gray-500 block mb-1">Pickup code</span>
+                                <span className="font-bold text-lg tracking-widest text-green-900">{order.pickup_code}</span>
+                                {order.pickup_ready_at && (
+                                    <p className="text-xs text-green-700 mt-1">
+                                        Ready from {new Date(order.pickup_ready_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                        {order.delivery_mode === 'delivery' && order.delivery_info && (
+                            <div className="text-sm mt-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                                <span className="text-gray-500 block mb-1">Courier</span>
+                                {order.delivery_info.delivery_person_name && (
+                                    <p className="font-medium">{order.delivery_info.delivery_person_name}</p>
+                                )}
+                                {order.delivery_info.delivery_person_phone && (
+                                    <a href={`tel:${order.delivery_info.delivery_person_phone}`} className="text-blue-600 hover:underline">
+                                        {order.delivery_info.delivery_person_phone}
+                                    </a>
+                                )}
+                                {order.delivery_info.delivery_status && (
+                                    <p className="text-xs text-gray-600 mt-1 capitalize">
+                                        Status: {order.delivery_info.delivery_status.replace(/_/g, ' ')}
+                                    </p>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </section>
+
+                {order.retailer && order.fulfillment_slot_start && RESCHEDULABLE_ORDER_STATUSES.has(order.status.toLowerCase()) && (
+                    <section className={styles.section}>
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="font-bold text-sm text-gray-500 uppercase">Change Time Slot</h3>
+                            {!showReschedule && (
+                                <Button variant="outline" className="text-xs h-8" onClick={() => setShowReschedule(true)}>
+                                    Reschedule
+                                </Button>
+                            )}
+                        </div>
+                        {showReschedule && (
+                            <div>
+                                <FulfillmentSlotPicker
+                                    retailerId={String(order.retailer)}
+                                    deliveryMode={order.delivery_mode as 'pickup' | 'delivery'}
+                                    selectedSlotStart={rescheduleSlot?.slot_start ?? null}
+                                    onSelect={setRescheduleSlot}
+                                    days={7}
+                                    refreshKey={slotRefreshKey}
+                                />
+                                <div className="flex gap-2 mt-4">
+                                    <Button
+                                        variant="outline"
+                                        className="flex-1"
+                                        onClick={() => {
+                                            setShowReschedule(false);
+                                            setRescheduleSlot(null);
+                                        }}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        variant="primary"
+                                        className="flex-1"
+                                        disabled={!rescheduleSlot}
+                                        isLoading={isRescheduling}
+                                        onClick={handleRescheduleSlot}
+                                    >
+                                        Confirm New Time
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                    </section>
+                )}
 
                 {order.special_instructions && (
                     <section className={styles.section}>
