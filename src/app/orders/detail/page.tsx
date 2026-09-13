@@ -2,12 +2,14 @@
 import toast from '@/lib/toast';
 import LoadingScreen from '@/app/components/LoadingScreen';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, MapPin, Phone, Package, Clock, CheckCircle, XCircle, AlertCircle, Star, MessageCircle, Loader2 } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { ProductImage } from '@/app/components/ProductImage';
+import { buildTxnRef, buildUpiIntentUri, formatUpiAmount } from '@/lib/upiIntent';
+import { QRCodeSVG } from 'qrcode.react';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -48,7 +50,6 @@ interface OrderDetail {
     expected_processing_start?: string;
     cancelled_by?: string;
     retailer_upi_id?: string;
-    retailer_upi_qr_code?: string;
     payment_reference_id?: string;
     payment_status?: string;
     payment_edit_count?: number;
@@ -73,6 +74,19 @@ function OrderDetails() {
     const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
     const [isEditingPayment, setIsEditingPayment] = useState(false);
 
+    // Exact-amount UPI QR (OE-277): one txn ref per viewed order, so refreshes keep the same QR.
+    const upiTxnRef = useMemo(() => buildTxnRef(order?.order_number), [order?.order_number]);
+    const upiAmount = formatUpiAmount(order?.total_amount);
+    const upiIntentUri = useMemo(() => {
+        if (!order) return null;
+        return buildUpiIntentUri({
+            upiId: order.retailer_upi_id,
+            shopName: order.retailer_name,
+            amount: order.total_amount,
+            orderNumber: order.order_number,
+            txnRef: upiTxnRef,
+        });
+    }, [order, upiTxnRef]);
 
     useEffect(() => {
         if (orderId) {
@@ -291,16 +305,26 @@ function OrderDetails() {
                                 </p>
 
                                 <div className={styles.qrContainer}>
-                                    {order.retailer_upi_qr_code ? (
-                                        <div className={styles.qrWrapper}>
-                                            <img 
-                                                src={order.retailer_upi_qr_code} 
-                                                alt="UPI QR Code" 
-                                                className={styles.qrImage}
-                                            />
-                                        </div>
+                                    {upiIntentUri ? (
+                                        <>
+                                            <div className={styles.qrWrapper}>
+                                                <QRCodeSVG
+                                                    value={upiIntentUri}
+                                                    size={140}
+                                                    className={styles.qrImage}
+                                                    title={`UPI payment QR for order ${order.order_number}`}
+                                                />
+                                            </div>
+                                            <p className="text-sm text-gray-600 text-center">
+                                                Scan with any UPI app to pay <strong>₹{upiAmount}</strong> for this order.
+                                            </p>
+                                        </>
                                     ) : (
-                                        <div className="text-sm text-gray-500 italic">No QR Code available</div>
+                                        <div className="text-sm text-gray-500 italic text-center">
+                                            {order.retailer_upi_id
+                                                ? "Exact-amount QR unavailable for this order. Please pay using the UPI ID below."
+                                                : "This shop has not added a UPI ID yet. Please contact the shop to complete payment."}
+                                        </div>
                                     )}
                                     
                                     <div className={styles.upiIdContainer}>
