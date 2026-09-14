@@ -19,7 +19,7 @@ export default function OrderStatusTimeline(order: OrderStatusTimelineInput) {
 
     return (
         <section
-            className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+            className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm max-w-2xl mx-auto w-full"
             aria-label="Order status timeline"
         >
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">
