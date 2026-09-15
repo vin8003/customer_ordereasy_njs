@@ -9,6 +9,7 @@ import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { ProductImage } from '@/app/components/ProductImage';
 import { buildTxnRef, buildUpiIntentUri, formatUpiAmount } from '@/lib/upiIntent';
+import { getOrderTaxSummary } from '@/lib/orderTaxSummary';
 import { QRCodeSVG } from 'qrcode.react';
 import styles from './OrderDetails.module.css';
 
@@ -34,6 +35,8 @@ interface OrderDetail {
     delivery_fee: string;
     discount_amount: string;
     discount_from_points: string;
+    taxable_amount?: string;
+    tax_amount?: string;
     total_amount: string;
     refund_amount?: string;
     net_amount?: string;
@@ -240,6 +243,7 @@ function OrderDetails() {
     if (!order) return <div className="p-20 text-center">Order not found.</div>;
 
     const statusInfo = getStatusInfo(order.status);
+    const taxSummary = getOrderTaxSummary(order);
 
     return (
         <div className={styles.container}>
@@ -548,6 +552,18 @@ function OrderDetails() {
                                 <span>Points Redeemed</span>
                                 <span className={styles.discount}>-₹{order.discount_from_points}</span>
                             </div>
+                        )}
+                        {taxSummary && (
+                            <>
+                                <div className={styles.summaryRow}>
+                                    <span>Taxable Amount</span>
+                                    <span>₹{taxSummary.taxableAmount}</span>
+                                </div>
+                                <div className={styles.summaryRow}>
+                                    <span>GST (included)</span>
+                                    <span>₹{taxSummary.taxAmount}</span>
+                                </div>
+                            </>
                         )}
                         <div className={styles.totalRow}>
                             <span>{parseFloat(order.refund_amount || '0') > 0 ? 'Original Total' : 'Total Amount'}</span>
