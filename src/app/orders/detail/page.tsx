@@ -53,6 +53,7 @@ interface OrderDetail {
     expected_processing_start?: string;
     cancelled_by?: string;
     retailer_upi_id?: string;
+    retailer_upi_qr_code?: string;
     payment_reference_id?: string;
     payment_status?: string;
     payment_edit_count?: number;
@@ -321,6 +322,20 @@ function OrderDetails() {
                                             </div>
                                             <p className="text-sm text-gray-600 text-center">
                                                 Scan with any UPI app to pay <strong>₹{upiAmount}</strong> for this order.
+                                            </p>
+                                        </>
+                                    ) : order.retailer_upi_qr_code ? (
+                                        /* No UPI ID (or unbuildable intent): fall back to the shop's uploaded QR image. */
+                                        <>
+                                            <div className={styles.qrWrapper}>
+                                                <img
+                                                    src={order.retailer_upi_qr_code}
+                                                    alt="UPI QR Code"
+                                                    className={styles.qrImage}
+                                                />
+                                            </div>
+                                            <p className="text-sm text-gray-600 text-center">
+                                                Scan this shop QR and enter <strong>₹{upiAmount}</strong> manually.
                                             </p>
                                         </>
                                     ) : (
