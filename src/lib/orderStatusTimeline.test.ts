@@ -190,4 +190,105 @@ describe('buildOrderStatusTimeline — timestamps and cancelled', () => {
         assert.equal(cancelledAfterPacked.find((s) => s.key === 'out_for_delivery')?.reached, false);
         assert.ok(cancelledAfterPacked.every((s) => !s.current));
     });
+
+    it('keeps a generic cancellation on the delivered step, with nothing failed', () => {
+        const steps = buildOrderStatusTimeline({
+            status: 'cancelled',
+            delivery_mode: 'delivery',
+            cancelled_by: 'retailer',
+            cancellation_reason: 'Out of stock',
+        });
+        assert.deepEqual(
+            steps.map((s) => s.key),
+            ['placed', 'packed', 'out_for_delivery', 'delivered']
+        );
+        assert.ok(steps.every((s) => !s.failed));
+    });
+});
+
+describe('buildOrderStatusTimeline — failed delivery (OE-281)', () => {
+    const failedOrder = {
+        status: 'cancelled',
+        delivery_mode: 'delivery',
+        cancelled_by: 'retailer',
+        cancellation_reason: 'Delivery failed — customer not reachable',
+    };
+
+    it('swaps only the terminal step and keeps placed → packed → OFD intact', () => {
+        const steps = buildOrderStatusTimeline(failedOrder);
+        assert.deepEqual(
+            steps.map((s) => s.key),
+            ['placed', 'packed', 'out_for_delivery', 'delivery_failed']
+        );
+        assert.deepEqual(
+            steps.map((s) => s.label),
+            ['Placed', 'Packed', 'Out for delivery', 'Delivery failed']
+        );
+    });
+
+    it('marks the failed step as the terminal one, with no current step', () => {
+        const steps = buildOrderStatusTimeline(failedOrder);
+        assert.ok(steps.every((s) => s.reached));
+        assert.ok(steps.every((s) => !s.current));
+        assert.deepEqual(
+            steps.map((s) => s.failed),
+            [false, false, false, true]
+        );
+    });
+
+    it('also triggers on a failed courier record or an explicit failed status', () => {
+        for (const order of [
+            {
+                status: 'cancelled',
+                delivery_mode: 'delivery',
+                delivery_info: { delivery_status: 'failed' },
+            },
+            { status: 'delivery_failed', delivery_mode: 'delivery' },
+        ]) {
+            const steps = buildOrderStatusTimeline(order);
+            assert.equal(steps[steps.length - 1].key, 'delivery_failed', order.status);
+            assert.equal(steps[steps.length - 1].failed, true, order.status);
+        }
+    });
+
+    it('timestamps the failed step from cancelled_at, falling back to status_logs', () => {
+        const fromField = buildOrderStatusTimeline({
+            ...failedOrder,
+            cancelled_at: '2026-09-14T10:00:00Z',
+        });
+        assert.equal(
+            fromField.find((s) => s.key === 'delivery_failed')?.at,
+            '2026-09-14T10:00:00Z'
+        );
+
+        const fromLogs = buildOrderStatusTimeline({
+            ...failedOrder,
+            status_logs: [
+                { status: 'out_for_delivery', created_at: '2026-09-14T08:00:00Z' },
+                { status: 'cancelled', created_at: '2026-09-14T10:30:00Z' },
+            ],
+        });
+        assert.equal(
+            fromLogs.find((s) => s.key === 'out_for_delivery')?.at,
+            '2026-09-14T08:00:00Z'
+        );
+        assert.equal(
+            fromLogs.find((s) => s.key === 'delivery_failed')?.at,
+            '2026-09-14T10:30:00Z'
+        );
+    });
+
+    it('leaves the pickup path untouched', () => {
+        const steps = buildOrderStatusTimeline({
+            status: 'cancelled',
+            delivery_mode: 'pickup',
+            cancellation_reason: 'Delivery failed',
+            delivery_info: { delivery_status: 'failed' },
+        });
+        assert.deepEqual(
+            steps.map((s) => s.key),
+            ['placed', 'packed', 'delivered']
+        );
+        assert.ok(steps.every((s) => !s.failed));
+    });
 });

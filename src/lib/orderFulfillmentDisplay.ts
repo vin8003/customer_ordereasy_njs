@@ -1,6 +1,8 @@
 /** Customer-facing labels and copy for pickup / delivery fulfillment (OE-152, RCP #82). */
 
-import { OrderDeliveryInfo } from '@/lib/fulfillmentSlots';
+import type { OrderDeliveryInfo } from '@/lib/fulfillmentSlots';
+// Relative .ts specifier so the node test runner resolves this the same way Next does.
+import { DELIVERY_FAILED_LABEL, isDeliveryFailureStatus } from './deliveryFailure.ts';
 
 export interface OrderFulfillmentHighlightFields {
     delivery_mode?: string;
@@ -24,7 +26,7 @@ export function needsFulfillmentDetailEnrichment(order: {
     status: string;
 }): boolean {
     const status = order.status.toLowerCase();
-    if (TERMINAL_STATUSES.has(status)) return false;
+    if (TERMINAL_STATUSES.has(status) || isDeliveryFailureStatus(status)) return false;
     if (order.delivery_mode === 'pickup') return true;
     if (order.delivery_mode === 'delivery') {
         return status === 'packed' || status === 'out_for_delivery';
@@ -32,8 +34,17 @@ export function needsFulfillmentDetailEnrichment(order: {
     return false;
 }
 
-export function formatOrderStatusLabel(status: string, deliveryMode?: string): string {
+/**
+ * `deliveryFailed` marks a close-out the backend reports as `cancelled`; callers
+ * that have the failure fields resolve it with `isDeliveryFailure` (OE-281).
+ */
+export function formatOrderStatusLabel(
+    status: string,
+    deliveryMode?: string,
+    deliveryFailed = false
+): string {
     const s = status.toLowerCase();
+    if (deliveryFailed || isDeliveryFailureStatus(s)) return DELIVERY_FAILED_LABEL;
     switch (s) {
         case 'packed':
             return deliveryMode === 'pickup' ? 'Ready for pickup' : 'Packed — preparing handoff';
@@ -56,10 +67,21 @@ export function formatOrderStatusLabel(status: string, deliveryMode?: string): s
     }
 }
 
-export function getOrderStatusDisplay(status: string, deliveryMode?: string): OrderStatusDisplay {
+export function getOrderStatusDisplay(
+    status: string,
+    deliveryMode?: string,
+    deliveryFailed = false
+): OrderStatusDisplay {
     const s = status.toLowerCase();
-    const label = formatOrderStatusLabel(status, deliveryMode);
+    const label = formatOrderStatusLabel(status, deliveryMode, deliveryFailed);
 
+    if (deliveryFailed || isDeliveryFailureStatus(s)) {
+        return {
+            label,
+            badgeClass: 'text-rose-700 bg-rose-50 border-rose-200',
+            bannerClass: 'bg-rose-100 text-rose-700',
+        };
+    }
     if (s === 'packed') {
         return deliveryMode === 'pickup'
             ? {
@@ -132,6 +154,7 @@ export function formatDeliveryStatusLabel(deliveryStatus?: string | null): strin
         in_transit: 'On the way',
         out_for_delivery: 'Out for delivery',
         delivered: 'Delivered',
+        failed: DELIVERY_FAILED_LABEL,
     };
     return map[deliveryStatus.toLowerCase()] ?? deliveryStatus.replace(/_/g, ' ');
 }

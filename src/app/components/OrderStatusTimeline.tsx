@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { X } from 'lucide-react';
 import {
     buildOrderStatusTimeline,
     OrderStatusTimelineInput,
@@ -38,23 +39,27 @@ export default function OrderStatusTimeline(order: OrderStatusTimelineInput) {
                                     className={`h-0.5 flex-1 ${
                                         index === 0
                                             ? 'bg-transparent'
-                                            : prevReached && step.reached
-                                              ? 'bg-emerald-500'
-                                              : 'bg-gray-200'
+                                            : step.failed
+                                              ? 'bg-rose-300'
+                                              : prevReached && step.reached
+                                                ? 'bg-emerald-500'
+                                                : 'bg-gray-200'
                                     }`}
                                     aria-hidden
                                 />
                                 <span
                                     className={`relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
-                                        step.current
-                                            ? 'bg-indigo-600 text-white ring-4 ring-indigo-100'
-                                            : step.reached
-                                              ? 'bg-emerald-500 text-white'
-                                              : 'bg-gray-200 text-gray-400'
+                                        step.failed
+                                            ? 'bg-rose-600 text-white'
+                                            : step.current
+                                              ? 'bg-indigo-600 text-white ring-4 ring-indigo-100'
+                                              : step.reached
+                                                ? 'bg-emerald-500 text-white'
+                                                : 'bg-gray-200 text-gray-400'
                                     }`}
                                     aria-current={step.current ? 'step' : undefined}
                                 >
-                                    {index + 1}
+                                    {step.failed ? <X size={12} strokeWidth={3} aria-hidden /> : index + 1}
                                 </span>
                                 <div
                                     className={`h-0.5 flex-1 ${
@@ -69,11 +74,13 @@ export default function OrderStatusTimeline(order: OrderStatusTimelineInput) {
                             </div>
                             <span
                                 className={`mt-2 text-[11px] leading-tight text-center px-1 ${
-                                    step.current
-                                        ? 'font-bold text-indigo-800'
-                                        : step.reached
-                                          ? 'font-medium text-gray-800'
-                                          : 'text-gray-400'
+                                    step.failed
+                                        ? 'font-bold text-rose-700'
+                                        : step.current
+                                          ? 'font-bold text-indigo-800'
+                                          : step.reached
+                                            ? 'font-medium text-gray-800'
+                                            : 'text-gray-400'
                                 }`}
                             >
                                 {step.label}
