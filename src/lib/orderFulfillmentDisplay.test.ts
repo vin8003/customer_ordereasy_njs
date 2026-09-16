@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import {
+    formatDeliveryStatusLabel,
     formatOrderStatusLabel,
     getOrderStatusDisplay,
     needsFulfillmentDetailEnrichment,
@@ -50,6 +51,19 @@ describe('getOrderStatusDisplay — failed delivery (OE-281)', () => {
     it('leaves delivered and out_for_delivery styling untouched', () => {
         assert.match(getOrderStatusDisplay('delivered', 'delivery').badgeClass, /green/);
         assert.match(getOrderStatusDisplay('out_for_delivery', 'delivery').badgeClass, /sky/);
+    });
+});
+
+describe('formatDeliveryStatusLabel', () => {
+    it('gives the failed courier record real copy instead of the raw enum', () => {
+        assert.equal(formatDeliveryStatusLabel('failed'), 'Delivery failed');
+    });
+
+    it('leaves the other courier states alone', () => {
+        assert.equal(formatDeliveryStatusLabel('assigned'), 'Courier assigned');
+        assert.equal(formatDeliveryStatusLabel('in_transit'), 'On the way');
+        assert.equal(formatDeliveryStatusLabel('delivered'), 'Delivered');
+        assert.equal(formatDeliveryStatusLabel(null), null);
     });
 });
 

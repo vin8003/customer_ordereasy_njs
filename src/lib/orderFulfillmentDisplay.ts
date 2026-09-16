@@ -154,6 +154,7 @@ export function formatDeliveryStatusLabel(deliveryStatus?: string | null): strin
         in_transit: 'On the way',
         out_for_delivery: 'Out for delivery',
         delivered: 'Delivered',
+        failed: DELIVERY_FAILED_LABEL,
     };
     return map[deliveryStatus.toLowerCase()] ?? deliveryStatus.replace(/_/g, ' ');
 }
