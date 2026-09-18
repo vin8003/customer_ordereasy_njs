@@ -143,6 +143,18 @@
     line-height: 1.7;
 }
 
+.careInstructionsBlock {
+    margin-top: 1.25rem;
+}
+
+.careInstructions {
+    font-size: 0.95rem;
+    color: #475569;
+    /* Slate-600 */
+    line-height: 1.7;
+    white-space: pre-wrap;
+}
+
 .moqBox {
     margin-top: 1rem;
     padding: 0.75rem 1rem;

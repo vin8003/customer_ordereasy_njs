@@ -12,12 +12,17 @@ import { WishlistIcon } from '@/app/components/WishlistIcon';
 import AddToCartButton from '@/app/components/AddToCartButton';
 import { ProductCard } from '@/app/components/ProductCard';
 import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
+import {
+    formatVisibleCareInstructions,
+    type OptionalCareInstructions,
+} from '@/lib/productCareInstructions';
 import styles from './ProductDetail.module.css';
 
 interface Product {
     id: number;
     name: string;
     description: string;
+    care_instructions?: OptionalCareInstructions;
     price: number; // Selling Price
     mrp: number;   // Original Price / MRP
     stock_quantity: number;
@@ -142,8 +147,7 @@ function ProductDetail() {
         ? product.savings
         : (hasDiscount ? (product.mrp - product.price) : 0);
 
-
-
+    const visibleCareInstructions = formatVisibleCareInstructions(product.care_instructions);
 
     return (
         <div className={styles.container}>
@@ -219,6 +223,13 @@ function ProductDetail() {
                 <p className={styles.description}>
                     {product.description || "No description available for this product."}
                 </p>
+
+                {visibleCareInstructions ? (
+                    <div className={styles.careInstructionsBlock}>
+                        <h2 className={styles.sectionTitle}>Care Instructions</h2>
+                        <p className={styles.careInstructions}>{visibleCareInstructions}</p>
+                    </div>
+                ) : null}
 
                 {product.product_group && (
                     <div className={styles.groupTag}>
