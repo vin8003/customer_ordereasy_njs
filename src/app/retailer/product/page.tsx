@@ -17,6 +17,7 @@ import {
     type OptionalBarcode,
 } from '@/lib/productDetailBarcode';
 import { formatVisibleHsnCode, type OptionalHsnCode } from '@/lib/productHsnCode';
+import { getVisibleCategoryName } from '@/lib/productCategoryName';
 import styles from './ProductDetail.module.css';
 
 interface Product {
@@ -30,6 +31,7 @@ interface Product {
     stock_quantity: number;
     image?: string;
     image_url?: string;
+    category_name?: string | null;
     minimum_order_quantity: number;
     maximum_order_quantity: number | null;
     unit?: string;
@@ -151,6 +153,7 @@ function ProductDetail() {
 
     const visibleBarcode = formatVisibleBarcode(product.barcode);
     const visibleHsnCode = formatVisibleHsnCode(product.hsn_code);
+    const visibleCategoryName = getVisibleCategoryName(product.category_name);
 
 
 
@@ -191,6 +194,8 @@ function ProductDetail() {
                 <h1 className={styles.title}>{product.name}</h1>
                 {visibleBarcode ? (
                     <p className={styles.barcode}>{visibleBarcode}</p>
+                {visibleCategoryName ? (
+                    <p className={styles.categoryName}>{visibleCategoryName}</p>
                 ) : null}
 
                 {retailerStatus && !retailerStatus.offersDelivery && !retailerStatus.offersPickup && (
