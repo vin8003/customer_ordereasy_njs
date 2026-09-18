@@ -12,12 +12,14 @@ import { WishlistIcon } from '@/app/components/WishlistIcon';
 import AddToCartButton from '@/app/components/AddToCartButton';
 import { ProductCard } from '@/app/components/ProductCard';
 import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
+import { formatVisibleMinOrderQty, type OptionalMinOrderQty } from '@/lib/productMinOrderQty';
 import styles from './ProductDetail.module.css';
 
 interface Product {
     id: number;
     name: string;
     description: string;
+    min_order_qty?: OptionalMinOrderQty;
     price: number; // Selling Price
     mrp: number;   // Original Price / MRP
     stock_quantity: number;
@@ -142,8 +144,7 @@ function ProductDetail() {
         ? product.savings
         : (hasDiscount ? (product.mrp - product.price) : 0);
 
-
-
+    const visibleMinOrderQty = formatVisibleMinOrderQty(product.min_order_qty);
 
     return (
         <div className={styles.container}>
@@ -219,6 +220,10 @@ function ProductDetail() {
                 <p className={styles.description}>
                     {product.description || "No description available for this product."}
                 </p>
+
+                {visibleMinOrderQty ? (
+                    <p className={styles.minOrderQty}>Min. order qty: {visibleMinOrderQty}</p>
+                ) : null}
 
                 {product.product_group && (
                     <div className={styles.groupTag}>
