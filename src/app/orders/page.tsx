@@ -9,6 +9,7 @@ import { EmptyState } from '@/app/components/EmptyState';
 import OrderFulfillmentHighlight from '@/app/components/OrderFulfillmentHighlight';
 import { formatFulfillmentWindow, OrderDeliveryInfo } from '@/lib/fulfillmentSlots';
 import { getOrderStatusDisplay, needsFulfillmentDetailEnrichment } from '@/lib/orderFulfillmentDisplay';
+import { visibleOrderListEtaMinutes } from '@/lib/orderListEtaMinutes';
 import styles from './Orders.module.css';
 
 interface Order {
@@ -19,6 +20,7 @@ interface Order {
     created_at: string;
     delivery_mode?: string;
     retailer_name?: string;
+    eta_minutes?: string | number | null;
     fulfillment_slot_start?: string | null;
     fulfillment_slot_end?: string | null;
     pickup_code?: string | null;
@@ -118,7 +120,9 @@ export default function OrdersPage() {
                     />
                 )}
 
-                {orders.map(order => (
+                {orders.map(order => {
+                    const etaMinutes = visibleOrderListEtaMinutes(order);
+                    return (
                     <div
                         key={order.id}
                         className={`${styles.card} cursor-pointer active:scale-[0.98] transition-all`}
@@ -131,6 +135,12 @@ export default function OrdersPage() {
                                     <Clock size={12} />
                                     {new Date(order.created_at).toLocaleDateString()}
                                 </div>
+                                {etaMinutes ? (
+                                    <p className={styles.etaMinutes}>
+                                        <Clock size={12} />
+                                        {etaMinutes}
+                                    </p>
+                                ) : null}
                                 {order.expected_processing_start && order.status.toLowerCase() === 'pending' && (
                                     <div className="text-xs text-orange-600 flex items-center gap-1 mt-1 font-medium bg-orange-50 px-2 py-0.5 rounded-md w-fit border border-orange-100">
                                         <Clock size={12} />
@@ -198,7 +208,8 @@ export default function OrdersPage() {
                             </span>
                         </div>
                     </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );
