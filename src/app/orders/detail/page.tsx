@@ -16,6 +16,7 @@ import { getOrderStatusDisplay } from '@/lib/orderFulfillmentDisplay';
 import { isDeliveryFailure } from '@/lib/deliveryFailure';
 import { OrderStatusLogEntry } from '@/lib/orderStatusTimeline';
 import { getVisibleOrderFeeLines, type OptionalMoneyAmount } from '@/lib/orderFeeLines';
+import { getVisibleSubscriptionId } from '@/lib/orderSubscriptionId';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -44,6 +45,7 @@ interface OrderDetail {
     refund_amount?: string;
     net_amount?: string;
     delivery_mode: string;
+    subscription_id?: string | number | null;
     retailer?: number;
     fulfillment_slot_start?: string | null;
     fulfillment_slot_end?: string | null;
@@ -286,6 +288,7 @@ function OrderDetails() {
 
     const deliveryFailed = isDeliveryFailure(order);
     const statusDisplay = getOrderStatusDisplay(order.status, order.delivery_mode, deliveryFailed);
+    const visibleSubscriptionId = getVisibleSubscriptionId(order);
 
     return (
         <div className={styles.container}>
@@ -641,6 +644,12 @@ function OrderDetails() {
                         <div className="text-sm">
                             <span className="text-gray-500">Method:</span> <span className="font-medium capitalize">{order.delivery_mode}</span>
                         </div>
+                        {visibleSubscriptionId && (
+                            <div className="text-sm">
+                                <span className="text-gray-500">Subscription ID:</span>{' '}
+                                <span className="font-medium">{visibleSubscriptionId}</span>
+                            </div>
+                        )}
                         <div className="text-sm">
                             <span className="text-gray-500">Payment:</span> <span className="font-medium uppercase">{order.payment_mode.replace(/_/g, ' ')}</span>
                         </div>
