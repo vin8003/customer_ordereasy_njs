@@ -12,11 +12,16 @@ import { WishlistIcon } from '@/app/components/WishlistIcon';
 import AddToCartButton from '@/app/components/AddToCartButton';
 import { ProductCard } from '@/app/components/ProductCard';
 import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
+import {
+    formatVisibleAgeRestriction,
+    type OptionalAgeRestriction,
+} from '@/lib/productDetailAgeRestriction';
 import styles from './ProductDetail.module.css';
 
 interface Product {
     id: number;
     name: string;
+    age_restriction?: OptionalAgeRestriction;
     description: string;
     price: number; // Selling Price
     mrp: number;   // Original Price / MRP
@@ -142,8 +147,7 @@ function ProductDetail() {
         ? product.savings
         : (hasDiscount ? (product.mrp - product.price) : 0);
 
-
-
+    const visibleAgeRestriction = formatVisibleAgeRestriction(product.age_restriction);
 
     return (
         <div className={styles.container}>
@@ -179,6 +183,9 @@ function ProductDetail() {
 
             <div className={styles.details}>
                 <h1 className={styles.title}>{product.name}</h1>
+                {visibleAgeRestriction ? (
+                    <span className={styles.ageRestrictionBadge}>{visibleAgeRestriction}</span>
+                ) : null}
 
                 {retailerStatus && !retailerStatus.offersDelivery && !retailerStatus.offersPickup && (
                     <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-xs font-bold animate-pulse flex items-center gap-2">
