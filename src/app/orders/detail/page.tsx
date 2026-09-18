@@ -19,6 +19,7 @@ import { getVisibleOrderFeeLines, type OptionalMoneyAmount } from '@/lib/orderFe
 import { getVisibleOrderNotes } from '@/lib/orderNotes';
 import { getVisibleLoyaltyPoints, type OptionalLoyaltyPoints } from '@/lib/orderLoyaltyPoints';
 import { getVisiblePointsEarned, type OptionalPointsEarned } from '@/lib/orderPointsEarned';
+import { getVisiblePickupCode } from '@/lib/orderPickupCode';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -295,6 +296,7 @@ function OrderDetails() {
     const visibleNotes = getVisibleOrderNotes(order);
     const visibleLoyaltyPoints = getVisibleLoyaltyPoints(order);
     const visiblePointsEarned = getVisiblePointsEarned(order);
+    const visiblePickupCode = getVisiblePickupCode(order);
 
     return (
         <div className={styles.container}>
@@ -660,6 +662,11 @@ function OrderDetails() {
                         <div className="text-sm">
                             <span className="text-gray-500">Method:</span> <span className="font-medium capitalize">{order.delivery_mode}</span>
                         </div>
+                        {visiblePickupCode && (
+                            <div className="text-sm">
+                                <span className="text-gray-500">Pickup code:</span> <span className="font-medium">{visiblePickupCode}</span>
+                            </div>
+                        )}
                         <div className="text-sm">
                             <span className="text-gray-500">Payment:</span> <span className="font-medium uppercase">{order.payment_mode.replace(/_/g, ' ')}</span>
                         </div>
