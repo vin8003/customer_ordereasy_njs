@@ -12,12 +12,17 @@ import { WishlistIcon } from '@/app/components/WishlistIcon';
 import AddToCartButton from '@/app/components/AddToCartButton';
 import { ProductCard } from '@/app/components/ProductCard';
 import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
+import {
+    formatVisibleBackorderQty,
+    type OptionalBackorderQty,
+} from '@/lib/productDetailBackorderQty';
 import styles from './ProductDetail.module.css';
 
 interface Product {
     id: number;
     name: string;
     description: string;
+    backorder_qty?: OptionalBackorderQty;
     price: number; // Selling Price
     mrp: number;   // Original Price / MRP
     stock_quantity: number;
@@ -142,8 +147,7 @@ function ProductDetail() {
         ? product.savings
         : (hasDiscount ? (product.mrp - product.price) : 0);
 
-
-
+    const visibleBackorderQty = formatVisibleBackorderQty(product);
 
     return (
         <div className={styles.container}>
@@ -219,6 +223,9 @@ function ProductDetail() {
                 <p className={styles.description}>
                     {product.description || "No description available for this product."}
                 </p>
+                {visibleBackorderQty ? (
+                    <p className={styles.backorderQty}>Backorder {visibleBackorderQty}</p>
+                ) : null}
 
                 {product.product_group && (
                     <div className={styles.groupTag}>
