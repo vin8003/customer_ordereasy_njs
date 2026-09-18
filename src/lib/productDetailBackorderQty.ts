@@ -3,11 +3,12 @@
 export type OptionalBackorderQty = string | number | null | undefined;
 
 export interface ProductDetailOptionalBackorderQty {
-    backorder_qty?: OptionalBackorderQty;
+    /** Unknown so nested junk is accepted and then rejected, never shown. */
+    backorder_qty?: unknown;
     /** Allowed on payloads / tests; never used to invent backorder_qty. */
-    stock_quantity?: OptionalBackorderQty;
-    quantity?: OptionalBackorderQty;
-    minimum_order_quantity?: OptionalBackorderQty;
+    stock_quantity?: unknown;
+    quantity?: unknown;
+    minimum_order_quantity?: unknown;
 }
 
 function asTrimmedString(value: unknown): string | null {

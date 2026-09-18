@@ -93,7 +93,7 @@ describe('formatVisibleBackorderQty', () => {
         assert.equal(
             formatVisibleBackorderQty({
                 backorder_qty: { qty: 5 },
-            } as { backorder_qty: unknown }),
+            }),
             null
         );
     });
