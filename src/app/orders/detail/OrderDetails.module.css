@@ -161,6 +161,20 @@
     color: #16a34a;
 }
 
+.invoiceLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.invoiceLink:hover {
+    text-decoration: underline;
+}
+
 .approvalSection {
     background: #fffbeb;
     border: 1px solid #fde68a;
