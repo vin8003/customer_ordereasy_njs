@@ -12,6 +12,7 @@ import { WishlistIcon } from '@/app/components/WishlistIcon';
 import AddToCartButton from '@/app/components/AddToCartButton';
 import { ProductCard } from '@/app/components/ProductCard';
 import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
+import { getVisibleCategoryName } from '@/lib/productCategoryName';
 import styles from './ProductDetail.module.css';
 
 interface Product {
@@ -23,6 +24,7 @@ interface Product {
     stock_quantity: number;
     image?: string;
     image_url?: string;
+    category_name?: string | null;
     minimum_order_quantity: number;
     maximum_order_quantity: number | null;
     unit?: string;
@@ -142,6 +144,8 @@ function ProductDetail() {
         ? product.savings
         : (hasDiscount ? (product.mrp - product.price) : 0);
 
+    const visibleCategoryName = getVisibleCategoryName(product.category_name);
+
 
 
 
@@ -179,6 +183,9 @@ function ProductDetail() {
 
             <div className={styles.details}>
                 <h1 className={styles.title}>{product.name}</h1>
+                {visibleCategoryName ? (
+                    <p className={styles.categoryName}>{visibleCategoryName}</p>
+                ) : null}
 
                 {retailerStatus && !retailerStatus.offersDelivery && !retailerStatus.offersPickup && (
                     <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-xs font-bold animate-pulse flex items-center gap-2">

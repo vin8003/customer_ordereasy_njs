@@ -9,6 +9,8 @@ import { apiService, getErrorMessage } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import styles from './Checkout.module.css';
 import PhoneVerification from '@/app/components/auth/PhoneVerification';
+import FulfillmentSlotPicker from '@/app/components/FulfillmentSlotPicker';
+import { FulfillmentSlot, formatSlotWindow } from '@/lib/fulfillmentSlots';
 
 interface Address {
     id: number;
@@ -59,6 +61,11 @@ export default function CheckoutPage() {
     const [userPhone, setUserPhone] = useState('');
     const [showVerification, setShowVerification] = useState(false);
 
+    // Fulfillment slot (OE-240)
+    const [selectedSlot, setSelectedSlot] = useState<FulfillmentSlot | null>(null);
+    const [slotRefreshKey, setSlotRefreshKey] = useState(0);
+    const [retailerId, setRetailerId] = useState<string | null>(null);
+
     // Ideally pass retailer_id from cart or context
     // For now assuming we are checking out the current active cart
     // We need to fetch cart to display summary or at least total
@@ -88,6 +95,10 @@ export default function CheckoutPage() {
         calculateDeliveryFee();
     }, [deliveryMode, retailerSettings, cartTotal]);
 
+    useEffect(() => {
+        setSelectedSlot(null);
+    }, [deliveryMode]);
+
     const loadData = async () => {
         await Promise.all([
             loadAddresses(),
@@ -101,6 +112,7 @@ export default function CheckoutPage() {
     const loadRetailerSettings = async () => {
         const storedId = localStorage.getItem('current_retailer_id');
         if (storedId) {
+            setRetailerId(storedId);
             try {
                 const data = await apiService.getRetailerDetails(storedId);
                 setRetailerSettings({
@@ -264,6 +276,11 @@ export default function CheckoutPage() {
             return;
         }
 
+        if (!selectedSlot) {
+            toast.error("Please select a pickup/delivery time slot.");
+            return;
+        }
+
         const storedId = localStorage.getItem('current_retailer_id');
         if (!storedId) {
             toast.error("Retailer session lost. Please go back to cart.");
@@ -278,7 +295,8 @@ export default function CheckoutPage() {
                 delivery_mode: deliveryMode,
                 payment_mode: paymentMethod === 'cod' ? 'cash' : paymentMethod,
                 special_instructions: specialInstructions,
-                use_reward_points: useRewardPoints
+                use_reward_points: useRewardPoints,
+                fulfillment_slot_start: selectedSlot.slot_start,
             });
 
             // Navigate to Order Details
@@ -286,8 +304,12 @@ export default function CheckoutPage() {
             router.push(`/orders/detail?id=${response.id}${isUPI ? '&payment=true' : ''}`);
         } catch (error) {
             console.error(error);
-            // global error interceptor handles this
-            console.error(error);
+            const slotError = (error as { response?: { data?: { fulfillment_slot_start?: unknown } } })
+                ?.response?.data?.fulfillment_slot_start;
+            if (slotError) {
+                setSelectedSlot(null);
+                setSlotRefreshKey((k) => k + 1);
+            }
         } finally {
             setIsLoading(false);
         }
@@ -356,6 +378,28 @@ export default function CheckoutPage() {
                         </div>
                     )}
                 </section>
+
+                {/* Fulfillment slot picker */}
+                {retailerId && retailerSettings && (retailerSettings.offersDelivery || retailerSettings.offersPickup) && (
+                    <section className={styles.section}>
+                        <h2 className={styles.sectionTitle}>
+                            {deliveryMode === 'pickup' ? 'Pickup Time' : 'Delivery Window'}
+                        </h2>
+                        <FulfillmentSlotPicker
+                            retailerId={retailerId}
+                            deliveryMode={deliveryMode}
+                            selectedSlotStart={selectedSlot?.slot_start ?? null}
+                            onSelect={setSelectedSlot}
+                            days={7}
+                            refreshKey={slotRefreshKey}
+                        />
+                        {selectedSlot && (
+                            <p className="text-sm text-primary font-medium mt-3">
+                                Selected: {formatSlotWindow(selectedSlot)}
+                            </p>
+                        )}
+                    </section>
+                )}
 
                 {/* Address Selection */}
                 {deliveryMode === 'delivery' && (
