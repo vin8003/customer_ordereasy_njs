@@ -12,12 +12,14 @@ import { WishlistIcon } from '@/app/components/WishlistIcon';
 import AddToCartButton from '@/app/components/AddToCartButton';
 import { ProductCard } from '@/app/components/ProductCard';
 import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
+import { formatVisibleIngredients, type OptionalIngredients } from '@/lib/productIngredients';
 import styles from './ProductDetail.module.css';
 
 interface Product {
     id: number;
     name: string;
     description: string;
+    ingredients?: OptionalIngredients;
     price: number; // Selling Price
     mrp: number;   // Original Price / MRP
     stock_quantity: number;
@@ -142,8 +144,7 @@ function ProductDetail() {
         ? product.savings
         : (hasDiscount ? (product.mrp - product.price) : 0);
 
-
-
+    const visibleIngredients = formatVisibleIngredients(product.ingredients);
 
     return (
         <div className={styles.container}>
@@ -219,6 +220,13 @@ function ProductDetail() {
                 <p className={styles.description}>
                     {product.description || "No description available for this product."}
                 </p>
+
+                {visibleIngredients ? (
+                    <section className={styles.ingredientsSection}>
+                        <h2 className={styles.sectionTitle}>Ingredients</h2>
+                        <p className={styles.ingredients}>{visibleIngredients}</p>
+                    </section>
+                ) : null}
 
                 {product.product_group && (
                     <div className={styles.groupTag}>

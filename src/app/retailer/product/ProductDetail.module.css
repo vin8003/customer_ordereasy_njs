@@ -143,6 +143,18 @@
     line-height: 1.7;
 }
 
+.ingredientsSection {
+    margin-top: 1.5rem;
+}
+
+.ingredients {
+    font-size: 0.95rem;
+    color: #475569;
+    /* Slate-600 */
+    line-height: 1.7;
+    margin: 0;
+}
+
 .moqBox {
     margin-top: 1rem;
     padding: 0.75rem 1rem;
