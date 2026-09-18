@@ -16,6 +16,7 @@ import { getOrderStatusDisplay } from '@/lib/orderFulfillmentDisplay';
 import { isDeliveryFailure } from '@/lib/deliveryFailure';
 import { OrderStatusLogEntry } from '@/lib/orderStatusTimeline';
 import { getVisibleOrderFeeLines, type OptionalMoneyAmount } from '@/lib/orderFeeLines';
+import { getVisibleGiftMessage } from '@/lib/orderGiftMessage';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -56,6 +57,7 @@ interface OrderDetail {
     delivery_info?: OrderDeliveryInfo | null;
     payment_mode: string;
     special_instructions: string;
+    gift_message?: string | null;
     delivery_address_text: string;
     items: OrderItem[];
     created_at: string;
@@ -286,6 +288,7 @@ function OrderDetails() {
 
     const deliveryFailed = isDeliveryFailure(order);
     const statusDisplay = getOrderStatusDisplay(order.status, order.delivery_mode, deliveryFailed);
+    const giftMessage = getVisibleGiftMessage(order);
 
     return (
         <div className={styles.container}>
@@ -647,6 +650,12 @@ function OrderDetails() {
                         {order.delivery_mode === 'delivery' && (
                             <div className="text-sm">
                                 <span className="text-gray-500">Address:</span> <p className="mt-1">{order.delivery_address_text}</p>
+                            </div>
+                        )}
+                        {giftMessage && (
+                            <div className={styles.mutedGiftRow}>
+                                <span>Gift Message</span>
+                                <span className={styles.mutedGiftText}>{giftMessage}</span>
                             </div>
                         )}
                         {fulfillmentWindow && (
