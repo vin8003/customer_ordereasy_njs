@@ -17,6 +17,7 @@ import { ProductCard } from '@/app/components/ProductCard';
 import { Button } from '@/app/components/ui/Button';
 import LazyProductLane from '@/app/components/LazyProductLane';
 import InfiniteProductGrid from '@/app/components/InfiniteProductGrid';
+import { visibleRetailerStoreHours } from '@/lib/retailerStoreHours';
 import styles from './RetailerHome.module.css';
 
 interface Category {
@@ -303,6 +304,8 @@ function RetailerHome() {
     }
     if (!retailer) return <div className="p-8 text-center">Retailer not found</div>;
 
+    const storeHours = visibleRetailerStoreHours(retailer);
+
     return (
         <div className={styles.container}>
             {/* Header */}
@@ -362,6 +365,9 @@ function RetailerHome() {
                     <div className={styles.storeAddress}>
                         {retailer?.address_line1 || `${retailer?.city || ''}, ${retailer?.state || ''}`}
                     </div>
+                    {storeHours ? (
+                        <div className={styles.storeHours}>{storeHours}</div>
+                    ) : null}
 
                     {retailer && !retailer.is_currently_open && (
                         <div className="mt-1.5">
