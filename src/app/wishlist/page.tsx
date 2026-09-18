@@ -10,6 +10,7 @@ import { EmptyState } from '@/app/components/EmptyState';
 import { ProductImage } from '@/app/components/ProductImage';
 import AddToCartButton from '@/app/components/AddToCartButton';
 import PageHeader from '@/app/components/PageHeader';
+import { visibleWishlistBrandName } from '@/lib/wishlistBrandName';
 import styles from './Wishlist.module.css';
 
 interface WishlistItem {
@@ -18,6 +19,7 @@ interface WishlistItem {
     product_name: string;
     product_price: number;
     product_image: string;
+    brand_name?: string | null;
     retailer_name: string;
     retailer_id: number;
     product_stock?: number;
@@ -102,7 +104,9 @@ export default function WishlistPage() {
             <PageHeader title="My Wishlist" subtitle={`${wishlistItems.length} saved ${wishlistItems.length === 1 ? 'item' : 'items'}`} onBack={handleBack} />
 
             <div className={styles.list}>
-                {wishlistItems.map(item => (
+                {wishlistItems.map(item => {
+                    const brandName = visibleWishlistBrandName(item);
+                    return (
                     <div key={item.id} className={styles.itemCard}>
                         <div className={styles.imagePlaceholder}>
                             <ProductImage
@@ -113,6 +117,7 @@ export default function WishlistPage() {
                         </div>
                         <div className={styles.info}>
                             <h3>{item.product_name}</h3>
+                            {brandName ? <p className={styles.brandName}>{brandName}</p> : null}
                             <p className={styles.retailer}><Store size={11} /> {item.retailer_name}</p>
                             <p className={styles.price}>₹{item.product_price}</p>
                         </div>
@@ -131,7 +136,8 @@ export default function WishlistPage() {
                             </button>
                         </div>
                     </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );
