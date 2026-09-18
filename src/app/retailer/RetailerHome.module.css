@@ -148,6 +148,20 @@
     margin-top: 2px;
 }
 
+.storePhone {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    margin-top: 4px;
+    width: fit-content;
+    text-decoration: none;
+}
+
+.storePhone:hover {
+    color: #2563eb;
+    text-decoration: underline;
+}
+
 .rotateIcon {
     transform: rotate(90deg);
     color: #64748b;

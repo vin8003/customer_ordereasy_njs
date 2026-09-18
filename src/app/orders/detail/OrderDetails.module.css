@@ -139,6 +139,13 @@
     font-size: 0.9rem;
 }
 
+.mutedFeeRow {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
 .totalRow {
     display: flex;
     justify-content: space-between;
