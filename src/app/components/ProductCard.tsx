@@ -5,6 +5,7 @@ import { ProductImage } from '@/app/components/ProductImage';
 import { WishlistIcon } from '@/app/components/WishlistIcon';
 import styles from './ProductCard.module.css';
 import AddToCartButton from '@/app/components/AddToCartButton';
+import { visibleProductPromoLabel } from '@/lib/productPromoLabel';
 
 interface Product {
     id: number;
@@ -13,6 +14,7 @@ interface Product {
     mrp: number;
     image: string;
     unit?: string;
+    promo_label?: string | null;
     active_offer_text?: string;
     track_inventory?: boolean;
     minimum_order_quantity?: number;
@@ -38,6 +40,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
     const price = Number(product.price);
     const mrp = Number(product.mrp);
+    const promoLabel = visibleProductPromoLabel(product);
     const discount = mrp > price
         ? Math.round(((mrp - price) / mrp) * 100)
         : 0;
@@ -47,6 +50,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <div className={styles.imageWrapper}>
                 <div className={styles.badges}>
                     <div className={styles.badgeGroup}>
+                        {promoLabel ? (
+                            <div className={styles.promoLabel}>{promoLabel}</div>
+                        ) : null}
                         {product.active_offer_text && (
                             <div className={styles.offerBadge}>
                                 {product.active_offer_text}
