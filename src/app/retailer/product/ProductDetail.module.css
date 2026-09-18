@@ -72,6 +72,23 @@
     margin-bottom: 0.5rem;
 }
 
+.ageRestrictionBadge {
+    display: inline-block;
+    background: #fff7ed;
+    /* Orange-50 */
+    color: #9a3412;
+    /* Orange-800 */
+    border: 1px solid #fed7aa;
+    /* Orange-200 */
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 6px;
+    line-height: 1.3;
+    margin: -0.15rem 0 0.75rem;
+    letter-spacing: 0.02em;
+}
+
 .groupTag {
     display: inline-block;
     background: #f1f5f9;
