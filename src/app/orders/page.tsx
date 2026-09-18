@@ -9,6 +9,7 @@ import { EmptyState } from '@/app/components/EmptyState';
 import OrderFulfillmentHighlight from '@/app/components/OrderFulfillmentHighlight';
 import { formatFulfillmentWindow, OrderDeliveryInfo } from '@/lib/fulfillmentSlots';
 import { getOrderStatusDisplay, needsFulfillmentDetailEnrichment } from '@/lib/orderFulfillmentDisplay';
+import { getVisibleEstimatedDeliveryDate } from '@/lib/orderListEstimatedDelivery';
 import styles from './Orders.module.css';
 
 interface Order {
@@ -17,6 +18,7 @@ interface Order {
     total_amount: string;
     status: string;
     created_at: string;
+    estimated_delivery?: string | null;
     delivery_mode?: string;
     retailer_name?: string;
     fulfillment_slot_start?: string | null;
@@ -118,7 +120,9 @@ export default function OrdersPage() {
                     />
                 )}
 
-                {orders.map(order => (
+                {orders.map(order => {
+                    const estimatedDelivery = getVisibleEstimatedDeliveryDate(order);
+                    return (
                     <div
                         key={order.id}
                         className={`${styles.card} cursor-pointer active:scale-[0.98] transition-all`}
@@ -142,6 +146,12 @@ export default function OrdersPage() {
                                         <Clock size={12} />
                                         {order.delivery_mode === 'pickup' ? 'Pickup' : 'Delivery'}:{' '}
                                         {formatFulfillmentWindow(order.fulfillment_slot_start, order.fulfillment_slot_end)}
+                                    </div>
+                                )}
+                                {estimatedDelivery && (
+                                    <div className="text-xs text-teal-700 flex items-center gap-1 mt-1 font-medium bg-teal-50 px-2 py-0.5 rounded-md w-fit border border-teal-100">
+                                        <Clock size={12} />
+                                        Est. delivery: {estimatedDelivery}
                                     </div>
                                 )}
                             </div>
@@ -198,7 +208,8 @@ export default function OrdersPage() {
                             </span>
                         </div>
                     </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );
