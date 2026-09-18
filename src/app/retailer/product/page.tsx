@@ -18,12 +18,16 @@ import {
 } from '@/lib/productDetailBarcode';
 import { formatVisibleHsnCode, type OptionalHsnCode } from '@/lib/productHsnCode';
 import { getVisibleCategoryName } from '@/lib/productCategoryName';
+    getVisibleProductTags,
+    type OptionalProductTags,
+} from '@/lib/productDetailTags';
 import styles from './ProductDetail.module.css';
 
 interface Product {
     id: number;
     name: string;
     barcode?: OptionalBarcode;
+    tags?: OptionalProductTags;
     description: string;
     hsn_code?: OptionalHsnCode;
     price: number; // Selling Price
@@ -157,6 +161,7 @@ function ProductDetail() {
 
 
 
+    const visibleTags = getVisibleProductTags(product.tags);
 
     return (
         <div className={styles.container}>
@@ -196,6 +201,14 @@ function ProductDetail() {
                     <p className={styles.barcode}>{visibleBarcode}</p>
                 {visibleCategoryName ? (
                     <p className={styles.categoryName}>{visibleCategoryName}</p>
+                {visibleTags.length > 0 ? (
+                    <ul className={styles.tagChips} aria-label="Product tags">
+                        {visibleTags.map((tag, index) => (
+                            <li key={`${tag}-${index}`} className={styles.tagChip}>
+                                {tag}
+                            </li>
+                        ))}
+                    </ul>
                 ) : null}
 
                 {retailerStatus && !retailerStatus.offersDelivery && !retailerStatus.offersPickup && (
