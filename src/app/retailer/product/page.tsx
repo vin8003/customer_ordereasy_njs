@@ -12,11 +12,16 @@ import { WishlistIcon } from '@/app/components/WishlistIcon';
 import AddToCartButton from '@/app/components/AddToCartButton';
 import { ProductCard } from '@/app/components/ProductCard';
 import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
+import {
+    formatVisiblePreorderShipDate,
+    type OptionalPreorderShipDate,
+} from '@/lib/productDetailPreorderShipDate';
 import styles from './ProductDetail.module.css';
 
 interface Product {
     id: number;
     name: string;
+    preorder_ship_date?: OptionalPreorderShipDate;
     description: string;
     price: number; // Selling Price
     mrp: number;   // Original Price / MRP
@@ -142,8 +147,7 @@ function ProductDetail() {
         ? product.savings
         : (hasDiscount ? (product.mrp - product.price) : 0);
 
-
-
+    const visiblePreorderShipDate = formatVisiblePreorderShipDate(product.preorder_ship_date);
 
     return (
         <div className={styles.container}>
@@ -200,6 +204,10 @@ function ProductDetail() {
                         </>
                     )}
                 </div>
+
+                {visiblePreorderShipDate ? (
+                    <p className={styles.preorderShipDate}>Ships on {visiblePreorderShipDate}</p>
+                ) : null}
 
                 {/* Offers Section - ONLY render if real offers exist */}
                 {product.offers && product.offers.length > 0 && (
