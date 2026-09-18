@@ -127,7 +127,7 @@ function AllProducts() {
                 mrp: p.original_price || p.price,
                 image: p.image || p.image_url || '',
                 stock_quantity: p.quantity || 0,
-                unit: p.unit || 'Unit',
+                unit: p.unit || undefined,
                 minimum_order_quantity: p.minimum_order_quantity || 1,
                 maximum_order_quantity: p.maximum_order_quantity
             }));
