@@ -12,11 +12,16 @@ import { WishlistIcon } from '@/app/components/WishlistIcon';
 import AddToCartButton from '@/app/components/AddToCartButton';
 import { ProductCard } from '@/app/components/ProductCard';
 import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
+import {
+    getVisibleProductTags,
+    type OptionalProductTags,
+} from '@/lib/productDetailTags';
 import styles from './ProductDetail.module.css';
 
 interface Product {
     id: number;
     name: string;
+    tags?: OptionalProductTags;
     description: string;
     price: number; // Selling Price
     mrp: number;   // Original Price / MRP
@@ -142,8 +147,7 @@ function ProductDetail() {
         ? product.savings
         : (hasDiscount ? (product.mrp - product.price) : 0);
 
-
-
+    const visibleTags = getVisibleProductTags(product.tags);
 
     return (
         <div className={styles.container}>
@@ -179,6 +183,15 @@ function ProductDetail() {
 
             <div className={styles.details}>
                 <h1 className={styles.title}>{product.name}</h1>
+                {visibleTags.length > 0 ? (
+                    <ul className={styles.tagChips} aria-label="Product tags">
+                        {visibleTags.map((tag, index) => (
+                            <li key={`${tag}-${index}`} className={styles.tagChip}>
+                                {tag}
+                            </li>
+                        ))}
+                    </ul>
+                ) : null}
 
                 {retailerStatus && !retailerStatus.offersDelivery && !retailerStatus.offersPickup && (
                     <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-xs font-bold animate-pulse flex items-center gap-2">
