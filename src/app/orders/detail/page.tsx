@@ -16,6 +16,7 @@ import { getOrderStatusDisplay } from '@/lib/orderFulfillmentDisplay';
 import { isDeliveryFailure } from '@/lib/deliveryFailure';
 import { OrderStatusLogEntry } from '@/lib/orderStatusTimeline';
 import { getVisibleOrderFeeLines, type OptionalMoneyAmount } from '@/lib/orderFeeLines';
+import { getVisiblePickupCode } from '@/lib/orderPickupCode';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -286,6 +287,7 @@ function OrderDetails() {
 
     const deliveryFailed = isDeliveryFailure(order);
     const statusDisplay = getOrderStatusDisplay(order.status, order.delivery_mode, deliveryFailed);
+    const visiblePickupCode = getVisiblePickupCode(order);
 
     return (
         <div className={styles.container}>
@@ -641,6 +643,11 @@ function OrderDetails() {
                         <div className="text-sm">
                             <span className="text-gray-500">Method:</span> <span className="font-medium capitalize">{order.delivery_mode}</span>
                         </div>
+                        {visiblePickupCode && (
+                            <div className="text-sm">
+                                <span className="text-gray-500">Pickup code:</span> <span className="font-medium">{visiblePickupCode}</span>
+                            </div>
+                        )}
                         <div className="text-sm">
                             <span className="text-gray-500">Payment:</span> <span className="font-medium uppercase">{order.payment_mode.replace(/_/g, ' ')}</span>
                         </div>
