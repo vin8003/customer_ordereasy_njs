@@ -12,12 +12,17 @@ import { WishlistIcon } from '@/app/components/WishlistIcon';
 import AddToCartButton from '@/app/components/AddToCartButton';
 import { ProductCard } from '@/app/components/ProductCard';
 import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
+import {
+    formatVisibleAllergenInfo,
+    type OptionalAllergenInfo,
+} from '@/lib/productDetailAllergenInfo';
 import styles from './ProductDetail.module.css';
 
 interface Product {
     id: number;
     name: string;
     description: string;
+    allergen_info?: OptionalAllergenInfo;
     price: number; // Selling Price
     mrp: number;   // Original Price / MRP
     stock_quantity: number;
@@ -142,8 +147,7 @@ function ProductDetail() {
         ? product.savings
         : (hasDiscount ? (product.mrp - product.price) : 0);
 
-
-
+    const visibleAllergenInfo = formatVisibleAllergenInfo(product.allergen_info);
 
     return (
         <div className={styles.container}>
@@ -219,6 +223,10 @@ function ProductDetail() {
                 <p className={styles.description}>
                     {product.description || "No description available for this product."}
                 </p>
+
+                {visibleAllergenInfo ? (
+                    <p className={styles.allergenInfo}>Allergen info: {visibleAllergenInfo}</p>
+                ) : null}
 
                 {product.product_group && (
                     <div className={styles.groupTag}>
