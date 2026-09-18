@@ -10,6 +10,7 @@ import { Button } from '@/app/components/ui/Button';
 import { EmptyState } from '@/app/components/EmptyState';
 import { ProductImage } from '@/app/components/ProductImage';
 import AddToCartButton from '@/app/components/AddToCartButton';
+import { visibleWishlistBrandName } from '@/lib/wishlistBrandName';
 import styles from './Wishlist.module.css';
 
 interface WishlistItem {
@@ -18,6 +19,7 @@ interface WishlistItem {
     product_name: string;
     product_price: number;
     product_image: string;
+    brand_name?: string | null;
     retailer_name: string;
     retailer_id: number;
     product_stock?: number;
@@ -108,36 +110,40 @@ export default function WishlistPage() {
             </header>
 
             <div className={styles.list}>
-                {wishlistItems.map(item => (
-                    <div key={item.id} className={styles.itemCard}>
-                        <div className={styles.imagePlaceholder}>
-                            <ProductImage
-                                src={item.product_image || ''}
-                                alt={item.product_name}
-                                className="w-full h-full"
-                            />
-                        </div>
-                        <div className={styles.info}>
-                            <h3>{item.product_name}</h3>
-                            <p className={styles.retailer}>{item.retailer_name}</p>
-                            <p className={styles.price}>₹{item.product_price}</p>
-                        </div>
-                        <div className={styles.actions}>
-                            <div onClick={() => { }} title="Add to Cart">
-                                <AddToCartButton
-                                    productId={item.product}
-                                    minimumOrderQuantity={item.minimum_order_quantity}
-                                    maximumOrderQuantity={item.maximum_order_quantity}
-                                    retailerId={String(item.retailer_id)}
-                                    retailerName={item.retailer_name}
+                {wishlistItems.map(item => {
+                    const brandName = visibleWishlistBrandName(item);
+                    return (
+                        <div key={item.id} className={styles.itemCard}>
+                            <div className={styles.imagePlaceholder}>
+                                <ProductImage
+                                    src={item.product_image || ''}
+                                    alt={item.product_name}
+                                    className="w-full h-full"
                                 />
                             </div>
-                            <button className={styles.actionBtn} onClick={() => removeItem(item.product)} title="Remove">
-                                <Trash2 size={18} className="text-red-500" />
-                            </button>
+                            <div className={styles.info}>
+                                <h3>{item.product_name}</h3>
+                                {brandName ? <p className={styles.brandName}>{brandName}</p> : null}
+                                <p className={styles.retailer}>{item.retailer_name}</p>
+                                <p className={styles.price}>₹{item.product_price}</p>
+                            </div>
+                            <div className={styles.actions}>
+                                <div onClick={() => { }} title="Add to Cart">
+                                    <AddToCartButton
+                                        productId={item.product}
+                                        minimumOrderQuantity={item.minimum_order_quantity}
+                                        maximumOrderQuantity={item.maximum_order_quantity}
+                                        retailerId={String(item.retailer_id)}
+                                        retailerName={item.retailer_name}
+                                    />
+                                </div>
+                                <button className={styles.actionBtn} onClick={() => removeItem(item.product)} title="Remove">
+                                    <Trash2 size={18} className="text-red-500" />
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );
