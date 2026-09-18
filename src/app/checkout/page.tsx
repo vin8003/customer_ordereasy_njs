@@ -110,6 +110,15 @@ export default function CheckoutPage() {
                     0
                 )
             );
+            setRetailerSettings({
+                deliveryCharge: 0,
+                freeDeliveryThreshold: 0,
+                minimumOrderAmount: 0,
+                offersDelivery: true,
+                offersPickup: true,
+                acceptsCod: true,
+                acceptsUpi: true,
+            });
             return;
         }
 
@@ -542,7 +551,10 @@ export default function CheckoutPage() {
                 <section className={styles.section}>
                     <h2 className={styles.sectionTitle}>Order Items</h2>
                     <div className={styles.itemsList}>
-                        {cartItems.map((item) => {
+                        {(isDummyPreview && cartItems.length === 0
+                            ? localDummyCheckoutLines()
+                            : cartItems
+                        ).map((item) => {
                             const brandName = visibleCheckoutLineBrandName(item);
                             return (
                                 <div key={item.id || item.product} className={styles.orderItem}>
