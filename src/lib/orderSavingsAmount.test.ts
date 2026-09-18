@@ -77,6 +77,19 @@ describe('getVisibleOrderSavingsAmount', () => {
         }
     });
 
+    it('uses savings_amount even when sibling money fields are also present', () => {
+        assert.equal(
+            getVisibleOrderSavingsAmount({
+                savings_amount: '18.00',
+                discount_amount: '20.00',
+                discount_from_points: '5',
+                savings: 99,
+                total_savings: '15',
+            }),
+            '18.00'
+        );
+    });
+
     it('does not invent savings from sibling money fields', () => {
         assert.equal(
             getVisibleOrderSavingsAmount({
