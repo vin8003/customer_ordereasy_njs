@@ -16,6 +16,7 @@ import { getOrderStatusDisplay } from '@/lib/orderFulfillmentDisplay';
 import { isDeliveryFailure } from '@/lib/deliveryFailure';
 import { OrderStatusLogEntry } from '@/lib/orderStatusTimeline';
 import { getVisibleOrderFeeLines, type OptionalMoneyAmount } from '@/lib/orderFeeLines';
+import { formatVisibleReturnWindowDays } from '@/lib/returnWindowDays';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -43,6 +44,7 @@ interface OrderDetail {
     total_amount: string;
     refund_amount?: string;
     net_amount?: string;
+    return_window_days?: string | number | null;
     delivery_mode: string;
     retailer?: number;
     fulfillment_slot_start?: string | null;
@@ -286,6 +288,7 @@ function OrderDetails() {
 
     const deliveryFailed = isDeliveryFailure(order);
     const statusDisplay = getOrderStatusDisplay(order.status, order.delivery_mode, deliveryFailed);
+    const visibleReturnWindow = formatVisibleReturnWindowDays(order);
 
     return (
         <div className={styles.container}>
@@ -644,6 +647,11 @@ function OrderDetails() {
                         <div className="text-sm">
                             <span className="text-gray-500">Payment:</span> <span className="font-medium uppercase">{order.payment_mode.replace(/_/g, ' ')}</span>
                         </div>
+                        {visibleReturnWindow && (
+                            <div className="text-sm">
+                                <span className="text-gray-500">Return window:</span> <span className="font-medium">{visibleReturnWindow}</span>
+                            </div>
+                        )}
                         {order.delivery_mode === 'delivery' && (
                             <div className="text-sm">
                                 <span className="text-gray-500">Address:</span> <p className="mt-1">{order.delivery_address_text}</p>
