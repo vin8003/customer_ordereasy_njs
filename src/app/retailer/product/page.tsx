@@ -12,6 +12,7 @@ import { WishlistIcon } from '@/app/components/WishlistIcon';
 import AddToCartButton from '@/app/components/AddToCartButton';
 import { ProductCard } from '@/app/components/ProductCard';
 import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
+import { visibleProductEcoFriendlyBadge } from '@/lib/productEcoFriendly';
 import styles from './ProductDetail.module.css';
 
 interface Product {
@@ -26,6 +27,7 @@ interface Product {
     minimum_order_quantity: number;
     maximum_order_quantity: number | null;
     unit?: string;
+    eco_friendly?: boolean | null;
     product_group?: string;
     savings?: number;
     discount_percentage?: number;
@@ -39,6 +41,7 @@ interface Product {
         original_price: number | null;
         image?: string;
         image_url?: string;
+        eco_friendly?: boolean | null;
         minimum_order_quantity?: number;
         maximum_order_quantity?: number | null;
         track_inventory?: boolean;
@@ -141,6 +144,7 @@ function ProductDetail() {
     const savingsAmount = product.savings
         ? product.savings
         : (hasDiscount ? (product.mrp - product.price) : 0);
+    const ecoFriendlyBadge = visibleProductEcoFriendlyBadge(product);
 
 
 
@@ -179,6 +183,9 @@ function ProductDetail() {
 
             <div className={styles.details}>
                 <h1 className={styles.title}>{product.name}</h1>
+                {ecoFriendlyBadge ? (
+                    <div className={styles.ecoFriendlyBadge}>{ecoFriendlyBadge}</div>
+                ) : null}
 
                 {retailerStatus && !retailerStatus.offersDelivery && !retailerStatus.offersPickup && (
                     <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-xs font-bold animate-pulse flex items-center gap-2">
@@ -239,6 +246,7 @@ function ProductDetail() {
                                     mrp: variant.original_price || variant.price,
                                     image: variant.image || variant.image_url || '',
                                     unit: variant.unit,
+                                    eco_friendly: variant.eco_friendly,
                                     minimum_order_quantity: variant.minimum_order_quantity || 1,
                                     maximum_order_quantity: variant.maximum_order_quantity,
                                     track_inventory: variant.track_inventory ?? true,
