@@ -8,6 +8,7 @@ import { User, Settings, LogOut, Package, MapPin, ChevronRight, Gift, HelpCircle
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import HelpModal from '@/app/components/HelpModal';
+import { getVisibleMemberTier } from '@/lib/memberTier';
 import styles from './Profile.module.css';
 
 export default function ProfilePage() {
@@ -98,6 +99,8 @@ export default function ProfilePage() {
 
     if (!profile) return <div className="p-8 text-center">User not found. Please login.</div>;
 
+    const visibleMemberTier = getVisibleMemberTier(profile);
+
     return (
         <div className={styles.container}>
             <header className={styles.header}>
@@ -105,6 +108,9 @@ export default function ProfilePage() {
                     {initials}
                 </div>
                 <h1 className={styles.name}>{profile.first_name} {profile.last_name}</h1>
+                {visibleMemberTier ? (
+                    <p className={styles.memberTier}>{visibleMemberTier}</p>
+                ) : null}
                 <p className={styles.contact}>{profile.email}</p>
                 <p className={styles.contact}>{profile.phone_number}</p>
             </header>
