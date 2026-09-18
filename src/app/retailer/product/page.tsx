@@ -12,12 +12,17 @@ import { WishlistIcon } from '@/app/components/WishlistIcon';
 import AddToCartButton from '@/app/components/AddToCartButton';
 import { ProductCard } from '@/app/components/ProductCard';
 import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
+import {
+    formatVisibleNutritionInfo,
+    type OptionalNutritionInfo,
+} from '@/lib/productDetailNutrition';
 import styles from './ProductDetail.module.css';
 
 interface Product {
     id: number;
     name: string;
     description: string;
+    nutrition_info?: OptionalNutritionInfo;
     price: number; // Selling Price
     mrp: number;   // Original Price / MRP
     stock_quantity: number;
@@ -142,8 +147,7 @@ function ProductDetail() {
         ? product.savings
         : (hasDiscount ? (product.mrp - product.price) : 0);
 
-
-
+    const visibleNutritionInfo = formatVisibleNutritionInfo(product.nutrition_info);
 
     return (
         <div className={styles.container}>
@@ -219,6 +223,13 @@ function ProductDetail() {
                 <p className={styles.description}>
                     {product.description || "No description available for this product."}
                 </p>
+
+                {visibleNutritionInfo ? (
+                    <section className={styles.nutritionSection} aria-label="Nutrition">
+                        <h2 className={styles.sectionTitle}>Nutrition</h2>
+                        <p className={styles.nutritionText}>{visibleNutritionInfo}</p>
+                    </section>
+                ) : null}
 
                 {product.product_group && (
                     <div className={styles.groupTag}>
