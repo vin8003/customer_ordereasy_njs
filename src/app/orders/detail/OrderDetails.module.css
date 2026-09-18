@@ -116,6 +116,12 @@
     margin-bottom: 2px;
 }
 
+.substitutedFor {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin: 0 0 2px;
+}
+
 .itemMeta {
     font-size: 0.8rem;
     color: var(--text-secondary);
