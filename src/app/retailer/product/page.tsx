@@ -16,6 +16,7 @@ import {
     formatVisibleBarcode,
     type OptionalBarcode,
 } from '@/lib/productDetailBarcode';
+import { formatVisibleHsnCode, type OptionalHsnCode } from '@/lib/productHsnCode';
 import styles from './ProductDetail.module.css';
 
 interface Product {
@@ -23,6 +24,7 @@ interface Product {
     name: string;
     barcode?: OptionalBarcode;
     description: string;
+    hsn_code?: OptionalHsnCode;
     price: number; // Selling Price
     mrp: number;   // Original Price / MRP
     stock_quantity: number;
@@ -148,6 +150,10 @@ function ProductDetail() {
         : (hasDiscount ? (product.mrp - product.price) : 0);
 
     const visibleBarcode = formatVisibleBarcode(product.barcode);
+    const visibleHsnCode = formatVisibleHsnCode(product.hsn_code);
+
+
+
 
     return (
         <div className={styles.container}>
@@ -226,6 +232,10 @@ function ProductDetail() {
                 <p className={styles.description}>
                     {product.description || "No description available for this product."}
                 </p>
+
+                {visibleHsnCode ? (
+                    <p className={styles.hsnCode}>HSN {visibleHsnCode}</p>
+                ) : null}
 
                 {product.product_group && (
                     <div className={styles.groupTag}>
