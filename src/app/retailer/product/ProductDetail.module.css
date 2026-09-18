@@ -72,6 +72,15 @@
     margin-bottom: 0.5rem;
 }
 
+.rating {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #64748b;
+    /* Slate-500 muted */
+    line-height: 1.4;
+    margin: -0.25rem 0 0.75rem;
+}
+
 .groupTag {
     display: inline-block;
     background: #f1f5f9;
