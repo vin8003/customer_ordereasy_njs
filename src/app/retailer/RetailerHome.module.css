@@ -344,6 +344,14 @@
     color: var(--primary-color);
 }
 
+.suggestionMrp {
+    font-size: 12px;
+    font-weight: 500;
+    color: #94a3b8;
+    text-decoration: line-through;
+    white-space: nowrap;
+}
+
 .noSuggestions {
     padding: 20px;
     text-align: center;
