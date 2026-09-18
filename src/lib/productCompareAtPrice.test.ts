@@ -49,7 +49,7 @@ describe('visibleProductCompareAtPrice — product-list compare-at line', () => 
                 compare_at_price: null,
                 mrp: 250,
                 original_price: '250.00',
-            }),
+            } as { compare_at_price?: string | number | null }),
             null
         );
         assert.equal(
@@ -63,7 +63,7 @@ describe('visibleProductCompareAtPrice — product-list compare-at line', () => 
                 compare_at_price: ' 175.00 ',
                 mrp: 999,
                 original_price: 999,
-            }),
+            } as { compare_at_price?: string | number | null }),
             '175.00'
         );
     });
