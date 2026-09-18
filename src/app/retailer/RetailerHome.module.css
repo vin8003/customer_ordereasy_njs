@@ -339,6 +339,12 @@
     overflow: hidden;
     text-overflow: ellipsis;
     margin-top: 1px;
+.suggestionUnit {
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 500;
+    line-height: 1.3;
+    margin: 2px 0 0;
 }
 
 .suggestionMeta {

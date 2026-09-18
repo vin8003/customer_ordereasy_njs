@@ -18,6 +18,7 @@ import { Button } from '@/app/components/ui/Button';
 import LazyProductLane from '@/app/components/LazyProductLane';
 import InfiniteProductGrid from '@/app/components/InfiniteProductGrid';
 import { visibleSearchProductBrandName } from '@/lib/searchProductBrandName';
+import { visibleProductListUnit } from '@/lib/productListUnit';
 import styles from './RetailerHome.module.css';
 
 interface Category {
@@ -409,6 +410,7 @@ function RetailerHome() {
                         ) : suggestions.length > 0 ? (
                             suggestions.map((product) => {
                                 const brandName = visibleSearchProductBrandName(product);
+                                const unit = visibleProductListUnit(product);
                                 return (
                                     <div
                                         key={product.id}
@@ -426,6 +428,9 @@ function RetailerHome() {
                                             <div className={styles.suggestionMeta}>
                                                 <span className={styles.suggestionPrice}>₹{product.price}</span>
                                                 {product.unit && <span>• {product.unit}</span>}
+                                            {unit ? <div className={styles.suggestionUnit}>{unit}</div> : null}
+                                            <div className={styles.suggestionMeta}>
+                                                <span className={styles.suggestionPrice}>₹{product.price}</span>
                                             </div>
                                         </div>
                                     </div>
