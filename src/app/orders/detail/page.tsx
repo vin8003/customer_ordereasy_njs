@@ -16,6 +16,7 @@ import { getOrderStatusDisplay } from '@/lib/orderFulfillmentDisplay';
 import { isDeliveryFailure } from '@/lib/deliveryFailure';
 import { OrderStatusLogEntry } from '@/lib/orderStatusTimeline';
 import { getVisibleOrderFeeLines, type OptionalMoneyAmount } from '@/lib/orderFeeLines';
+import { getVisibleOrderNotes } from '@/lib/orderNotes';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -55,6 +56,7 @@ interface OrderDetail {
     status_logs?: OrderStatusLogEntry[] | null;
     delivery_info?: OrderDeliveryInfo | null;
     payment_mode: string;
+    notes?: string | null;
     special_instructions: string;
     delivery_address_text: string;
     items: OrderItem[];
@@ -286,6 +288,7 @@ function OrderDetails() {
 
     const deliveryFailed = isDeliveryFailure(order);
     const statusDisplay = getOrderStatusDisplay(order.status, order.delivery_mode, deliveryFailed);
+    const visibleNotes = getVisibleOrderNotes(order);
 
     return (
         <div className={styles.container}>
@@ -706,10 +709,10 @@ function OrderDetails() {
                     </section>
                 )}
 
-                {order.special_instructions && (
+                {(visibleNotes || order.special_instructions) && (
                     <section className={styles.section}>
                         <h3 className="font-bold mb-2 text-sm text-gray-500 uppercase">Notes</h3>
-                        <div className={styles.instructionsBox}>{order.special_instructions}</div>
+                        <div className={styles.instructionsBox}>{visibleNotes ?? order.special_instructions}</div>
                     </section>
                 )}
 
