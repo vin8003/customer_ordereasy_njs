@@ -22,6 +22,7 @@ describe('visibleAccountReferralCode — account referral line', () => {
 
     it('does not invent a code from non-strings or nested referral objects', () => {
         assert.equal(visibleAccountReferralCode({ referral_code: 10 }), null);
+        assert.equal(visibleAccountReferralCode({ referral_code: { code: 'HIDDEN' } }), null);
         const nestedOnly = { referral: { code: 'HIDDEN' } };
         assert.equal(visibleAccountReferralCode(nestedOnly), null);
         const blankWithNested = { referral_code: ' ', referral: { code: 'HIDDEN' } };
