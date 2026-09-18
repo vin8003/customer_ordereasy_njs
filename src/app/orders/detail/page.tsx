@@ -4,7 +4,7 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, MapPin, Phone, Package, Clock, CheckCircle, XCircle, AlertCircle, Star, MessageCircle, Loader2, Truck } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, Package, Clock, CheckCircle, XCircle, AlertCircle, Star, MessageCircle, Loader2, Truck, FileText } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { ProductImage } from '@/app/components/ProductImage';
@@ -16,6 +16,7 @@ import { getOrderStatusDisplay } from '@/lib/orderFulfillmentDisplay';
 import { isDeliveryFailure } from '@/lib/deliveryFailure';
 import { OrderStatusLogEntry } from '@/lib/orderStatusTimeline';
 import { getVisibleOrderFeeLines, type OptionalMoneyAmount } from '@/lib/orderFeeLines';
+import { getVisibleInvoicePdfUrl } from '@/lib/orderInvoicePdfUrl';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -39,6 +40,7 @@ interface OrderDetail {
     subtotal: string;
     delivery_fee?: OptionalMoneyAmount;
     discount_amount?: OptionalMoneyAmount;
+    invoice_pdf_url?: string | null;
     discount_from_points: string;
     total_amount: string;
     refund_amount?: string;
@@ -285,6 +287,7 @@ function OrderDetails() {
     if (!order) return <div className="p-20 text-center">Order not found.</div>;
 
     const deliveryFailed = isDeliveryFailure(order);
+    const invoicePdfUrl = getVisibleInvoicePdfUrl(order);
     const statusDisplay = getOrderStatusDisplay(order.status, order.delivery_mode, deliveryFailed);
 
     return (
@@ -634,6 +637,20 @@ function OrderDetails() {
                         )}
                     </div>
                 </section>
+
+                {invoicePdfUrl ? (
+                    <section className={styles.section}>
+                        <a
+                            href={invoicePdfUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.invoiceLink}
+                        >
+                            <FileText size={16} />
+                            Download invoice
+                        </a>
+                    </section>
+                ) : null}
 
                 <section className={styles.section}>
                     <h3 className="font-bold mb-3 text-sm text-gray-500 uppercase">Delivery Info</h3>
