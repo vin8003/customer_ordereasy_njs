@@ -17,6 +17,7 @@ import { ProductCard } from '@/app/components/ProductCard';
 import { Button } from '@/app/components/ui/Button';
 import LazyProductLane from '@/app/components/LazyProductLane';
 import InfiniteProductGrid from '@/app/components/InfiniteProductGrid';
+import { visibleSearchProductBrandName } from '@/lib/searchProductBrandName';
 import styles from './RetailerHome.module.css';
 
 interface Category {
@@ -39,6 +40,7 @@ export interface Product {
     stock_quantity: number;
     track_inventory: boolean;
     unit?: string;
+    brand_name?: string | null;
     minimum_order_quantity?: number;
     maximum_order_quantity?: number | null;
 }
@@ -405,24 +407,30 @@ function RetailerHome() {
                         {isSearching ? (
                             <div className={styles.noSuggestions}>Searching...</div>
                         ) : suggestions.length > 0 ? (
-                            suggestions.map((product) => (
-                                <div
-                                    key={product.id}
-                                    className={styles.suggestionItem}
-                                    onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
-                                >
-                                    <div className={styles.suggestionImage}>
-                                        <ProductImage src={product.image} alt={product.name} />
-                                    </div>
-                                    <div className={styles.suggestionInfo}>
-                                        <div className={styles.suggestionName}>{product.name}</div>
-                                        <div className={styles.suggestionMeta}>
-                                            <span className={styles.suggestionPrice}>₹{product.price}</span>
-                                            {product.unit && <span>• {product.unit}</span>}
+                            suggestions.map((product) => {
+                                const brandName = visibleSearchProductBrandName(product);
+                                return (
+                                    <div
+                                        key={product.id}
+                                        className={styles.suggestionItem}
+                                        onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
+                                    >
+                                        <div className={styles.suggestionImage}>
+                                            <ProductImage src={product.image} alt={product.name} />
+                                        </div>
+                                        <div className={styles.suggestionInfo}>
+                                            <div className={styles.suggestionName}>{product.name}</div>
+                                            {brandName ? (
+                                                <div className={styles.suggestionBrand}>{brandName}</div>
+                                            ) : null}
+                                            <div className={styles.suggestionMeta}>
+                                                <span className={styles.suggestionPrice}>₹{product.price}</span>
+                                                {product.unit && <span>• {product.unit}</span>}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))
+                                );
+                            })
                         ) : (
                             <div className={styles.noSuggestions}>No products found for "{searchQuery}"</div>
                         )}
