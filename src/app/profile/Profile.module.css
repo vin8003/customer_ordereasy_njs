@@ -63,6 +63,22 @@
     margin: 0;
 }
 
+.accountReferralRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: #6b7280;
+    border-bottom: 1px solid #f9fafb;
+}
+
+.accountReferralRow span:last-child {
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: #4b5563;
+}
+
 .menuItem {
     display: flex;
     align-items: center;
