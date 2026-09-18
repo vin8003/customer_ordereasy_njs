@@ -11,6 +11,12 @@ import styles from './Checkout.module.css';
 import PhoneVerification from '@/app/components/auth/PhoneVerification';
 import FulfillmentSlotPicker from '@/app/components/FulfillmentSlotPicker';
 import { FulfillmentSlot, formatSlotWindow } from '@/lib/fulfillmentSlots';
+import {
+    CheckoutLineItem,
+    isLocalDummyCheckoutPreview,
+    localDummyCheckoutLines,
+    visibleCheckoutLineBrandName,
+} from '@/lib/checkoutLineBrandName';
 
 interface Address {
     id: number;
@@ -70,7 +76,7 @@ export default function CheckoutPage() {
     // For now assuming we are checking out the current active cart
     // We need to fetch cart to display summary or at least total
 
-    const [cartItems, setCartItems] = useState<any[]>([]);
+    const [cartItems, setCartItems] = useState<CheckoutLineItem[]>([]);
 
     useEffect(() => {
         const checkAuth = () => {
@@ -81,6 +87,21 @@ export default function CheckoutPage() {
             }
             return true;
         };
+
+        if (
+            typeof window !== 'undefined' &&
+            isLocalDummyCheckoutPreview(window.location.hostname, window.location.search)
+        ) {
+            const dummyLines = localDummyCheckoutLines();
+            setCartItems(dummyLines);
+            setCartTotal(
+                dummyLines.reduce(
+                    (sum, line) => sum + Number(line.product_price || 0) * line.quantity,
+                    0
+                )
+            );
+            return;
+        }
 
         if (checkAuth()) {
             loadData();
@@ -509,15 +530,23 @@ export default function CheckoutPage() {
                 <section className={styles.section}>
                     <h2 className={styles.sectionTitle}>Order Items</h2>
                     <div className={styles.itemsList}>
-                        {cartItems.map((item: any) => (
-                            <div key={item.id || item.product} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
-                                <div className="flex gap-2">
-                                    <span className="text-gray-500 font-medium">{item.quantity}x</span>
-                                    <span>{item.product_name}</span>
+                        {cartItems.map((item) => {
+                            const brandName = visibleCheckoutLineBrandName(item);
+                            return (
+                                <div key={item.id || item.product} className={styles.orderItem}>
+                                    <div>
+                                        <div className={styles.orderItemName}>
+                                            <span className={styles.orderItemQty}>{item.quantity}x</span>
+                                            <span>{item.product_name}</span>
+                                        </div>
+                                        {brandName ? <p className={styles.brandName}>{brandName}</p> : null}
+                                    </div>
+                                    <span className={styles.orderItemPrice}>
+                                        ₹{(Number(item.product_price) * item.quantity).toFixed(2)}
+                                    </span>
                                 </div>
-                                <span className="font-medium">₹{(Number(item.product_price) * item.quantity).toFixed(2)}</span>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </section>
 
