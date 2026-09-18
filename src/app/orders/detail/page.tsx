@@ -16,6 +16,7 @@ import { getOrderStatusDisplay } from '@/lib/orderFulfillmentDisplay';
 import { isDeliveryFailure } from '@/lib/deliveryFailure';
 import { OrderStatusLogEntry } from '@/lib/orderStatusTimeline';
 import { getVisibleOrderFeeLines, type OptionalMoneyAmount } from '@/lib/orderFeeLines';
+import { visibleOrderLineSubstitutedFor, type OptionalSubstitutedFor } from '@/lib/orderLineSubstitutedFor';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -27,6 +28,8 @@ interface OrderItem {
     total_price: string;
     net_quantity?: number;
     returned_quantity?: number;
+    /** Optional; missing/blank invents nothing. */
+    substituted_for?: OptionalSubstitutedFor;
 }
 
 interface OrderDetail {
@@ -564,13 +567,18 @@ function OrderDetails() {
                 <section className={styles.section}>
                     <h3 className="font-bold mb-3 text-sm text-gray-500 uppercase">Items</h3>
                     <div className={styles.itemsList}>
-                        {order.items.map(item => (
+                        {order.items.map(item => {
+                            const substitutedFor = visibleOrderLineSubstitutedFor(item);
+                            return (
                             <div key={item.id} className={styles.item}>
                                 <div className={styles.itemImage}>
                                     <ProductImage src={item.product_image} alt={item.product_name} />
                                 </div>
                                 <div className={styles.itemDetails}>
                                     <h4 className={styles.itemName}>{item.product_name}</h4>
+                                    {substitutedFor ? (
+                                        <p className={styles.substitutedFor}>Substituted for {substitutedFor}</p>
+                                    ) : null}
                                     <p className={styles.itemMeta}>
                                         ₹{item.product_price} × {item.quantity}
                                         {item.returned_quantity && item.returned_quantity > 0 ? (
@@ -591,7 +599,8 @@ function OrderDetails() {
                                     )}
                                 </div>
                             </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </section>
 
