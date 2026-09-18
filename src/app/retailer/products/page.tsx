@@ -22,6 +22,7 @@ interface Product {
     unit?: string;
     minimum_order_quantity: number;
     maximum_order_quantity: number | null;
+    flash_sale_ends_at?: string | null;
 }
 
 function AllProducts() {

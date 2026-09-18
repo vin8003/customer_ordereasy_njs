@@ -3,6 +3,7 @@
 import React from 'react';
 import { ProductImage } from '@/app/components/ProductImage';
 import { WishlistIcon } from '@/app/components/WishlistIcon';
+import { FlashSaleCountdown } from '@/app/components/FlashSaleCountdown';
 import styles from './ProductCard.module.css';
 import AddToCartButton from '@/app/components/AddToCartButton';
 
@@ -14,6 +15,7 @@ interface Product {
     image: string;
     unit?: string;
     active_offer_text?: string;
+    flash_sale_ends_at?: string | null;
     track_inventory?: boolean;
     minimum_order_quantity?: number;
     maximum_order_quantity?: number | null;
@@ -55,6 +57,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                         {discount > 0 && (
                             <div className={styles.discountBadge}>{discount}% OFF</div>
                         )}
+                        <FlashSaleCountdown endsAt={product.flash_sale_ends_at} compact />
                     </div>
 
                     <button className={styles.wishlistBtn} onClick={onToggleWishlist}>

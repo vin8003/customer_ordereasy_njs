@@ -6,6 +6,7 @@ This is the customer-facing web application for the Shopeasy platform, built wit
 
 -   **Retailer Selection:** Browse available shops and categories.
 -   **Product Browsing:** Grid view with optimized layout and search.
+-   **Flash sale countdown:** If a product includes `flash_sale_ends_at`, the product page and product cards show a live countdown. Missing, invalid, or expired values stay hidden.
 -   **Cart & Checkout:** Seamless cart management and order placement.
 -   **User Accounts:** Login/Signup with OTP, address management.
 -   **Rewards:** Referral system and loyalty points tracking.

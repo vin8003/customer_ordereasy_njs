@@ -20,6 +20,7 @@ interface RawProduct {
     unit?: string;
     minimum_order_quantity?: number;
     maximum_order_quantity?: number | null;
+    flash_sale_ends_at?: string | null;
 }
 
 interface FrequentlyBoughtTogetherProps {
@@ -41,6 +42,7 @@ function mapProduct(p: RawProduct) {
         unit: p.unit || 'Unit',
         minimum_order_quantity: p.minimum_order_quantity || 1,
         maximum_order_quantity: p.maximum_order_quantity,
+        flash_sale_ends_at: p.flash_sale_ends_at,
     };
 }
 
