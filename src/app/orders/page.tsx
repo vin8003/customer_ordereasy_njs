@@ -123,86 +123,86 @@ export default function OrdersPage() {
                 {orders.map(order => {
                     const storeName = visibleOrderListStoreName(order);
                     return (
-                    <div
-                        key={order.id}
-                        className={`${styles.card} cursor-pointer active:scale-[0.98] transition-all`}
-                        onClick={() => router.push(`/orders/detail?id=${order.id}`)}
-                    >
-                        <div className={styles.cardHeader}>
-                            <div>
-                                <h3 className="font-bold text-gray-800">Order #{order.order_number}</h3>
-                                {storeName ? <p className={styles.storeName}>{storeName}</p> : null}
-                                <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                                    <Clock size={12} />
-                                    {new Date(order.created_at).toLocaleDateString()}
-                                </div>
-                                {order.expected_processing_start && order.status.toLowerCase() === 'pending' && (
-                                    <div className="text-xs text-orange-600 flex items-center gap-1 mt-1 font-medium bg-orange-50 px-2 py-0.5 rounded-md w-fit border border-orange-100">
+                        <div
+                            key={order.id}
+                            className={`${styles.card} cursor-pointer active:scale-[0.98] transition-all`}
+                            onClick={() => router.push(`/orders/detail?id=${order.id}`)}
+                        >
+                            <div className={styles.cardHeader}>
+                                <div>
+                                    <h3 className="font-bold text-gray-800">Order #{order.order_number}</h3>
+                                    {storeName ? <p className={styles.storeName}>{storeName}</p> : null}
+                                    <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
                                         <Clock size={12} />
-                                        Processing starts later
+                                        {new Date(order.created_at).toLocaleDateString()}
                                     </div>
-                                )}
-                                {order.fulfillment_slot_start && (
-                                    <div className="text-xs text-indigo-700 flex items-center gap-1 mt-1 font-medium bg-indigo-50 px-2 py-0.5 rounded-md w-fit border border-indigo-100">
-                                        <Clock size={12} />
-                                        {order.delivery_mode === 'pickup' ? 'Pickup' : 'Delivery'}:{' '}
-                                        {formatFulfillmentWindow(order.fulfillment_slot_start, order.fulfillment_slot_end)}
-                                    </div>
-                                )}
-                            </div>
-                            <div className="flex flex-col items-end gap-1">
-                                <span
-                                    className={`px-2 py-1 rounded-full text-xs font-bold border uppercase ${getStatusBadgeClass(order.status, order.delivery_mode)}`}
-                                >
-                                    {getOrderStatusDisplay(order.status, order.delivery_mode).label}
-                                </span>
-                                {order.feedback && (
-                                    <div className="flex items-center gap-1 bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded-full text-xs font-bold border border-yellow-200">
-                                        <span>{order.feedback.overall_rating}</span>
-                                        <Star size={12} className="fill-yellow-500 text-yellow-500" />
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <OrderFulfillmentHighlight
-                            delivery_mode={order.delivery_mode}
-                            status={order.status}
-                            pickup_code={order.pickup_code}
-                            pickup_ready_at={order.pickup_ready_at}
-                            delivery_info={order.delivery_info}
-                            variant="compact"
-                        />
-
-                        <div className="mt-3 flex justify-between items-end">
-                            <div>
-                                <p className="text-xs text-gray-500">Retailer</p>
-                                <p className="font-medium text-sm">{order.retailer_name || 'Retailer'}</p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500 text-right">{order.is_returned ? 'Net Amount' : 'Total Amount'}</p>
-                                <div className="flex flex-col items-end">
-                                    {order.is_returned && (
-                                        <span className="text-[10px] line-through text-gray-400">₹{order.total_amount}</span>
+                                    {order.expected_processing_start && order.status.toLowerCase() === 'pending' && (
+                                        <div className="text-xs text-orange-600 flex items-center gap-1 mt-1 font-medium bg-orange-50 px-2 py-0.5 rounded-md w-fit border border-orange-100">
+                                            <Clock size={12} />
+                                            Processing starts later
+                                        </div>
                                     )}
-                                    <p className="font-bold text-primary">₹{order.is_returned ? order.net_amount : order.total_amount}</p>
+                                    {order.fulfillment_slot_start && (
+                                        <div className="text-xs text-indigo-700 flex items-center gap-1 mt-1 font-medium bg-indigo-50 px-2 py-0.5 rounded-md w-fit border border-indigo-100">
+                                            <Clock size={12} />
+                                            {order.delivery_mode === 'pickup' ? 'Pickup' : 'Delivery'}:{' '}
+                                            {formatFulfillmentWindow(order.fulfillment_slot_start, order.fulfillment_slot_end)}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex flex-col items-end gap-1">
+                                    <span
+                                        className={`px-2 py-1 rounded-full text-xs font-bold border uppercase ${getStatusBadgeClass(order.status, order.delivery_mode)}`}
+                                    >
+                                        {getOrderStatusDisplay(order.status, order.delivery_mode).label}
+                                    </span>
+                                    {order.feedback && (
+                                        <div className="flex items-center gap-1 bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded-full text-xs font-bold border border-yellow-200">
+                                            <span>{order.feedback.overall_rating}</span>
+                                            <Star size={12} className="fill-yellow-500 text-yellow-500" />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                        </div>
 
-                        {order.is_returned && (
-                            <div className="mt-2 flex items-center gap-1.5 bg-red-50 text-red-600 px-2 py-1 rounded text-[10px] font-bold border border-red-100 w-fit">
-                                <Package size={12} />
-                                ITEMS RETURNED
+                            <OrderFulfillmentHighlight
+                                delivery_mode={order.delivery_mode}
+                                status={order.status}
+                                pickup_code={order.pickup_code}
+                                pickup_ready_at={order.pickup_ready_at}
+                                delivery_info={order.delivery_info}
+                                variant="compact"
+                            />
+
+                            <div className="mt-3 flex justify-between items-end">
+                                <div>
+                                    <p className="text-xs text-gray-500">Retailer</p>
+                                    <p className="font-medium text-sm">{order.retailer_name || 'Retailer'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 text-right">{order.is_returned ? 'Net Amount' : 'Total Amount'}</p>
+                                    <div className="flex flex-col items-end">
+                                        {order.is_returned && (
+                                            <span className="text-[10px] line-through text-gray-400">₹{order.total_amount}</span>
+                                        )}
+                                        <p className="font-bold text-primary">₹{order.is_returned ? order.net_amount : order.total_amount}</p>
+                                    </div>
+                                </div>
                             </div>
-                        )}
 
-                        <div className="mt-4 pt-3 border-t border-gray-100 flex justify-center">
-                            <span className="text-xs font-bold text-primary flex items-center gap-1">
-                                View Details <ChevronRight size={14} />
-                            </span>
+                            {order.is_returned && (
+                                <div className="mt-2 flex items-center gap-1.5 bg-red-50 text-red-600 px-2 py-1 rounded text-[10px] font-bold border border-red-100 w-fit">
+                                    <Package size={12} />
+                                    ITEMS RETURNED
+                                </div>
+                            )}
+
+                            <div className="mt-4 pt-3 border-t border-gray-100 flex justify-center">
+                                <span className="text-xs font-bold text-primary flex items-center gap-1">
+                                    View Details <ChevronRight size={14} />
+                                </span>
+                            </div>
                         </div>
-                    </div>
                     );
                 })}
             </div>

@@ -37,6 +37,12 @@ describe('visibleOrderListStoreName — order list row store line', () => {
         );
         assert.equal(
             visibleOrderListStoreName({
+                shop: { shop_name: 'Hidden Shop' },
+            } as { store_name?: string | null }),
+            null
+        );
+        assert.equal(
+            visibleOrderListStoreName({
                 store_name: 'Visible Store',
                 retailer_name: 'Other Retailer',
             } as { store_name?: string | null }),
