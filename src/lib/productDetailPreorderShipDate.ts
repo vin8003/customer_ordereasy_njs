@@ -2,8 +2,9 @@
 
 export type OptionalPreorderShipDate = string | null | undefined;
 
-/** ISO calendar date, optionally followed by a time suffix. */
-const ISO_CALENDAR_PREFIX = /^(\d{4})-(\d{2})-(\d{2})(?:[T\s].*)?$/;
+/** ISO calendar date, optionally followed by a clock + timezone suffix. */
+const ISO_CALENDAR_PREFIX =
+    /^(\d{4})-(\d{2})-(\d{2})(?:[T\s]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/;
 
 function calendarDateFromIsoPrefix(trimmed: string): Date | null {
     const match = ISO_CALENDAR_PREFIX.exec(trimmed);

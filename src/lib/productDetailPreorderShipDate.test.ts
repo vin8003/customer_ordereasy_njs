@@ -34,6 +34,9 @@ describe('formatVisiblePreorderShipDate', () => {
             '2026-13-01',
             '2026-02-31',
             'not-a-date',
+            '2026-10-15T',
+            '2026-10-15Tnot-a-time',
+            '2026-10-15 junk',
         ]) {
             assert.equal(formatVisiblePreorderShipDate(value), null, String(value));
         }
