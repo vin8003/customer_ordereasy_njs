@@ -72,6 +72,15 @@
     margin-bottom: 0.5rem;
 }
 
+.categoryName {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #64748b;
+    /* Slate-500 — muted; omit when helper returns null */
+    line-height: 1.4;
+    margin: -0.15rem 0 0.75rem;
+}
+
 .groupTag {
     display: inline-block;
     background: #f1f5f9;
