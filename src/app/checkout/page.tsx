@@ -1,16 +1,27 @@
 'use client';
 import toast from '@/lib/toast';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useSyncExternalStore } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { ArrowLeft, MapPin, CreditCard, CheckCircle } from 'lucide-react';
 import { apiService, getErrorMessage } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import styles from './Checkout.module.css';
-import PhoneVerification from '@/app/components/auth/PhoneVerification';
 import FulfillmentSlotPicker from '@/app/components/FulfillmentSlotPicker';
+
+const PhoneVerification = dynamic(
+    () => import('@/app/components/auth/PhoneVerification'),
+    { ssr: false }
+);
 import { FulfillmentSlot, formatSlotWindow } from '@/lib/fulfillmentSlots';
+import {
+    CheckoutLineItem,
+    isLocalDummyCheckoutPreview,
+    localDummyCheckoutLines,
+    visibleCheckoutLineBrandName,
+} from '@/lib/checkoutLineBrandName';
 
 interface Address {
     id: number;
@@ -70,7 +81,12 @@ export default function CheckoutPage() {
     // For now assuming we are checking out the current active cart
     // We need to fetch cart to display summary or at least total
 
-    const [cartItems, setCartItems] = useState<any[]>([]);
+    const [cartItems, setCartItems] = useState<CheckoutLineItem[]>([]);
+    const isDummyPreview = useSyncExternalStore(
+        () => () => {},
+        () => isLocalDummyCheckoutPreview(window.location.hostname, window.location.search),
+        () => false
+    );
 
     useEffect(() => {
         const checkAuth = () => {
@@ -81,6 +97,30 @@ export default function CheckoutPage() {
             }
             return true;
         };
+
+        if (
+            typeof window !== 'undefined' &&
+            isLocalDummyCheckoutPreview(window.location.hostname, window.location.search)
+        ) {
+            const dummyLines = localDummyCheckoutLines();
+            setCartItems(dummyLines);
+            setCartTotal(
+                dummyLines.reduce(
+                    (sum, line) => sum + Number(line.product_price || 0) * line.quantity,
+                    0
+                )
+            );
+            setRetailerSettings({
+                deliveryCharge: 0,
+                freeDeliveryThreshold: 0,
+                minimumOrderAmount: 0,
+                offersDelivery: true,
+                offersPickup: true,
+                acceptsCod: true,
+                acceptsUpi: true,
+            });
+            return;
+        }
 
         if (checkAuth()) {
             loadData();
@@ -317,16 +357,18 @@ export default function CheckoutPage() {
 
     return (
         <div className={styles.container}>
-            {/* Phone Verification Modal */}
-            <PhoneVerification
-                isOpen={showVerification}
-                onClose={() => setShowVerification(false)}
-                initialPhone={userPhone}
-                onVerified={() => {
-                    setIsPhoneVerified(true);
-                    checkUserVerification(); // re-fetch to be sure or just set state
-                }}
-            />
+            {/* Phone Verification Modal — skipped on loopback dummy preview (no Firebase / no live API). */}
+            {!isDummyPreview && (
+                <PhoneVerification
+                    isOpen={showVerification}
+                    onClose={() => setShowVerification(false)}
+                    initialPhone={userPhone}
+                    onVerified={() => {
+                        setIsPhoneVerified(true);
+                        checkUserVerification(); // re-fetch to be sure or just set state
+                    }}
+                />
+            )}
 
             <header className={styles.header}>
                 <Button variant="outline" onClick={handleBack}>
@@ -509,15 +551,26 @@ export default function CheckoutPage() {
                 <section className={styles.section}>
                     <h2 className={styles.sectionTitle}>Order Items</h2>
                     <div className={styles.itemsList}>
-                        {cartItems.map((item: any) => (
-                            <div key={item.id || item.product} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
-                                <div className="flex gap-2">
-                                    <span className="text-gray-500 font-medium">{item.quantity}x</span>
-                                    <span>{item.product_name}</span>
+                        {(isDummyPreview && cartItems.length === 0
+                            ? localDummyCheckoutLines()
+                            : cartItems
+                        ).map((item) => {
+                            const brandName = visibleCheckoutLineBrandName(item);
+                            return (
+                                <div key={item.id || item.product} className={styles.orderItem}>
+                                    <div>
+                                        <div className={styles.orderItemName}>
+                                            <span className={styles.orderItemQty}>{item.quantity}x</span>
+                                            <span>{item.product_name}</span>
+                                        </div>
+                                        {brandName ? <p className={styles.brandName}>{brandName}</p> : null}
+                                    </div>
+                                    <span className={styles.orderItemPrice}>
+                                        ₹{(Number(item.product_price) * item.quantity).toFixed(2)}
+                                    </span>
                                 </div>
-                                <span className="font-medium">₹{(Number(item.product_price) * item.quantity).toFixed(2)}</span>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </section>
 
