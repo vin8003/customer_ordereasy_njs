@@ -15,6 +15,7 @@ import { FulfillmentSlot, OrderDeliveryInfo, RESCHEDULABLE_ORDER_STATUSES, forma
 import { getOrderStatusDisplay } from '@/lib/orderFulfillmentDisplay';
 import { isDeliveryFailure } from '@/lib/deliveryFailure';
 import { OrderStatusLogEntry } from '@/lib/orderStatusTimeline';
+import { getVisibleOrderFeeLines, type OptionalMoneyAmount } from '@/lib/orderFeeLines';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -36,8 +37,8 @@ interface OrderDetail {
     retailer_address: string;
     status: string;
     subtotal: string;
-    delivery_fee: string;
-    discount_amount: string;
+    delivery_fee?: OptionalMoneyAmount;
+    discount_amount?: OptionalMoneyAmount;
     discount_from_points: string;
     total_amount: string;
     refund_amount?: string;
@@ -601,16 +602,14 @@ function OrderDetails() {
                             <span>Subtotal</span>
                             <span>₹{order.subtotal}</span>
                         </div>
-                        <div className={styles.summaryRow}>
-                            <span>Delivery Fee ({order.delivery_mode})</span>
-                            <span>₹{order.delivery_fee}</span>
-                        </div>
-                        {parseFloat(order.discount_amount) > 0 && (
-                            <div className={styles.summaryRow}>
-                                <span>Discount</span>
-                                <span className={styles.discount}>-₹{order.discount_amount}</span>
+                        {getVisibleOrderFeeLines(order).map((line) => (
+                            <div key={line.key} className={styles.mutedFeeRow}>
+                                <span>{line.label}</span>
+                                <span className={line.isDiscount ? styles.discount : undefined}>
+                                    {line.isDiscount ? `-₹${line.amount}` : `₹${line.amount}`}
+                                </span>
                             </div>
-                        )}
+                        ))}
                         {parseFloat(order.discount_from_points) > 0 && (
                             <div className={styles.summaryRow}>
                                 <span>Points Redeemed</span>
