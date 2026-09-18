@@ -13,6 +13,8 @@ describe('formatVisibleEstimatedDelivery', () => {
         assert.equal(formatVisibleEstimatedDelivery('2026-09-20'), '20 Sep 2026');
         assert.equal(formatVisibleEstimatedDelivery(' 2026-09-20 '), '20 Sep 2026');
         assert.equal(formatVisibleEstimatedDelivery('2026-09-20T12:00:00Z'), '20 Sep 2026');
+        assert.equal(formatVisibleEstimatedDelivery('2026-09-20T00:00:00Z'), '20 Sep 2026');
+        assert.equal(formatVisibleEstimatedDelivery('2026-09-20T18:30:00+05:30'), '20 Sep 2026');
     });
 
     it('hides missing, blank, non-string, and unparseable values', () => {
@@ -23,7 +25,10 @@ describe('formatVisibleEstimatedDelivery', () => {
             '   ',
             'not-a-date',
             '2026-02-31',
+            '2026-02-31T12:00:00Z',
             '2026-13-01',
+            '09/20/2026',
+            '2026/09/20',
             0,
             20260920,
             true,

@@ -12,46 +12,44 @@ export interface OrderListEstimatedDeliveryFields {
     delivery_info?: { estimated_delivery_time?: OptionalEstimatedDelivery } | null;
 }
 
-const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
+/** Calendar YYYY-MM-DD at the start of a date or ISO datetime. */
+const LEADING_CALENDAR_DATE = /^(\d{4})-(\d{2})-(\d{2})(?:$|[T\s])/;
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-function parseEstimatedDeliveryDate(raw: unknown): Date | null {
+function parseCalendarDateParts(raw: unknown): { year: number; month: number; day: number } | null {
     if (typeof raw !== 'string') return null;
     const trimmed = raw.trim();
     if (!trimmed) return null;
 
-    const dateOnly = DATE_ONLY.exec(trimmed);
-    if (dateOnly) {
-        const year = Number(dateOnly[1]);
-        const month = Number(dateOnly[2]);
-        const day = Number(dateOnly[3]);
-        const parsed = new Date(year, month - 1, day);
-        if (
-            parsed.getFullYear() !== year ||
-            parsed.getMonth() !== month - 1 ||
-            parsed.getDate() !== day
-        ) {
-            return null;
-        }
-        return parsed;
-    }
+    const match = LEADING_CALENDAR_DATE.exec(trimmed);
+    if (!match) return null;
 
-    const parsed = new Date(trimmed);
-    if (Number.isNaN(parsed.getTime())) return null;
-    return parsed;
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    const parsed = new Date(year, month - 1, day);
+    if (
+        parsed.getFullYear() !== year ||
+        parsed.getMonth() !== month - 1 ||
+        parsed.getDate() !== day
+    ) {
+        return null;
+    }
+    return { year, month, day };
 }
 
-function formatDateLabel(date: Date): string {
-    return `${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+function formatDateLabel(parts: { year: number; month: number; day: number }): string {
+    return `${parts.day} ${MONTHS[parts.month - 1]} ${parts.year}`;
 }
 
 /**
  * Date label from top-level `estimated_delivery` only.
- * Absent / null / blank / non-string / unparseable → do not show.
+ * Uses the calendar YYYY-MM-DD in the payload — never a timezone-shifted Date.
+ * Absent / null / blank / non-string / unparseable / overflow → do not show.
  */
 export function formatVisibleEstimatedDelivery(value: unknown): string | null {
-    const date = parseEstimatedDeliveryDate(value);
-    return date ? formatDateLabel(date) : null;
+    const parts = parseCalendarDateParts(value);
+    return parts ? formatDateLabel(parts) : null;
 }
 
 /**
