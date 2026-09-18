@@ -1,15 +1,20 @@
 'use client';
 import toast from '@/lib/toast';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useSyncExternalStore } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { ArrowLeft, MapPin, CreditCard, CheckCircle } from 'lucide-react';
 import { apiService, getErrorMessage } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import styles from './Checkout.module.css';
-import PhoneVerification from '@/app/components/auth/PhoneVerification';
 import FulfillmentSlotPicker from '@/app/components/FulfillmentSlotPicker';
+
+const PhoneVerification = dynamic(
+    () => import('@/app/components/auth/PhoneVerification'),
+    { ssr: false }
+);
 import { FulfillmentSlot, formatSlotWindow } from '@/lib/fulfillmentSlots';
 import {
     CheckoutLineItem,
@@ -77,6 +82,11 @@ export default function CheckoutPage() {
     // We need to fetch cart to display summary or at least total
 
     const [cartItems, setCartItems] = useState<CheckoutLineItem[]>([]);
+    const isDummyPreview = useSyncExternalStore(
+        () => () => {},
+        () => isLocalDummyCheckoutPreview(window.location.hostname, window.location.search),
+        () => false
+    );
 
     useEffect(() => {
         const checkAuth = () => {
@@ -338,16 +348,18 @@ export default function CheckoutPage() {
 
     return (
         <div className={styles.container}>
-            {/* Phone Verification Modal */}
-            <PhoneVerification
-                isOpen={showVerification}
-                onClose={() => setShowVerification(false)}
-                initialPhone={userPhone}
-                onVerified={() => {
-                    setIsPhoneVerified(true);
-                    checkUserVerification(); // re-fetch to be sure or just set state
-                }}
-            />
+            {/* Phone Verification Modal — skipped on loopback dummy preview (no Firebase / no live API). */}
+            {!isDummyPreview && (
+                <PhoneVerification
+                    isOpen={showVerification}
+                    onClose={() => setShowVerification(false)}
+                    initialPhone={userPhone}
+                    onVerified={() => {
+                        setIsPhoneVerified(true);
+                        checkUserVerification(); // re-fetch to be sure or just set state
+                    }}
+                />
+            )}
 
             <header className={styles.header}>
                 <Button variant="outline" onClick={handleBack}>
