@@ -12,11 +12,16 @@ import { WishlistIcon } from '@/app/components/WishlistIcon';
 import AddToCartButton from '@/app/components/AddToCartButton';
 import { ProductCard } from '@/app/components/ProductCard';
 import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
+import {
+    formatVisibleShortDescription,
+    type OptionalShortDescription,
+} from '@/lib/productShortDescription';
 import styles from './ProductDetail.module.css';
 
 interface Product {
     id: number;
     name: string;
+    short_description?: OptionalShortDescription;
     description: string;
     price: number; // Selling Price
     mrp: number;   // Original Price / MRP
@@ -142,8 +147,7 @@ function ProductDetail() {
         ? product.savings
         : (hasDiscount ? (product.mrp - product.price) : 0);
 
-
-
+    const visibleShortDescription = formatVisibleShortDescription(product.short_description);
 
     return (
         <div className={styles.container}>
@@ -179,6 +183,9 @@ function ProductDetail() {
 
             <div className={styles.details}>
                 <h1 className={styles.title}>{product.name}</h1>
+                {visibleShortDescription ? (
+                    <p className={styles.shortDescription}>{visibleShortDescription}</p>
+                ) : null}
 
                 {retailerStatus && !retailerStatus.offersDelivery && !retailerStatus.offersPickup && (
                     <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-xs font-bold animate-pulse flex items-center gap-2">
