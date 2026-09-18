@@ -15,6 +15,7 @@ import { WishlistIcon } from '@/app/components/WishlistIcon';
 import { ProductImage } from '@/app/components/ProductImage';
 import { useCartContext } from '@/context/CartContext';
 import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
+import { visibleCartLinePackSize, type OptionalCartLinePackSize } from '@/lib/cartLinePackSize';
 import styles from './Cart.module.css';
 
 interface CartItem {
@@ -27,6 +28,8 @@ interface CartItem {
     stock_quantity: number;
     minimum_order_quantity: number;
     maximum_order_quantity: number | null;
+    /** Optional; missing/blank invents nothing. Brand is OE-329 — do not retouch. */
+    pack_size?: OptionalCartLinePackSize;
 }
 
 const CartItemRow = ({ item, updateQuantity, removeItem, toggleWishlist, isWishlisted }: {
@@ -77,6 +80,7 @@ const CartItemRow = ({ item, updateQuantity, removeItem, toggleWishlist, isWishl
     const isMinViolation = item.quantity < item.minimum_order_quantity;
     const isMaxViolation = item.maximum_order_quantity ? item.quantity > item.maximum_order_quantity : false;
     const isStockMaxReached = item.quantity >= item.stock_quantity;
+    const packSize = visibleCartLinePackSize(item);
 
     return (
         <div className={styles.cartItem}>
@@ -89,6 +93,7 @@ const CartItemRow = ({ item, updateQuantity, removeItem, toggleWishlist, isWishl
             </div>
             <div className={styles.itemInfo}>
                 <h3>{item.product_name}</h3>
+                {packSize ? <p className={styles.packSize}>{packSize}</p> : null}
                 <p className={styles.price}>₹{item.product_price}</p>
 
                 {isMinViolation && (
@@ -186,7 +191,8 @@ export default function CartPage() {
                     product_price: item.product_price,
                     stock_quantity: item.stock_quantity,
                     minimum_order_quantity: item.minimum_order_quantity || 1,
-                    maximum_order_quantity: item.maximum_order_quantity
+                    maximum_order_quantity: item.maximum_order_quantity,
+                    pack_size: item.pack_size ?? null,
                 })));
                 setTotalAmount(parseFloat(cartData.discounted_total || cartData.total_amount));
                 if (cartData.total_savings > 0) {
@@ -228,7 +234,8 @@ export default function CartPage() {
                                 product_image: product.images?.[0]?.image || product.image || '',
                                 stock_quantity: product.stock_quantity || 100,
                                 minimum_order_quantity: product.minimum_order_quantity || 1,
-                                maximum_order_quantity: product.maximum_order_quantity
+                                maximum_order_quantity: product.maximum_order_quantity,
+                                pack_size: product.pack_size ?? null,
                             } as CartItem;
                         } catch (e) {
                             console.error(`Failed to fetch product ${pid}`, e);
