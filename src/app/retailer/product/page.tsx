@@ -12,6 +12,7 @@ import { WishlistIcon } from '@/app/components/WishlistIcon';
 import AddToCartButton from '@/app/components/AddToCartButton';
 import { ProductCard } from '@/app/components/ProductCard';
 import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
+import { FlashSaleCountdown } from '@/app/components/FlashSaleCountdown';
 import styles from './ProductDetail.module.css';
 
 interface Product {
@@ -31,6 +32,7 @@ interface Product {
     discount_percentage?: number;
     track_inventory: boolean;
     offers?: any[]; // flexible for now
+    flash_sale_ends_at?: string | null;
     group_variants?: {
         id: number;
         name: string;
@@ -43,6 +45,7 @@ interface Product {
         maximum_order_quantity?: number | null;
         track_inventory?: boolean;
         stock_quantity?: number;
+        flash_sale_ends_at?: string | null;
     }[];
 }
 
@@ -201,6 +204,8 @@ function ProductDetail() {
                     )}
                 </div>
 
+                <FlashSaleCountdown endsAt={product.flash_sale_ends_at} />
+
                 {/* Offers Section - ONLY render if real offers exist */}
                 {product.offers && product.offers.length > 0 && (
                     <div className={styles.offerSection}>
@@ -243,6 +248,7 @@ function ProductDetail() {
                                     maximum_order_quantity: variant.maximum_order_quantity,
                                     track_inventory: variant.track_inventory ?? true,
                                     stock_quantity: variant.stock_quantity ?? 0,
+                                    flash_sale_ends_at: variant.flash_sale_ends_at,
                                 };
                                 return (
                                     <div key={variant.id} style={{ minWidth: '150px', flexShrink: 0 }}>
