@@ -8,6 +8,7 @@ import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { ProductCard } from '@/app/components/ProductCard';
 import { useWishlist } from '@/hooks/useWishlist';
+import { visibleSearchProductBrandName } from '@/lib/searchProductBrandName';
 import styles from './Products.module.css';
 
 interface Product {
@@ -20,6 +21,7 @@ interface Product {
     category_name?: string;
     stock_quantity: number;
     unit?: string;
+    brand_name?: string | null;
     minimum_order_quantity: number;
     maximum_order_quantity: number | null;
 }
@@ -243,23 +245,32 @@ function AllProducts() {
                     </div>
                 ) : (
                     <>
-                        {products.map(product => (
-                            <ProductCard
-                                key={product.id}
-                                product={{
-                                    ...product,
-                                    price: Number(product.price),
-                                    mrp: Number(product.mrp)
-                                }}
-                                isWishlisted={isWishlisted(product.id)}
-                                onToggleWishlist={(e: React.MouseEvent) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    toggleWishlist(product.id);
-                                }}
-                                onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
-                            />
-                        ))}
+                        {products.map(product => {
+                            const searchBrand = search
+                                ? visibleSearchProductBrandName(product)
+                                : null;
+                            return (
+                                <div key={product.id} className={styles.searchResult}>
+                                    <ProductCard
+                                        product={{
+                                            ...product,
+                                            price: Number(product.price),
+                                            mrp: Number(product.mrp)
+                                        }}
+                                        isWishlisted={isWishlisted(product.id)}
+                                        onToggleWishlist={(e: React.MouseEvent) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            toggleWishlist(product.id);
+                                        }}
+                                        onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
+                                    />
+                                    {searchBrand ? (
+                                        <p className={styles.searchBrandName}>{searchBrand}</p>
+                                    ) : null}
+                                </div>
+                            );
+                        })}
                     </>
                 )}
             </div>
