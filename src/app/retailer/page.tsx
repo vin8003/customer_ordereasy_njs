@@ -9,6 +9,7 @@ import NotificationDropdown from '@/app/components/NotificationDropdown';
 import { useNotification } from '@/context/NotificationContext';
 import { ShoppingBag, Search, MapPin, ChevronRight, Copy, Star, Heart, Bell, Gem } from 'lucide-react';
 import { apiService } from '@/services/api';
+import { visibleSellerPhone } from '@/lib/sellerPhone';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useCartContext } from '@/context/CartContext';
 import { WishlistIcon } from '@/app/components/WishlistIcon';
@@ -303,6 +304,8 @@ function RetailerHome() {
     }
     if (!retailer) return <div className="p-8 text-center">Retailer not found</div>;
 
+    const sellerPhone = visibleSellerPhone(retailer);
+
     return (
         <div className={styles.container}>
             {/* Header */}
@@ -362,6 +365,11 @@ function RetailerHome() {
                     <div className={styles.storeAddress}>
                         {retailer?.address_line1 || `${retailer?.city || ''}, ${retailer?.state || ''}`}
                     </div>
+                    {sellerPhone ? (
+                        <a href={`tel:${sellerPhone}`} className={styles.storePhone}>
+                            {sellerPhone}
+                        </a>
+                    ) : null}
 
                     {retailer && !retailer.is_currently_open && (
                         <div className="mt-1.5">
