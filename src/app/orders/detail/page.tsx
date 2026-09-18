@@ -16,6 +16,7 @@ import { getOrderStatusDisplay } from '@/lib/orderFulfillmentDisplay';
 import { isDeliveryFailure } from '@/lib/deliveryFailure';
 import { OrderStatusLogEntry } from '@/lib/orderStatusTimeline';
 import { getVisibleOrderFeeLines, type OptionalMoneyAmount } from '@/lib/orderFeeLines';
+import { getVisibleOrderTaxAmount } from '@/lib/orderTaxAmount';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -40,6 +41,7 @@ interface OrderDetail {
     delivery_fee?: OptionalMoneyAmount;
     discount_amount?: OptionalMoneyAmount;
     discount_from_points: string;
+    tax_amount?: OptionalMoneyAmount;
     total_amount: string;
     refund_amount?: string;
     net_amount?: string;
@@ -286,6 +288,7 @@ function OrderDetails() {
 
     const deliveryFailed = isDeliveryFailure(order);
     const statusDisplay = getOrderStatusDisplay(order.status, order.delivery_mode, deliveryFailed);
+    const taxAmount = getVisibleOrderTaxAmount(order);
 
     return (
         <div className={styles.container}>
@@ -610,6 +613,12 @@ function OrderDetails() {
                                 </span>
                             </div>
                         ))}
+                        {taxAmount ? (
+                            <div className={styles.mutedFeeRow}>
+                                <span>Tax</span>
+                                <span>₹{taxAmount}</span>
+                            </div>
+                        ) : null}
                         {parseFloat(order.discount_from_points) > 0 && (
                             <div className={styles.summaryRow}>
                                 <span>Points Redeemed</span>
