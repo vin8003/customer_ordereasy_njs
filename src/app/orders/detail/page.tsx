@@ -18,6 +18,7 @@ import { OrderStatusLogEntry } from '@/lib/orderStatusTimeline';
 import { getVisibleOrderFeeLines, type OptionalMoneyAmount } from '@/lib/orderFeeLines';
 import { getVisibleOrderNotes } from '@/lib/orderNotes';
 import { getVisibleLoyaltyPoints, type OptionalLoyaltyPoints } from '@/lib/orderLoyaltyPoints';
+import { getVisiblePointsEarned, type OptionalPointsEarned } from '@/lib/orderPointsEarned';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -43,6 +44,7 @@ interface OrderDetail {
     discount_amount?: OptionalMoneyAmount;
     discount_from_points: string;
     loyalty_points?: OptionalLoyaltyPoints;
+    points_earned?: OptionalPointsEarned;
     total_amount: string;
     refund_amount?: string;
     net_amount?: string;
@@ -292,6 +294,7 @@ function OrderDetails() {
     const statusDisplay = getOrderStatusDisplay(order.status, order.delivery_mode, deliveryFailed);
     const visibleNotes = getVisibleOrderNotes(order);
     const visibleLoyaltyPoints = getVisibleLoyaltyPoints(order);
+    const visiblePointsEarned = getVisiblePointsEarned(order);
 
     return (
         <div className={styles.container}>
@@ -626,6 +629,10 @@ function OrderDetails() {
                             <div className={styles.mutedFeeRow}>
                                 <span>Loyalty Points</span>
                                 <span>{visibleLoyaltyPoints}</span>
+                        {visiblePointsEarned && (
+                            <div className={styles.mutedFeeRow}>
+                                <span>Points Earned</span>
+                                <span>{visiblePointsEarned}</span>
                             </div>
                         )}
                         <div className={styles.totalRow}>
