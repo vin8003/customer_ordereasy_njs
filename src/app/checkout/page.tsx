@@ -11,6 +11,7 @@ import styles from './Checkout.module.css';
 import PhoneVerification from '@/app/components/auth/PhoneVerification';
 import FulfillmentSlotPicker from '@/app/components/FulfillmentSlotPicker';
 import { FulfillmentSlot, formatSlotWindow } from '@/lib/fulfillmentSlots';
+import { getVisibleDeliveryInstructions } from '@/lib/checkoutDeliveryInstructions';
 
 interface Address {
     id: number;
@@ -71,6 +72,9 @@ export default function CheckoutPage() {
     // We need to fetch cart to display summary or at least total
 
     const [cartItems, setCartItems] = useState<any[]>([]);
+    const [deliveryInstructions, setDeliveryInstructions] = useState<string | null | undefined>(
+        undefined
+    );
 
     useEffect(() => {
         const checkAuth = () => {
@@ -211,6 +215,7 @@ export default function CheckoutPage() {
                 setOfferSavings(offerSavings);
                 setHasActiveOffers(offerSavings > 0);
                 setCartItems(data.items || []);
+                setDeliveryInstructions(data.delivery_instructions);
             } catch (e) {
                 console.error(e);
             }
@@ -314,6 +319,10 @@ export default function CheckoutPage() {
             setIsLoading(false);
         }
     };
+
+    const visibleDeliveryInstructions = getVisibleDeliveryInstructions({
+        delivery_instructions: deliveryInstructions,
+    });
 
     return (
         <div className={styles.container}>
@@ -557,6 +566,16 @@ export default function CheckoutPage() {
                         <span className="font-bold text-lg">Total Amount</span>
                         <span className="font-bold text-xl text-primary">₹{(cartTotal + deliveryFee - discountFromPoints).toFixed(2)}</span>
                     </div>
+                    {visibleDeliveryInstructions && (
+                        <div className="mt-3 pt-3 border-t border-gray-100">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
+                                Delivery instructions
+                            </p>
+                            <p className="text-sm text-gray-500 whitespace-pre-wrap">
+                                {visibleDeliveryInstructions}
+                            </p>
+                        </div>
+                    )}
                 </section>
             </main>
 
