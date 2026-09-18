@@ -169,6 +169,13 @@
     white-space: nowrap;
 }
 
+.compareAtPrice {
+    font-size: 0.725rem;
+    color: var(--text-muted);
+    text-decoration: line-through;
+    white-space: nowrap;
+}
+
 .price {
     font-size: 0.95rem;
     font-weight: 700;
