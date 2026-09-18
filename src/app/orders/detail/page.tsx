@@ -16,6 +16,7 @@ import { getOrderStatusDisplay } from '@/lib/orderFulfillmentDisplay';
 import { isDeliveryFailure } from '@/lib/deliveryFailure';
 import { OrderStatusLogEntry } from '@/lib/orderStatusTimeline';
 import { getVisibleOrderFeeLines, type OptionalMoneyAmount } from '@/lib/orderFeeLines';
+import { formatVisibleDeliverySlotLabel } from '@/lib/deliverySlotLabel';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -47,6 +48,7 @@ interface OrderDetail {
     retailer?: number;
     fulfillment_slot_start?: string | null;
     fulfillment_slot_end?: string | null;
+    delivery_slot_label?: string | null;
     pickup_code?: string | null;
     pickup_ready_at?: string | null;
     packed_at?: string | null;
@@ -174,6 +176,7 @@ function OrderDetails() {
     };
 
     const fulfillmentWindow = order ? formatFulfillmentWindow(order.fulfillment_slot_start, order.fulfillment_slot_end) : null;
+    const deliverySlotLabel = order ? formatVisibleDeliverySlotLabel(order.delivery_slot_label) : null;
 
     const handleApproval = async (action: 'accept' | 'reject') => {
         if (!order) return;
@@ -647,6 +650,12 @@ function OrderDetails() {
                         {order.delivery_mode === 'delivery' && (
                             <div className="text-sm">
                                 <span className="text-gray-500">Address:</span> <p className="mt-1">{order.delivery_address_text}</p>
+                            </div>
+                        )}
+                        {deliverySlotLabel && (
+                            <div className="text-sm">
+                                <span className="text-gray-500">Slot:</span>{' '}
+                                <span className="font-medium">{deliverySlotLabel}</span>
                             </div>
                         )}
                         {fulfillmentWindow && (
