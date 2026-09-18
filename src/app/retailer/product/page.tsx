@@ -12,12 +12,14 @@ import { WishlistIcon } from '@/app/components/WishlistIcon';
 import AddToCartButton from '@/app/components/AddToCartButton';
 import { ProductCard } from '@/app/components/ProductCard';
 import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
+import { formatVisibleHsnCode, type OptionalHsnCode } from '@/lib/productHsnCode';
 import styles from './ProductDetail.module.css';
 
 interface Product {
     id: number;
     name: string;
     description: string;
+    hsn_code?: OptionalHsnCode;
     price: number; // Selling Price
     mrp: number;   // Original Price / MRP
     stock_quantity: number;
@@ -142,6 +144,8 @@ function ProductDetail() {
         ? product.savings
         : (hasDiscount ? (product.mrp - product.price) : 0);
 
+    const visibleHsnCode = formatVisibleHsnCode(product.hsn_code);
+
 
 
 
@@ -219,6 +223,10 @@ function ProductDetail() {
                 <p className={styles.description}>
                     {product.description || "No description available for this product."}
                 </p>
+
+                {visibleHsnCode ? (
+                    <p className={styles.hsnCode}>HSN {visibleHsnCode}</p>
+                ) : null}
 
                 {product.product_group && (
                     <div className={styles.groupTag}>
