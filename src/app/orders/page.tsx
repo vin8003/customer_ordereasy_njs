@@ -9,6 +9,7 @@ import { EmptyState } from '@/app/components/EmptyState';
 import OrderFulfillmentHighlight from '@/app/components/OrderFulfillmentHighlight';
 import { formatFulfillmentWindow, OrderDeliveryInfo } from '@/lib/fulfillmentSlots';
 import { getOrderStatusDisplay, needsFulfillmentDetailEnrichment } from '@/lib/orderFulfillmentDisplay';
+import { visibleOrderListStoreName } from '@/lib/orderListStoreName';
 import styles from './Orders.module.css';
 
 interface Order {
@@ -19,6 +20,7 @@ interface Order {
     created_at: string;
     delivery_mode?: string;
     retailer_name?: string;
+    store_name?: string | null;
     fulfillment_slot_start?: string | null;
     fulfillment_slot_end?: string | null;
     pickup_code?: string | null;
@@ -118,7 +120,9 @@ export default function OrdersPage() {
                     />
                 )}
 
-                {orders.map(order => (
+                {orders.map(order => {
+                    const storeName = visibleOrderListStoreName(order);
+                    return (
                     <div
                         key={order.id}
                         className={`${styles.card} cursor-pointer active:scale-[0.98] transition-all`}
@@ -127,6 +131,7 @@ export default function OrdersPage() {
                         <div className={styles.cardHeader}>
                             <div>
                                 <h3 className="font-bold text-gray-800">Order #{order.order_number}</h3>
+                                {storeName ? <p className={styles.storeName}>{storeName}</p> : null}
                                 <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
                                     <Clock size={12} />
                                     {new Date(order.created_at).toLocaleDateString()}
@@ -198,7 +203,8 @@ export default function OrdersPage() {
                             </span>
                         </div>
                     </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );
