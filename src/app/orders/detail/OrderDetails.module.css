@@ -146,6 +146,19 @@
     color: var(--text-secondary);
 }
 
+.couponRow {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.couponCode {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
 .totalRow {
     display: flex;
     justify-content: space-between;

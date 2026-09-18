@@ -16,6 +16,7 @@ import { getOrderStatusDisplay } from '@/lib/orderFulfillmentDisplay';
 import { isDeliveryFailure } from '@/lib/deliveryFailure';
 import { OrderStatusLogEntry } from '@/lib/orderStatusTimeline';
 import { getVisibleOrderFeeLines, type OptionalMoneyAmount } from '@/lib/orderFeeLines';
+import { visibleOrderCouponCode } from '@/lib/orderCouponCode';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -39,6 +40,7 @@ interface OrderDetail {
     subtotal: string;
     delivery_fee?: OptionalMoneyAmount;
     discount_amount?: OptionalMoneyAmount;
+    coupon_code?: string | null;
     discount_from_points: string;
     total_amount: string;
     refund_amount?: string;
@@ -285,6 +287,7 @@ function OrderDetails() {
     if (!order) return <div className="p-20 text-center">Order not found.</div>;
 
     const deliveryFailed = isDeliveryFailure(order);
+    const couponCode = visibleOrderCouponCode(order);
     const statusDisplay = getOrderStatusDisplay(order.status, order.delivery_mode, deliveryFailed);
 
     return (
@@ -610,6 +613,12 @@ function OrderDetails() {
                                 </span>
                             </div>
                         ))}
+                        {couponCode ? (
+                            <div className={styles.couponRow}>
+                                <span>Coupon</span>
+                                <span className={styles.couponCode}>{couponCode}</span>
+                            </div>
+                        ) : null}
                         {parseFloat(order.discount_from_points) > 0 && (
                             <div className={styles.summaryRow}>
                                 <span>Points Redeemed</span>
