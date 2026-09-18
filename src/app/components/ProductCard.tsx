@@ -5,12 +5,14 @@ import { ProductImage } from '@/app/components/ProductImage';
 import { WishlistIcon } from '@/app/components/WishlistIcon';
 import styles from './ProductCard.module.css';
 import AddToCartButton from '@/app/components/AddToCartButton';
+import { visibleProductCompareAtPrice } from '@/lib/productCompareAtPrice';
 
 interface Product {
     id: number;
     name: string;
     price: number;
     mrp: number;
+    compare_at_price?: string | number | null;
     image: string;
     unit?: string;
     active_offer_text?: string;
@@ -38,6 +40,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
     const price = Number(product.price);
     const mrp = Number(product.mrp);
+    const compareAtPrice = visibleProductCompareAtPrice(product);
     const discount = mrp > price
         ? Math.round(((mrp - price) / mrp) * 100)
         : 0;
@@ -84,6 +87,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                             <>
                                 <span className={styles.separator}>|</span>
                                 <span className={styles.mrp}>₹{product.mrp} M.R.P.</span>
+                            </>
+                        )}
+                        {compareAtPrice != null && (
+                            <>
+                                <span className={styles.separator}>|</span>
+                                <span className={styles.compareAtPrice}>₹{compareAtPrice}</span>
                             </>
                         )}
                     </div>
