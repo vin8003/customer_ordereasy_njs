@@ -11,6 +11,7 @@ import { Input } from '@/app/components/ui/Input';
 import MapPicker from '@/app/components/MapPicker';
 import { AVAILABLE_CITIES } from '@/config/cities';
 import { getPersistedLocation, matchAvailableCity } from '@/utils/location';
+import { hasValidAddressCoordinates } from '@/utils/addressLocation';
 import styles from './AddressForm.module.css';
 
 export default function NewAddressPage() {
@@ -67,6 +68,10 @@ export default function NewAddressPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!hasValidAddressCoordinates(formData.latitude, formData.longitude)) {
+            toast.error('Please set your location on the map before saving.');
+            return;
+        }
         setIsLoading(true);
         try {
             await apiService.addAddress(formData);

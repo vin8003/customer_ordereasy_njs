@@ -8,6 +8,12 @@ import { useWishlist } from '@/hooks/useWishlist';
 import { useRouter } from 'next/navigation';
 import styles from '../retailer/RetailerHome.module.css';
 import { Product } from '../retailer/page';
+
+type GridProduct = Product & {
+    discounted_price?: number | string;
+    original_price?: number | string;
+    quantity?: number;
+};
 import { EmptyState } from '@/app/components/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Package } from 'lucide-react';
@@ -110,14 +116,15 @@ export default function InfiniteProductGrid({ retailerId, offersDelivery, offers
             </div>
 
             <div className={styles.productsGrid}>
-                {products.map((product) => (
+                {products.map((product: GridProduct) => (
                     <ProductCard
                         key={`infinite-${product.id}`}
                         product={{
                             ...product,
-                            price: Number(product.price || (product as any).discounted_price),
-                            mrp: Number(product.mrp || (product as any).original_price || product.price),
-                            track_inventory: (product as any).track_inventory ?? true,
+                            price: Number(product.price || product.discounted_price),
+                            mrp: Number(product.mrp || product.original_price || product.price),
+                            track_inventory: product.track_inventory ?? true,
+                            stock_quantity: product.quantity ?? product.stock_quantity ?? 0,
                             minimum_order_quantity: product.minimum_order_quantity || 1,
                             maximum_order_quantity: product.maximum_order_quantity || null
                         }}

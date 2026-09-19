@@ -4,8 +4,8 @@ import toast from '@/lib/toast';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
-import { ArrowLeft, MapPin, CreditCard, CheckCircle } from 'lucide-react';
-import { apiService, getErrorMessage } from '@/services/api';
+import { ArrowLeft, CheckCircle } from 'lucide-react';
+import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import styles from './Checkout.module.css';
 import PhoneVerification from '@/app/components/auth/PhoneVerification';
@@ -17,6 +17,20 @@ interface Address {
     state: string;
     pincode: string;
     address_type: string;
+}
+
+interface RewardConfig {
+    conversion_rate: string;
+    max_reward_usage_percent: string;
+    max_reward_usage_flat: string;
+}
+
+interface CheckoutCartItem {
+    id?: number;
+    product?: number;
+    product_name: string;
+    product_price: number | string;
+    quantity: number;
 }
 
 export default function CheckoutPage() {
@@ -46,11 +60,13 @@ export default function CheckoutPage() {
         acceptsUpi: boolean;
         isCurrentlyOpen?: boolean;
         nextOpenTime?: string;
+        retailerUpiId?: string;
+        shopName?: string;
     } | null>(null);
 
     // Rewards
     const [useRewardPoints, setUseRewardPoints] = useState(false);
-    const [rewardConfig, setRewardConfig] = useState<any>(null);
+    const [rewardConfig, setRewardConfig] = useState<RewardConfig | null>(null);
     const [userRewardPoints, setUserRewardPoints] = useState(0);
     const [discountFromPoints, setDiscountFromPoints] = useState(0);
 
@@ -63,7 +79,7 @@ export default function CheckoutPage() {
     // For now assuming we are checking out the current active cart
     // We need to fetch cart to display summary or at least total
 
-    const [cartItems, setCartItems] = useState<any[]>([]);
+    const [cartItems, setCartItems] = useState<CheckoutCartItem[]>([]);
 
     useEffect(() => {
         const checkAuth = () => {
@@ -112,7 +128,9 @@ export default function CheckoutPage() {
                     acceptsCod: data.accepts_cod,
                     acceptsUpi: data.accepts_upi,
                     isCurrentlyOpen: data.is_currently_open,
-                    nextOpenTime: data.next_open_time
+                    nextOpenTime: data.next_open_time,
+                    retailerUpiId: data.upi_id || data.retailer_upi_id || '',
+                    shopName: data.shop_name || '',
                 });
 
                 // Set default delivery mode based on what's offered
@@ -158,10 +176,12 @@ export default function CheckoutPage() {
     const checkUserVerification = async () => {
         try {
             const profile = await apiService.fetchUserProfile();
-            // Assuming profile has is_phone_verified. UserProfileSerializer in backend usually has it.
-            // If not, we might need to rely on what was returned.
-            setIsPhoneVerified(!!profile.is_phone_verified);
+            const verified = !!profile.is_phone_verified;
+            setIsPhoneVerified(verified);
             setUserPhone(profile.phone_number || '');
+            if (!verified) {
+                setShowVerification(true);
+            }
         } catch (e) {
             console.error("Error fetching profile", e);
         }
@@ -191,7 +211,6 @@ export default function CheckoutPage() {
                 // Use discounted_total if available, else total_amount
                 // However, logic below (calculateDiscount) uses cartTotal to calculate potential points usage.
                 // We should track Subtotal and Discount separately to be accurate.
-                const subTotal = parseFloat(data.subtotal || data.total_amount);
                 const discTotal = parseFloat(data.discounted_total || data.total_amount);
                 const offerSavings = parseFloat(data.total_savings || '0');
 
@@ -252,10 +271,21 @@ export default function CheckoutPage() {
         setDiscountFromPoints(redeemable);
     };
 
+    const payableTotal = cartTotal + deliveryFee - discountFromPoints;
+    const minOrder = retailerSettings?.minimumOrderAmount ?? 0;
+    const belowMinOrder = minOrder > 0 && cartTotal < minOrder;
+    const minOrderGap = belowMinOrder ? minOrder - cartTotal : 0;
+    const upiAvailable = retailerSettings?.acceptsUpi !== false && !!retailerSettings?.retailerUpiId;
+
     const handlePlaceOrder = async () => {
         // Verification Check
         if (!isPhoneVerified) {
             setShowVerification(true);
+            return;
+        }
+
+        if (belowMinOrder) {
+            toast.error(`Minimum order amount is ₹${minOrder.toFixed(0)}. Add ₹${minOrderGap.toFixed(0)} more.`);
             return;
         }
 
@@ -330,6 +360,11 @@ export default function CheckoutPage() {
                 {/* Delivery Mode Toggle */}
                 <section className={styles.section}>
                     <h2 className={styles.sectionTitle}>Order Type</h2>
+                    <p className="text-xs text-gray-500 mb-3 leading-relaxed">
+                        {deliveryMode === 'delivery'
+                            ? 'Home delivery to your address. Delivery fee may apply. Orders placed when the shop is closed are processed when it opens.'
+                            : 'Collect from the shop. No delivery fee. Pay cash at pickup if you chose Cash on Pickup.'}
+                    </p>
                     {retailerSettings && !retailerSettings.offersDelivery && !retailerSettings.offersPickup ? (
                         <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium flex items-center gap-3">
                             <span className="text-xl">🚫</span>
@@ -414,14 +449,19 @@ export default function CheckoutPage() {
                                     {['cod', 'cash_pickup'].includes(paymentMethod) && <CheckCircle size={18} className="text-blue-600" />}
                                 </div>
                             )}
-                            {retailerSettings?.acceptsUpi !== false && (
+                            {upiAvailable && (
                                 <div
                                     className={`${styles.paymentCard} ${paymentMethod === 'upi' ? styles.selected : ''}`}
                                     onClick={() => setPaymentMethod('upi')}
                                 >
-                                    <span className="font-bold">UPI / One Click</span>
+                                    <span className="font-bold">UPI (Paytm, PhonePe, GPay)</span>
                                     {paymentMethod === 'upi' && <CheckCircle size={18} className="text-blue-600" />}
                                 </div>
+                            )}
+                            {retailerSettings?.acceptsUpi !== false && !retailerSettings?.retailerUpiId && (
+                                <p className="text-xs text-amber-600 mt-2">
+                                    UPI is not available — this shop has not added a UPI ID yet.
+                                </p>
                             )}
                         </div>
                     )}
@@ -465,7 +505,7 @@ export default function CheckoutPage() {
                 <section className={styles.section}>
                     <h2 className={styles.sectionTitle}>Order Items</h2>
                     <div className={styles.itemsList}>
-                        {cartItems.map((item: any) => (
+                        {cartItems.map((item) => (
                             <div key={item.id || item.product} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
                                 <div className="flex gap-2">
                                     <span className="text-gray-500 font-medium">{item.quantity}x</span>
@@ -497,6 +537,15 @@ export default function CheckoutPage() {
                             </Button>
                         </div>
                     )}
+                    {minOrder > 0 && (
+                        <div className={`${styles.summaryRow} ${belowMinOrder ? 'text-orange-600 font-medium' : ''}`}>
+                            <span>Min. order</span>
+                            <span>
+                                ₹{minOrder.toFixed(0)}
+                                {belowMinOrder ? ` (add ₹${minOrderGap.toFixed(0)} more)` : ''}
+                            </span>
+                        </div>
+                    )}
                     {deliveryFee > 0 && (
                         <div className={styles.summaryRow}>
                             <span>Delivery Fee</span>
@@ -511,7 +560,7 @@ export default function CheckoutPage() {
                     )}
                     <div className="flex justify-between items-center py-2 border-t border-dashed border-gray-200 mt-2">
                         <span className="font-bold text-lg">Total Amount</span>
-                        <span className="font-bold text-xl text-primary">₹{(cartTotal + deliveryFee - discountFromPoints).toFixed(2)}</span>
+                        <span className="font-bold text-xl text-primary">₹{payableTotal.toFixed(2)}</span>
                     </div>
                 </section>
             </main>
@@ -521,8 +570,11 @@ export default function CheckoutPage() {
                     fullWidth 
                     onClick={handlePlaceOrder} 
                     isLoading={isLoading}
+                    disabled={belowMinOrder}
                 >
-                    Place Order (₹{(cartTotal + deliveryFee - discountFromPoints).toFixed(2)})
+                    {belowMinOrder
+                        ? `Add ₹${minOrderGap.toFixed(0)} more to order`
+                        : `Place Order (₹${payableTotal.toFixed(2)})`}
                 </Button>
             </div>
         </div>

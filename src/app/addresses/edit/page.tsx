@@ -12,6 +12,7 @@ import { Input } from '@/app/components/ui/Input';
 import MapPicker from '@/app/components/MapPicker';
 import { AVAILABLE_CITIES } from '@/config/cities';
 import { matchAvailableCity } from '@/utils/location';
+import { hasValidAddressCoordinates } from '@/utils/addressLocation';
 import styles from '../Addresses.module.css';
 
 function EditAddressForm() {
@@ -86,6 +87,11 @@ function EditAddressForm() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!addressId) return;
+        if (!hasValidAddressCoordinates(formData.latitude, formData.longitude)) {
+            toast.error('Please set your location on the map before saving.');
+            return;
+        }
+        setIsSaving(true);
         try {
             await apiService.updateAddress(parseInt(addressId), formData);
             handleBack();
