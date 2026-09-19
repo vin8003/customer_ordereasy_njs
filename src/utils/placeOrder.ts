@@ -7,41 +7,36 @@ export interface PlaceOrderInput {
     useRewardPoints: boolean;
 }
 
+/** Matches the historical `orders/place/` request body used before Phases 1–3. */
 export interface PlaceOrderPayload {
-    retailer_id: number;
+    retailer_id: string;
     delivery_mode: 'delivery' | 'pickup';
     payment_mode: string;
     special_instructions: string;
     use_reward_points: boolean;
-    address_id?: number;
+    address_id: number | null;
 }
 
-export function resolvePlaceOrderPaymentMode(
-    paymentMethod: string,
-    deliveryMode: 'delivery' | 'pickup'
-): string {
-    if (paymentMethod === 'upi') return 'upi';
-    if (deliveryMode === 'pickup') return 'cash_pickup';
-    return 'cash';
+export function resolvePlaceOrderPaymentMode(paymentMethod: string): string {
+    return paymentMethod === 'cod' ? 'cash' : paymentMethod;
 }
 
 export function buildPlaceOrderPayload(input: PlaceOrderInput): PlaceOrderPayload {
-    const retailerId = parseInt(input.retailerId, 10);
-    if (!Number.isFinite(retailerId) || retailerId <= 0) {
+    const retailerId = input.retailerId.trim();
+    if (!retailerId || !/^\d+$/.test(retailerId)) {
         throw new Error('Invalid retailer session. Please return to the shop and try again.');
     }
 
-    const payload: PlaceOrderPayload = {
-        retailer_id: retailerId,
-        delivery_mode: input.deliveryMode,
-        payment_mode: resolvePlaceOrderPaymentMode(input.paymentMethod, input.deliveryMode),
-        special_instructions: input.specialInstructions.trim(),
-        use_reward_points: Boolean(input.useRewardPoints),
-    };
-
-    if (input.deliveryMode === 'delivery' && input.selectedAddressId) {
-        payload.address_id = input.selectedAddressId;
+    if (input.deliveryMode === 'delivery' && !input.selectedAddressId) {
+        throw new Error('Please select a delivery address.');
     }
 
-    return payload;
+    return {
+        retailer_id: retailerId,
+        address_id: input.deliveryMode === 'delivery' ? input.selectedAddressId : null,
+        delivery_mode: input.deliveryMode,
+        payment_mode: resolvePlaceOrderPaymentMode(input.paymentMethod),
+        special_instructions: input.specialInstructions,
+        use_reward_points: input.useRewardPoints,
+    };
 }

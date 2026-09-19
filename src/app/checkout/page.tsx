@@ -356,8 +356,17 @@ export default function CheckoutPage() {
             // Navigate to Order Details
             const isUPI = paymentMethod === 'upi';
             router.push(`/orders/detail?id=${response.id}${isUPI ? '&payment=true' : ''}`);
-        } catch (error) {
-            console.error('placeOrder failed', error);
+        } catch (error: unknown) {
+            const responseData =
+                error &&
+                typeof error === 'object' &&
+                'response' in error &&
+                error.response &&
+                typeof error.response === 'object' &&
+                'data' in error.response
+                    ? error.response.data
+                    : undefined;
+            console.error('placeOrder failed', { error, responseData, orderPayload });
         } finally {
             setIsLoading(false);
         }
@@ -443,7 +452,12 @@ export default function CheckoutPage() {
                             </div>
                         ) : (
                             <div className={styles.addressList}>
-                                {addresses.map(addr => (
+                                {addresses.map(addr => {
+                                    const hasMapLocation = hasValidAddressCoordinates(
+                                        parseCoordinate(addr.latitude),
+                                        parseCoordinate(addr.longitude)
+                                    );
+                                    return (
                                     <div
                                         key={addr.id}
                                         className={`${styles.addressCard} ${selectedAddressId === addr.id ? styles.selected : ''}`}
@@ -458,10 +472,26 @@ export default function CheckoutPage() {
                                                 <p className={styles.addressText}>
                                                     {addr.address_line1}, {addr.city}, {addr.pincode}
                                                 </p>
+                                                {!hasMapLocation && (
+                                                    <p className="text-xs text-amber-600 mt-1">
+                                                        Map location required —{' '}
+                                                        <button
+                                                            type="button"
+                                                            className="underline font-medium"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                router.push(`/addresses/edit?id=${addr.id}`);
+                                                            }}
+                                                        >
+                                                            update address
+                                                        </button>
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
-                                ))}
+                                    );
+                                })}
                                 <Button variant="outline" className="text-primary text-sm mt-2" onClick={() => router.push('/addresses/create')}>
                                     + Add New Address
                                 </Button>
