@@ -3,11 +3,10 @@ import toast from '@/lib/toast';
 import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
-import { ShoppingBag, Trash2, Plus, Minus, ArrowLeft, Tag, Award } from 'lucide-react';
-import { apiService, getErrorMessage } from '@/services/api';
+import { ShoppingBag, Trash2, Plus, Minus, ArrowLeft } from 'lucide-react';
+import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { EmptyState } from '@/app/components/EmptyState';
 import { useWishlist } from '@/hooks/useWishlist';
@@ -15,6 +14,7 @@ import { WishlistIcon } from '@/app/components/WishlistIcon';
 import { ProductImage } from '@/app/components/ProductImage';
 import { useCartContext } from '@/context/CartContext';
 import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
+import { resolveStockQuantity } from '@/utils/productStock';
 import styles from './Cart.module.css';
 
 interface CartItem {
@@ -37,10 +37,6 @@ const CartItemRow = ({ item, updateQuantity, removeItem, toggleWishlist, isWishl
     isWishlisted: (id: number) => boolean;
 }) => {
     const [localQty, setLocalQty] = useState(item.quantity.toString());
-
-    useEffect(() => {
-        setLocalQty(item.quantity.toString());
-    }, [item.quantity]);
 
     const handleBlur = () => {
         let qty = parseInt(localQty);
@@ -158,8 +154,15 @@ export default function CartPage() {
     const { loadWishlist, toggleWishlist, isWishlisted } = useWishlist();
 
     const [savings, setSavings] = useState(0);
-    const [appliedOffers, setAppliedOffers] = useState<any[]>([]);
+    const [appliedOffers, setAppliedOffers] = useState<{ name?: string; discount?: number }[]>([]);
     const [potentialPoints, setPotentialPoints] = useState(0);
+    const [fetchError, setFetchError] = useState('');
+    const [retailerSettings, setRetailerSettings] = useState<{
+        minimumOrderAmount: number;
+        deliveryCharge: number;
+        freeDeliveryThreshold: number;
+    } | null>(null);
+    const isGuest = !apiService.isAuthenticated();
 
     useEffect(() => {
         const storedId = localStorage.getItem('current_retailer_id');
@@ -176,10 +179,32 @@ export default function CartPage() {
 
     const fetchData = async (rId: string) => {
         setIsLoading(true);
+        setFetchError('');
         try {
+            try {
+                const retailerData = await apiService.getRetailerDetails(rId);
+                setRetailerSettings({
+                    minimumOrderAmount: parseFloat(retailerData.minimum_order_amount || '0'),
+                    deliveryCharge: parseFloat(retailerData.delivery_charge || '0'),
+                    freeDeliveryThreshold: parseFloat(retailerData.free_delivery_threshold || '0'),
+                });
+            } catch (e) {
+                console.error('Failed to load retailer settings for cart', e);
+            }
+
             if (apiService.isAuthenticated()) {
                 const cartData = await apiService.getCart(rId);
-                setCartItems((cartData.items || []).map((item: any) => ({
+                setCartItems((cartData.items || []).map((item: {
+                    id: number;
+                    product: number;
+                    product_name: string;
+                    product_price: number;
+                    quantity: number;
+                    stock_quantity: number;
+                    minimum_order_quantity?: number;
+                    maximum_order_quantity?: number | null;
+                    product_image?: string;
+                }) => ({
                     ...item,
                     product_id: item.product,
                     product_name: item.product_name,
@@ -226,7 +251,10 @@ export default function CartPage() {
                                 product_price: price, // Use the resolved price
                                 quantity: qty,
                                 product_image: product.images?.[0]?.image || product.image || '',
-                                stock_quantity: product.stock_quantity || 100,
+                                stock_quantity: resolveStockQuantity(
+                                    product.quantity ?? product.stock_quantity,
+                                    product.track_inventory
+                                ),
                                 minimum_order_quantity: product.minimum_order_quantity || 1,
                                 maximum_order_quantity: product.maximum_order_quantity
                             } as CartItem;
@@ -248,10 +276,15 @@ export default function CartPage() {
             }
         } catch (error) {
             console.error("Failed to fetch data", error);
+            setFetchError('Could not load your cart. Please check your connection and try again.');
         } finally {
             setIsLoading(false);
         }
     };
+
+    const minOrder = retailerSettings?.minimumOrderAmount ?? 0;
+    const belowMinOrder = minOrder > 0 && totalAmount < minOrder;
+    const minOrderGap = belowMinOrder ? minOrder - totalAmount : 0;
 
     const updateQuantity = async (itemId: number, newQty: number) => {
         const item = cartItems.find(i => i.id === itemId);
@@ -303,6 +336,20 @@ export default function CartPage() {
 
     if (isLoading) return <LoadingScreen message="Loading Cart..." />;
 
+    if (fetchError) {
+        return (
+            <div className="flex min-h-[80vh] items-center justify-center p-6">
+                <EmptyState
+                    icon={ShoppingBag}
+                    title="Could not load cart"
+                    description={fetchError}
+                    actionLabel="Retry"
+                    onAction={() => retailerId && fetchData(retailerId)}
+                />
+            </div>
+        );
+    }
+
     if (cartItems.length === 0) {
         return (
             <div className="flex min-h-[80vh] items-center justify-center p-6">
@@ -331,7 +378,7 @@ export default function CartPage() {
             <div className={styles.cartList}>
                 {cartItems.map(item => (
                     <CartItemRow
-                        key={item.id}
+                        key={`${item.id}-${item.quantity}`}
                         item={item}
                         updateQuantity={updateQuantity}
                         removeItem={removeItem}
@@ -361,18 +408,52 @@ export default function CartPage() {
                         <span>-₹{Number(savings).toFixed(2)}</span>
                     </div>
                 )}
+                {appliedOffers.length > 0 && (
+                    <p className="text-xs text-green-700 mb-2">
+                        {appliedOffers.length} offer{appliedOffers.length > 1 ? 's' : ''} applied
+                    </p>
+                )}
+                {potentialPoints > 0 && (
+                    <p className="text-xs text-indigo-600 mb-2">
+                        Earn up to {potentialPoints} shop points on this order
+                    </p>
+                )}
+                {retailerSettings && minOrder > 0 && (
+                    <p className={`text-xs mb-2 ${belowMinOrder ? 'text-orange-600 font-medium' : 'text-gray-500'}`}>
+                        Min. order ₹{minOrder.toFixed(0)}
+                        {belowMinOrder ? ` — add ₹${minOrderGap.toFixed(0)} more` : ''}
+                    </p>
+                )}
+                {retailerSettings && retailerSettings.deliveryCharge > 0 && (
+                    <p className="text-xs text-gray-500 mb-2">
+                        Delivery from ₹{retailerSettings.deliveryCharge.toFixed(0)}
+                        {retailerSettings.freeDeliveryThreshold > 0
+                            ? ` · free above ₹${retailerSettings.freeDeliveryThreshold.toFixed(0)}`
+                            : ''}
+                    </p>
+                )}
                 <div className={styles.totalRow}>
                     <span className="font-bold">Total Amount</span>
                     <span className={`${styles.totalValue} font-bold`}>₹{totalAmount.toFixed(2)}</span>
                 </div>
+                {isGuest && (
+                    <p className="text-xs text-center text-gray-500 mb-2">
+                        You will need to log in to complete checkout. Your cart will be saved.
+                    </p>
+                )}
                 <Button
                     fullWidth
+                    disabled={belowMinOrder}
                     onClick={() => {
-                        if (cartItems.length === 0) return;
+                        if (cartItems.length === 0 || belowMinOrder) return;
+                        if (isGuest) {
+                            router.push(`/login?redirect=${encodeURIComponent('/checkout')}`);
+                            return;
+                        }
                         router.push('/checkout');
                     }}
                 >
-                    Proceed to Checkout
+                    {isGuest ? 'Login to checkout' : belowMinOrder ? `Add ₹${minOrderGap.toFixed(0)} more` : 'Proceed to Checkout'}
                 </Button>
             </div>
         </div>

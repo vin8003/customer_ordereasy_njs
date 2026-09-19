@@ -4,12 +4,15 @@ import React, { useState } from 'react';
 import toast from '@/lib/toast';
 import { ShoppingCart } from 'lucide-react';
 import { useCartContext } from '@/context/CartContext';
+import { isOutOfStock } from '@/utils/productStock';
 import styles from './AddToCartButton.module.css';
 
 interface AddToCartButtonProps {
     productId: number;
     minimumOrderQuantity?: number;
     maximumOrderQuantity?: number | null;
+    trackInventory?: boolean;
+    stockQuantity?: number;
     retailerId?: string;
     retailerName?: string;
     offersDelivery?: boolean;
@@ -25,14 +28,19 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
     retailerName,
     offersDelivery = true, // Default to true if not provided
     offersPickup = true,
+    trackInventory,
+    stockQuantity,
     className
 }) => {
     const { getItemQuantity, addToCart, updateQuantity } = useCartContext();
     const quantity = getItemQuantity(productId);
     const [loading, setLoading] = useState(false);
+    const outOfStock = isOutOfStock(trackInventory, stockQuantity);
 
     const handleAdd = async (e: React.MouseEvent) => {
         e.stopPropagation();
+
+        if (outOfStock) return;
 
         // Retailer Validation
         const currentRetailerId = localStorage.getItem('current_retailer_id');
@@ -98,6 +106,17 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
     };
 
     if (quantity === 0) {
+        if (outOfStock) {
+            return (
+                <button
+                    className={`${styles.addButton} ${styles.disabled} ${className || ''}`}
+                    disabled
+                    type="button"
+                >
+                    OUT
+                </button>
+            );
+        }
         return (
             <button
                 className={`${styles.addButton} ${className || ''} ${(!offersDelivery && !offersPickup) ? styles.disabled : ''}`}
