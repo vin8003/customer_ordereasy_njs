@@ -9,6 +9,8 @@ import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import styles from './Checkout.module.css';
 import PhoneVerification from '@/app/components/auth/PhoneVerification';
+import { hasValidAddressCoordinates, parseCoordinate } from '@/utils/addressLocation';
+import { buildPlaceOrderPayload } from '@/utils/placeOrder';
 
 interface Address {
     id: number;
@@ -17,6 +19,8 @@ interface Address {
     state: string;
     pincode: string;
     address_type: string;
+    latitude?: number | string | null;
+    longitude?: number | string | null;
 }
 
 interface RewardConfig {
@@ -277,6 +281,12 @@ export default function CheckoutPage() {
     const minOrderGap = belowMinOrder ? minOrder - cartTotal : 0;
     const upiAvailable = retailerSettings?.acceptsUpi !== false && !!retailerSettings?.retailerUpiId;
 
+    useEffect(() => {
+        if (!upiAvailable && paymentMethod === 'upi') {
+            setPaymentMethod(deliveryMode === 'delivery' ? 'cod' : 'cash_pickup');
+        }
+    }, [upiAvailable, paymentMethod, deliveryMode]);
+
     const handlePlaceOrder = async () => {
         // Verification Check
         if (!isPhoneVerified) {
@@ -294,30 +304,60 @@ export default function CheckoutPage() {
             return;
         }
 
+        if (deliveryMode === 'delivery' && selectedAddressId) {
+            const selectedAddress = addresses.find((addr) => addr.id === selectedAddressId);
+            if (
+                selectedAddress &&
+                !hasValidAddressCoordinates(
+                    parseCoordinate(selectedAddress.latitude),
+                    parseCoordinate(selectedAddress.longitude)
+                )
+            ) {
+                toast.error('Please update your delivery address with a map location before ordering.');
+                return;
+            }
+        }
+
+        if (cartItems.length === 0) {
+            toast.error('Your cart is empty. Add items before placing an order.');
+            return;
+        }
+
+        if (paymentMethod === 'upi' && !upiAvailable) {
+            toast.error('UPI is not available for this shop. Please choose Cash on Delivery or Pickup.');
+            return;
+        }
+
         const storedId = localStorage.getItem('current_retailer_id');
         if (!storedId) {
             toast.error("Retailer session lost. Please go back to cart.");
             return;
         }
 
+        let orderPayload;
+        try {
+            orderPayload = buildPlaceOrderPayload({
+                retailerId: storedId,
+                deliveryMode,
+                selectedAddressId,
+                paymentMethod,
+                specialInstructions,
+                useRewardPoints,
+            });
+        } catch (payloadError) {
+            toast.error(payloadError instanceof Error ? payloadError.message : 'Could not prepare order.');
+            return;
+        }
+
         setIsLoading(true);
         try {
-            const response = await apiService.placeOrder({
-                retailer_id: storedId,
-                address_id: deliveryMode === 'delivery' ? selectedAddressId : null,
-                delivery_mode: deliveryMode,
-                payment_mode: paymentMethod === 'cod' ? 'cash' : paymentMethod,
-                special_instructions: specialInstructions,
-                use_reward_points: useRewardPoints
-            });
+            const response = await apiService.placeOrder(orderPayload);
 
             // Navigate to Order Details
             const isUPI = paymentMethod === 'upi';
             router.push(`/orders/detail?id=${response.id}${isUPI ? '&payment=true' : ''}`);
         } catch (error) {
-            console.error(error);
-            // global error interceptor handles this
-            console.error(error);
+            console.error('placeOrder failed', error);
         } finally {
             setIsLoading(false);
         }
