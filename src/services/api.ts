@@ -407,9 +407,13 @@ export const apiService = {
     },
 
     getRetailerProducts: async (retailerId: string | number, params?: any) => {
-        const key = `products_${retailerId}_${JSON.stringify(params || {})}`;
+        const requestParams = {
+            ...params,
+            in_stock: params?.in_stock ?? 'true',
+        };
+        const key = `products_${retailerId}_${JSON.stringify(requestParams || {})}`;
         return fetchWithDedupe(key, async () => {
-            const response = await api.get(`products/retailer/${retailerId}/`, { params });
+            const response = await api.get(`products/retailer/${retailerId}/`, { params: requestParams });
             return response.data;
         });
     },
@@ -417,7 +421,9 @@ export const apiService = {
     searchProducts: async (retailerId: string | number, query: string) => {
         const key = `search_${retailerId}_${query}`;
         return fetchWithDedupe(key, async () => {
-            const response = await api.get(`products/retailer/${retailerId}/search/`, { params: { search: query } });
+            const response = await api.get(`products/retailer/${retailerId}/search/`, {
+                params: { search: query, in_stock: 'true' },
+            });
             return response.data;
         });
     },

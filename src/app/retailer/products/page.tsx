@@ -8,6 +8,7 @@ import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { ProductCard } from '@/app/components/ProductCard';
 import { useWishlist } from '@/hooks/useWishlist';
+import { processRetailerProductList } from '@/utils/productStock';
 import styles from './Products.module.css';
 
 interface Product {
@@ -46,7 +47,6 @@ function AllProducts() {
     // Filter states
     const [minPrice, setMinPrice] = useState('');
     const [maxPrice, setMaxPrice] = useState('');
-    const [inStock, setInStock] = useState(false);
     const [selectedCategoryId, setSelectedCategoryId] = useState(categoryId || '');
 
     const { wishlistIds, loadWishlist, toggleWishlist, isWishlisted } = useWishlist();
@@ -63,12 +63,12 @@ function AllProducts() {
         if (retailerId) {
             loadData(currentPage);
         }
-    }, [retailerId, search, minPrice, maxPrice, inStock, selectedCategoryId, currentPage, loadWishlist]);
+    }, [retailerId, search, minPrice, maxPrice, selectedCategoryId, currentPage, loadWishlist]);
 
     // Reset page to 1 if search/filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [search, minPrice, maxPrice, inStock, selectedCategoryId]);
+    }, [search, minPrice, maxPrice, selectedCategoryId]);
 
     // Helper to flatten nested categories
     const flattenCategories = (categories: any[], parentName = ''): any[] => {
@@ -100,7 +100,6 @@ function AllProducts() {
                 category: selectedCategoryId || undefined,
                 min_price: minPrice || undefined,
                 max_price: maxPrice || undefined,
-                in_stock: inStock ? 'true' : undefined,
                 offer_id: offerId || undefined,
                 page: page
             };
@@ -121,18 +120,7 @@ function AllProducts() {
                 setTotalPages(1);
             }
 
-            const processedProducts = rawProducts.map((p: any) => ({
-                ...p,
-                price: p.discounted_price || p.price,
-                mrp: p.original_price || p.price,
-                image: p.image || p.image_url || '',
-                stock_quantity: p.quantity || 0,
-                unit: p.unit || 'Unit',
-                minimum_order_quantity: p.minimum_order_quantity || 1,
-                maximum_order_quantity: p.maximum_order_quantity
-            }));
-
-            setProducts(processedProducts);
+            setProducts(processRetailerProductList(rawProducts));
         } catch (error) {
             console.error("Failed to load products", error);
         } finally {
@@ -209,23 +197,11 @@ function AllProducts() {
                             </select>
                         </div>
 
-                        <div className={styles.filterSection}>
-                            <label className={styles.checkboxLabel}>
-                                <input
-                                    type="checkbox"
-                                    checked={inStock}
-                                    onChange={(e) => setInStock(e.target.checked)}
-                                />
-                                <span>In Stock Only</span>
-                            </label>
-                        </div>
-
                         <Button
                             className={styles.resetBtn}
                             onClick={() => {
                                 setMinPrice('');
                                 setMaxPrice('');
-                                setInStock(false);
                                 setSelectedCategoryId('');
                             }}
                         >

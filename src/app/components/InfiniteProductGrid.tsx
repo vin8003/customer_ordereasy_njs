@@ -8,6 +8,7 @@ import { useWishlist } from '@/hooks/useWishlist';
 import { useRouter } from 'next/navigation';
 import styles from '../retailer/RetailerHome.module.css';
 import { Product } from '../retailer/page';
+import { filterInStockProducts, mapRetailerProduct } from '@/utils/productStock';
 
 type GridProduct = Product & {
     discounted_price?: number | string;
@@ -63,9 +64,13 @@ export default function InfiniteProductGrid({ retailerId, offersDelivery, offers
                 setHasMore(false);
             }
 
+            const inStockProducts = filterInStockProducts(
+                newProducts.map((product) => mapRetailerProduct(product as Record<string, unknown>))
+            ) as Product[];
+
             setProducts(prev => {
                 const existingIds = new Set(prev.map(p => p.id));
-                const uniqueNewProducts = newProducts.filter(p => !existingIds.has(p.id));
+                const uniqueNewProducts = inStockProducts.filter(p => !existingIds.has(p.id));
                 return [...prev, ...uniqueNewProducts];
             });
 

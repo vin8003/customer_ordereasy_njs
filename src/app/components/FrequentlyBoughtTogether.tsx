@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { apiService } from '@/services/api';
 import { ProductCard } from '@/app/components/ProductCard';
 import { useWishlist } from '@/hooks/useWishlist';
+import { filterInStockProducts } from '@/utils/productStock';
 import styles from './FrequentlyBoughtTogether.module.css';
 
 interface RawProduct {
@@ -73,7 +74,7 @@ export function FrequentlyBoughtTogether({
             .then((data) => {
                 if (cancelled) return;
                 const rows = Array.isArray(data) ? data : [];
-                setProducts(rows.map(mapProduct));
+                setProducts(filterInStockProducts(rows.map(mapProduct)));
             })
             .catch((err) => {
                 console.error('Failed to load frequently bought together', err);
