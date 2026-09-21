@@ -5,6 +5,7 @@ import { ProductImage } from '@/app/components/ProductImage';
 import { WishlistIcon } from '@/app/components/WishlistIcon';
 import styles from './ProductCard.module.css';
 import AddToCartButton from '@/app/components/AddToCartButton';
+import { isOutOfStock } from '@/utils/productStock';
 
 interface Product {
     id: number;
@@ -15,6 +16,7 @@ interface Product {
     unit?: string;
     active_offer_text?: string;
     track_inventory?: boolean;
+    stock_quantity?: number;
     minimum_order_quantity?: number;
     maximum_order_quantity?: number | null;
 }
@@ -41,6 +43,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     const discount = mrp > price
         ? Math.round(((mrp - price) / mrp) * 100)
         : 0;
+    const outOfStock = isOutOfStock(product.track_inventory, product.stock_quantity);
 
     return (
         <div className={styles.card} onClick={onClick}>
@@ -52,7 +55,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                                 {product.active_offer_text}
                             </div>
                         )}
-                        {discount > 0 && (
+                        {outOfStock && (
+                            <div className={styles.discountBadge} style={{ backgroundColor: 'var(--error-color)' }}>
+                                Out of stock
+                            </div>
+                        )}
+                        {!outOfStock && discount > 0 && (
                             <div className={styles.discountBadge}>{discount}% OFF</div>
                         )}
                     </div>
@@ -92,6 +100,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                             productId={product.id}
                             minimumOrderQuantity={product.minimum_order_quantity}
                             maximumOrderQuantity={product.maximum_order_quantity}
+                            trackInventory={product.track_inventory}
+                            stockQuantity={product.stock_quantity}
                             offersDelivery={offersDelivery}
                             offersPickup={offersPickup}
                         />

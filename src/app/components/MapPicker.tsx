@@ -3,8 +3,9 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
-import { MapPin } from 'lucide-react';
+import { MapPin, Navigation } from 'lucide-react';
 import { requestCurrentPosition, reverseGeocode } from '@/utils/location';
+import { hasValidAddressCoordinates } from '@/utils/addressLocation';
 
 const containerStyle = {
     width: '100%',
@@ -13,11 +14,10 @@ const containerStyle = {
 };
 
 const defaultCenter = {
-    lat: 12.9716, // Bangalore default
+    lat: 12.9716,
     lng: 77.5946
 };
 
-// Libraries to load - must be stable array ref
 const libraries: ("places")[] = ["places"];
 
 interface MapPickerProps {
@@ -34,41 +34,36 @@ export default function MapPicker({ onLocationSelect, initialLat, initialLng }: 
     });
 
     const [map, setMap] = useState<google.maps.Map | null>(null);
-    const [markerPos, setMarkerPos] = useState(defaultCenter);
+    const hasInitialCoords = hasValidAddressCoordinates(initialLat ?? 0, initialLng ?? 0);
+    const [markerPos, setMarkerPos] = useState(
+        hasInitialCoords
+            ? { lat: initialLat!, lng: initialLng! }
+            : defaultCenter
+    );
+    const [isLocating, setIsLocating] = useState(false);
+    const [locationSet, setLocationSet] = useState(hasInitialCoords);
     const locationFetchedRef = useRef(false);
 
     const applyGeocode = useCallback(async (lat: number, lng: number) => {
         const geo = await reverseGeocode(lat, lng);
         if (geo) {
+            setLocationSet(true);
             onLocationSelect(lat, lng, geo.address, geo.pincode, geo.city, geo.state);
         }
     }, [onLocationSelect]);
 
     useEffect(() => {
-        if (initialLat && initialLng) {
-            setMarkerPos({ lat: initialLat, lng: initialLng });
-            return;
+        if (hasInitialCoords) {
+            setMarkerPos({ lat: initialLat!, lng: initialLng! });
+            setLocationSet(true);
         }
-        if (isLoaded && !locationFetchedRef.current) {
-            locationFetchedRef.current = true;
-            const fetchLocation = async () => {
-                const pos = await requestCurrentPosition();
-                if (!pos) {
-                    console.warn('Geolocation failed or denied.');
-                    return;
-                }
-                setMarkerPos({ lat: pos.lat, lng: pos.lng });
-                await applyGeocode(pos.lat, pos.lng);
-            };
-            fetchLocation();
-        }
-    }, [initialLat, initialLng, isLoaded, applyGeocode]);
+    }, [initialLat, initialLng, hasInitialCoords]);
 
     const onLoad = useCallback(function callback(map: google.maps.Map) {
         setMap(map);
     }, []);
 
-    const onUnmount = useCallback(function callback(map: google.maps.Map) {
+    const onUnmount = useCallback(function callback() {
         setMap(null);
     }, []);
 
@@ -81,10 +76,38 @@ export default function MapPicker({ onLocationSelect, initialLat, initialLng }: 
         await applyGeocode(lat, lng);
     };
 
+    const handleUseMyLocation = async () => {
+        if (locationFetchedRef.current && isLocating) return;
+        locationFetchedRef.current = true;
+        setIsLocating(true);
+        try {
+            const pos = await requestCurrentPosition();
+            if (!pos) {
+                return;
+            }
+            const next = { lat: pos.lat, lng: pos.lng };
+            setMarkerPos(next);
+            map?.panTo(next);
+            await applyGeocode(pos.lat, pos.lng);
+        } finally {
+            setIsLocating(false);
+        }
+    };
+
     if (!isLoaded) return <LoadingScreen message="Loading Map..." />;
 
     return (
         <div className="relative w-full">
+            <button
+                type="button"
+                onClick={handleUseMyLocation}
+                disabled={isLocating}
+                className="mb-3 w-full flex items-center justify-center gap-2 rounded-xl border-2 border-blue-600 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 disabled:opacity-60"
+            >
+                <Navigation size={18} />
+                {isLocating ? 'Getting your location…' : 'Use my location'}
+            </button>
+
             <GoogleMap
                 mapContainerStyle={containerStyle}
                 center={markerPos}
@@ -101,7 +124,11 @@ export default function MapPicker({ onLocationSelect, initialLat, initialLng }: 
             </GoogleMap>
             <div className="mt-2 text-xs text-center text-gray-500 flex items-center justify-center gap-1">
                 <MapPin size={12} />
-                <span>Location is set from GPS. Tap the map only if you want to adjust the pin.</span>
+                <span>
+                    {locationSet
+                        ? 'Tap the map to adjust the pin if needed.'
+                        : 'Use the button above or tap the map to set your delivery location.'}
+                </span>
             </div>
         </div>
     );

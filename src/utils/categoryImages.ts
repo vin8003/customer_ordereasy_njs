@@ -1,4 +1,5 @@
 import { apiService } from '@/services/api';
+import { filterInStockProducts } from '@/utils/productStock';
 
 const categoryImageCache = new Map<string, string | null>();
 const pendingRequests = new Map<string, Promise<string | null>>();
@@ -44,7 +45,9 @@ export async function getCategoryIcon(
                 page: 1
             });
 
-            const products = Array.isArray(prodData) ? prodData : (prodData.results || []);
+            const products = filterInStockProducts(
+                Array.isArray(prodData) ? prodData : (prodData.results || [])
+            );
 
             if (products.length > 0 && products[0].image) {
                 const imageUrl = products[0].image;

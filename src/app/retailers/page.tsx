@@ -23,6 +23,10 @@ interface Retailer {
     shop_image?: string;
     distance?: number;
     categories?: any[];
+    is_currently_open?: boolean;
+    minimum_order_amount?: number | string;
+    delivery_charge?: number | string;
+    free_delivery_threshold?: number | string;
 }
 
 interface OperationalCity {
@@ -115,6 +119,12 @@ export default function RetailersPage() {
         if (!path) return null;
         if (path.startsWith('http')) return path;
         return `https://api.ordereasy.win${path.startsWith('/') ? '' : '/'}${path}`;
+    };
+
+    const formatCurrency = (value?: number | string) => {
+        const num = Number(value);
+        if (!Number.isFinite(num) || num <= 0) return null;
+        return `₹${num % 1 === 0 ? num : num.toFixed(2)}`;
     };
 
     const locationLabel = selectedCity
@@ -261,16 +271,43 @@ export default function RetailersPage() {
                                             {retailer.average_rating}
                                         </span>
                                     </div>
+
                                 </div>
                             </div>
 
                             <div className={styles.cardFooter}>
                                 <div className={styles.tags}>
+                                    {retailer.is_currently_open !== undefined && (
+                                        <span
+                                            className={
+                                                retailer.is_currently_open
+                                                    ? styles.chipOpen
+                                                    : styles.chipClosed
+                                            }
+                                        >
+                                            {retailer.is_currently_open ? 'Open' : 'Closed'}
+                                        </span>
+                                    )}
+                                    {formatCurrency(retailer.minimum_order_amount) && (
+                                        <span className={styles.chipInfo}>
+                                            Min {formatCurrency(retailer.minimum_order_amount)}
+                                        </span>
+                                    )}
+                                    {formatCurrency(retailer.delivery_charge) && (
+                                        <span className={styles.chipInfo}>
+                                            Delivery {formatCurrency(retailer.delivery_charge)}
+                                        </span>
+                                    )}
+                                    {formatCurrency(retailer.free_delivery_threshold) && (
+                                        <span className={styles.chipInfo}>
+                                            Free above {formatCurrency(retailer.free_delivery_threshold)}
+                                        </span>
+                                    )}
                                     {retailer.offers_delivery && (
-                                        <span className={styles.tagDelivery}>● Delivery</span>
+                                        <span className={styles.tagDelivery}>Delivery</span>
                                     )}
                                     {retailer.offers_pickup && (
-                                        <span className={styles.tagPickup}>● Pickup</span>
+                                        <span className={styles.tagPickup}>Pickup</span>
                                     )}
                                 </div>
 

@@ -17,6 +17,7 @@ import { ProductCard } from '@/app/components/ProductCard';
 import { Button } from '@/app/components/ui/Button';
 import LazyProductLane from '@/app/components/LazyProductLane';
 import InfiniteProductGrid from '@/app/components/InfiniteProductGrid';
+import { processRetailerProductList } from '@/utils/productStock';
 import styles from './RetailerHome.module.css';
 
 interface Category {
@@ -105,7 +106,7 @@ function RetailerHome() {
         setIsSearching(true);
         try {
             const data = await apiService.searchProducts(retailerId, searchQuery);
-            setSuggestions(Array.isArray(data) ? data : data.results || []);
+            setSuggestions(processRetailerProductList(data));
             setShowSuggestions(true);
         } catch (error) {
             console.error("Suggestions fetch failed", error);
@@ -222,17 +223,7 @@ function RetailerHome() {
             const offersData = await apiService.getRetailerOffers(retailerId);
             setOffers(Array.isArray(offersData) ? offersData : offersData.results || []);
 
-            const processProducts = (data: any) => (Array.isArray(data) ? data : data.results || []).map((p: any) => ({
-                ...p,
-                price: p.discounted_price || p.price,
-                mrp: p.original_price || p.price,
-                image: p.image || '',
-                stock_quantity: p.quantity || 0,
-                track_inventory: p.track_inventory ?? true,
-                unit: p.unit || 'Unit',
-                minimum_order_quantity: p.minimum_order_quantity || 1,
-                maximum_order_quantity: p.maximum_order_quantity
-            }));
+            const processProducts = (data: unknown) => processRetailerProductList(data);
 
             setFeaturedProducts(processProducts(featData));
             setBestSellingProducts(processProducts(bestData)); // Removed .data || []

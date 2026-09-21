@@ -132,7 +132,7 @@ function VerifyEmailContent() {
                     <div className={styles.logoWrapper}>
                         <Image
                             src="/assets/images/logo.png"
-                            alt="BuyEasy Logo"
+                            alt="Order Easy Logo"
                             width={100}
                             height={100}
                             className={styles.logo}

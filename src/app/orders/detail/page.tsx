@@ -8,6 +8,7 @@ import { ArrowLeft, MapPin, Phone, Package, Clock, CheckCircle, XCircle, AlertCi
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { ProductImage } from '@/app/components/ProductImage';
+import UpiPaymentPanel from '@/app/components/UpiPaymentPanel';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -59,6 +60,7 @@ function OrderDetails() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const orderId = searchParams.get('id');
+    const autoOpenUpi = searchParams.get('payment') === 'true';
 
     const [order, setOrder] = useState<OrderDetail | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -290,37 +292,14 @@ function OrderDetails() {
                                     Please complete the payment and provide the transaction ID below.
                                 </p>
 
-                                <div className={styles.qrContainer}>
-                                    {order.retailer_upi_qr_code ? (
-                                        <div className={styles.qrWrapper}>
-                                            <img 
-                                                src={order.retailer_upi_qr_code} 
-                                                alt="UPI QR Code" 
-                                                className={styles.qrImage}
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div className="text-sm text-gray-500 italic">No QR Code available</div>
-                                    )}
-                                    
-                                    <div className={styles.upiIdContainer}>
-                                        <span className={styles.upiIdLabel}>UPI ID</span>
-                                        <div className={styles.upiIdValue}>
-                                            {order.retailer_upi_id || "Not Provided"}
-                                        </div>
-                                        <button 
-                                            onClick={() => {
-                                                if (order.retailer_upi_id) {
-                                                    navigator.clipboard.writeText(order.retailer_upi_id);
-                                                    toast.success("UPI ID copied!");
-                                                }
-                                            }}
-                                            className={styles.copyButton}
-                                        >
-                                            Copy UPI ID
-                                        </button>
-                                    </div>
-                                </div>
+                                <UpiPaymentPanel
+                                    retailerUpiId={order.retailer_upi_id}
+                                    retailerName={order.retailer_name}
+                                    orderNumber={order.order_number}
+                                    netAmount={order.net_amount}
+                                    totalAmount={order.total_amount}
+                                    autoOpen={autoOpenUpi}
+                                />
 
                                 <div className={styles.formGroup}>
                                     <label>Transaction ID / Reference Number</label>
