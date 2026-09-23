@@ -5,6 +5,7 @@ import styles from '../retailer/RetailerHome.module.css';
 import { useRouter } from 'next/navigation';
 
 import { Product } from '../retailer/page';
+import { processRetailerProductList } from '@/utils/productStock';
 import { EmptyState } from './EmptyState';
 import { Package } from 'lucide-react';
 
@@ -35,7 +36,7 @@ export default function LazyProductLane({ title, fetchFn, retailerId, offersDeli
                 try {
                     setIsLoading(true);
                     const data = await fetchFn();
-                    setProducts(data);
+                    setProducts(processRetailerProductList(data));
                 } catch (err) {
                     console.error(`Error fetching products for ${title}:`, err);
                     setError('Failed to load products');

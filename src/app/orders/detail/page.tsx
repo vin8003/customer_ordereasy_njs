@@ -2,15 +2,14 @@
 import toast from '@/lib/toast';
 import LoadingScreen from '@/app/components/LoadingScreen';
 
-import React, { useState, useEffect, useMemo, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, MapPin, Phone, Package, Clock, CheckCircle, XCircle, AlertCircle, Star, MessageCircle, Loader2 } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { ProductImage } from '@/app/components/ProductImage';
-import { buildTxnRef, buildUpiIntentUri, formatUpiAmount } from '@/lib/upiIntent';
+import UpiPaymentPanel from '@/app/components/UpiPaymentPanel';
 import { getOrderTaxSummary } from '@/lib/orderTaxSummary';
-import { QRCodeSVG } from 'qrcode.react';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -64,6 +63,7 @@ function OrderDetails() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const orderId = searchParams.get('id');
+    const autoOpenUpi = searchParams.get('payment') === 'true';
 
     const [order, setOrder] = useState<OrderDetail | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -77,20 +77,6 @@ function OrderDetails() {
     const [referenceId, setReferenceId] = useState('');
     const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
     const [isEditingPayment, setIsEditingPayment] = useState(false);
-
-    // Exact-amount UPI QR (OE-277): one txn ref per viewed order, so refreshes keep the same QR.
-    const upiTxnRef = useMemo(() => buildTxnRef(order?.order_number), [order?.order_number]);
-    const upiAmount = formatUpiAmount(order?.total_amount);
-    const upiIntentUri = useMemo(() => {
-        if (!order) return null;
-        return buildUpiIntentUri({
-            upiId: order.retailer_upi_id,
-            shopName: order.retailer_name,
-            amount: order.total_amount,
-            orderNumber: order.order_number,
-            txnRef: upiTxnRef,
-        });
-    }, [order, upiTxnRef]);
 
     useEffect(() => {
         if (orderId) {
@@ -309,61 +295,15 @@ function OrderDetails() {
                                     Please complete the payment and provide the transaction ID below.
                                 </p>
 
-                                <div className={styles.qrContainer}>
-                                    {upiIntentUri ? (
-                                        <>
-                                            <div className={styles.qrWrapper}>
-                                                <QRCodeSVG
-                                                    value={upiIntentUri}
-                                                    size={140}
-                                                    className={styles.qrImage}
-                                                    title={`UPI payment QR for order ${order.order_number}`}
-                                                />
-                                            </div>
-                                            <p className="text-sm text-gray-600 text-center">
-                                                Scan with any UPI app to pay <strong>₹{upiAmount}</strong> for this order.
-                                            </p>
-                                        </>
-                                    ) : order.retailer_upi_qr_code ? (
-                                        /* No UPI ID (or unbuildable intent): fall back to the shop's uploaded QR image. */
-                                        <>
-                                            <div className={styles.qrWrapper}>
-                                                <img
-                                                    src={order.retailer_upi_qr_code}
-                                                    alt="UPI QR Code"
-                                                    className={styles.qrImage}
-                                                />
-                                            </div>
-                                            <p className="text-sm text-gray-600 text-center">
-                                                Scan this shop QR and enter <strong>₹{upiAmount}</strong> manually.
-                                            </p>
-                                        </>
-                                    ) : (
-                                        <div className="text-sm text-gray-500 italic text-center">
-                                            {order.retailer_upi_id
-                                                ? "Exact-amount QR unavailable for this order. Please pay using the UPI ID below."
-                                                : "This shop has not added a UPI ID yet. Please contact the shop to complete payment."}
-                                        </div>
-                                    )}
-                                    
-                                    <div className={styles.upiIdContainer}>
-                                        <span className={styles.upiIdLabel}>UPI ID</span>
-                                        <div className={styles.upiIdValue}>
-                                            {order.retailer_upi_id || "Not Provided"}
-                                        </div>
-                                        <button 
-                                            onClick={() => {
-                                                if (order.retailer_upi_id) {
-                                                    navigator.clipboard.writeText(order.retailer_upi_id);
-                                                    toast.success("UPI ID copied!");
-                                                }
-                                            }}
-                                            className={styles.copyButton}
-                                        >
-                                            Copy UPI ID
-                                        </button>
-                                    </div>
-                                </div>
+                                <UpiPaymentPanel
+                                    retailerUpiId={order.retailer_upi_id}
+                                    retailerName={order.retailer_name}
+                                    orderNumber={order.order_number}
+                                    netAmount={order.net_amount}
+                                    totalAmount={order.total_amount}
+                                    retailerUpiQrCode={order.retailer_upi_qr_code}
+                                    autoOpen={autoOpenUpi}
+                                />
 
                                 <div className={styles.formGroup}>
                                     <label>Transaction ID / Reference Number</label>

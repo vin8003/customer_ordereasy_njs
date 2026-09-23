@@ -215,7 +215,7 @@ function LoginContent() {
                     <div className={styles.logoWrapper}>
                         <Image
                             src="/assets/images/logo.png"
-                            alt="BuyEasy Logo"
+                            alt="Order Easy Logo"
                             width={200}
                             height={200}
                             priority

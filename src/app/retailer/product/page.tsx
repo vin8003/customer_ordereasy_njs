@@ -12,6 +12,7 @@ import { WishlistIcon } from '@/app/components/WishlistIcon';
 import AddToCartButton from '@/app/components/AddToCartButton';
 import { ProductCard } from '@/app/components/ProductCard';
 import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
+import { filterInStockProducts, isOutOfStock } from '@/utils/productStock';
 import styles from './ProductDetail.module.css';
 
 interface Product {
@@ -76,6 +77,12 @@ function ProductDetail() {
             const sellingPrice = Number(data.discounted_price) || Number(data.price);
             const mrp = Number(data.original_price) || Number(data.price); // Fallback to price if original_price missing
 
+            if (isOutOfStock(data.track_inventory ?? true, data.quantity || 0)) {
+                toast.error('This product is out of stock.');
+                router.replace(`/retailer?id=${retailerId}`);
+                return;
+            }
+
             setProduct({
                 ...data,
                 price: sellingPrice,
@@ -86,7 +93,14 @@ function ProductDetail() {
                 maximum_order_quantity: data.maximum_order_quantity,
                 savings: Number(data.savings),
                 discount_percentage: Number(data.discount_percentage),
-                offers: data.offers || [] // Assuming offers might be in response, else empty
+                offers: data.offers || [], // Assuming offers might be in response, else empty
+                group_variants: filterInStockProducts(
+                    (data.group_variants || []).map((variant: NonNullable<Product['group_variants']>[number]) => ({
+                        ...variant,
+                        stock_quantity: variant.stock_quantity ?? 0,
+                        track_inventory: variant.track_inventory ?? true,
+                    }))
+                ),
             });
 
             // Fetch retailer details for online status
@@ -227,11 +241,11 @@ function ProductDetail() {
                 )}
 
                 {/* Pack Sizes (Variant Selector) */}
-                {product.group_variants && product.group_variants.length > 0 && (
+                {product.group_variants && filterInStockProducts(product.group_variants).length > 0 && (
                     <div className={styles.variantSection}>
                         <span className={styles.variantTitle}>Available Pack Sizes</span>
                         <div className={styles.productsGrid}>
-                            {product.group_variants.map(variant => {
+                            {filterInStockProducts(product.group_variants).map(variant => {
                                 const mappedProduct = {
                                     id: variant.id,
                                     name: variant.name,

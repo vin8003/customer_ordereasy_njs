@@ -1,41 +1,79 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import LoadingScreen from '@/app/components/LoadingScreen';
+import { Button } from '@/app/components/ui/Button';
 import { hasConfirmedLocation, requestAndPersistLocation } from '@/utils/location';
+import styles from './WelcomeScreen.module.css';
 
 export default function Home() {
     const router = useRouter();
+    const [checking, setChecking] = useState(true);
+    const [isLocating, setIsLocating] = useState(false);
 
     useEffect(() => {
-        let cancelled = false;
+        if (hasConfirmedLocation()) {
+            router.replace('/retailers');
+            return;
+        }
+        setChecking(false);
+    }, [router]);
 
-        const bootstrap = async () => {
-            // Returning users who already confirmed GPS or a manual city can shop.
-            if (hasConfirmedLocation()) {
-                router.replace('/retailers');
-                return;
-            }
-
-            sessionStorage.setItem('location_prompted', '1');
+    const handleUseLocation = async () => {
+        setIsLocating(true);
+        sessionStorage.setItem('location_prompted', '1');
+        try {
             const loc = await requestAndPersistLocation();
-            if (cancelled) return;
-
             if (loc) {
                 router.replace('/retailers');
                 return;
             }
-
-            // GPS denied/failed: ask the user to pick a city. Do not silently pin Bharatpur.
             router.replace('/city-selection');
-        };
+        } finally {
+            setIsLocating(false);
+        }
+    };
 
-        bootstrap();
-        return () => {
-            cancelled = true;
-        };
-    }, [router]);
+    const handleChooseCity = () => {
+        sessionStorage.setItem('location_prompted', '1');
+        router.push('/city-selection');
+    };
 
-    return <LoadingScreen message="Finding your location..." fullScreen />;
+    if (checking) {
+        return <LoadingScreen message="Loading..." fullScreen />;
+    }
+
+    return (
+        <div className={styles.container}>
+            <div className={styles.logoContainer}>
+                <Image
+                    src="/assets/images/logo.png"
+                    alt="Order Easy"
+                    width={150}
+                    height={150}
+                    className={styles.logo}
+                    priority
+                />
+            </div>
+            <h1 className={styles.title}>Order Easy</h1>
+            <p className={styles.subtitle}>
+                Find local shops near you and order groceries, essentials, and more for delivery or pickup.
+            </p>
+            <div className={styles.buttonGroup}>
+                <Button
+                    fullWidth
+                    onClick={handleUseLocation}
+                    isLoading={isLocating}
+                    className={styles.primaryButton}
+                >
+                    Use my location
+                </Button>
+                <button type="button" onClick={handleChooseCity} className={styles.secondaryButton}>
+                    Choose city manually
+                </button>
+            </div>
+        </div>
+    );
 }

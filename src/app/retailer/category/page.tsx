@@ -8,6 +8,7 @@ import { ArrowLeft, ShoppingBag, Filter, Loader2 } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { ProductCard } from '@/app/components/ProductCard';
+import { processRetailerProductList } from '@/utils/productStock';
 import { useWishlist } from '@/hooks/useWishlist';
 import { getCategoryIcon } from '@/utils/categoryImages';
 import styles from './CategoryProducts.module.css';
@@ -184,16 +185,7 @@ function CategoryProducts() {
                 }
             }
 
-            const processedProducts = rawProducts.map((p: any) => ({
-                ...p,
-                price: p.discounted_price || p.price,
-                mrp: p.original_price || p.price,
-                image: p.image || '',
-                stock_quantity: p.quantity || 0,
-                unit: p.unit || 'Unit',
-                minimum_order_quantity: p.minimum_order_quantity || 1,
-                maximum_order_quantity: p.maximum_order_quantity
-            }));
+            const processedProducts = processRetailerProductList(rawProducts);
 
             setProducts(prev => {
                 // Prevent duplicates just in case
