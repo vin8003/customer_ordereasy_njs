@@ -4,10 +4,8 @@ const config: CapacitorConfig = {
   appId: 'win.ordereasy.customer',
   appName: 'Order Easy',
   webDir: 'out',
-  server: {
-    url: 'https://customer.ordereasy.win',
-    cleartext: false
-  },
+  // Production must load bundled files in webDir. A server.url makes the
+  // Play Store app inject native plugins only on some Android WebViews.
   plugins: {
     GoogleAuth: {
       scopes: ["profile", "email"],
