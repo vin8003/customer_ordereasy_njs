@@ -27,48 +27,63 @@ export function buildAndroidIntentUri(upiUri: string): string {
     return `intent://${pathAndQuery}#Intent;scheme=upi;action=android.intent.action.VIEW;end`;
 }
 
-export function isUpiAppLaunchSupported(): boolean {
+function userAgent(): string {
+    if (typeof navigator === 'undefined') return '';
+    return navigator.userAgent || '';
+}
+
+export function isNativeAndroid(): boolean {
     if (typeof window === 'undefined') return false;
-    if (Capacitor.isNativePlatform()) return true;
-    return /Android/i.test(navigator.userAgent);
+    try {
+        return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
+    } catch {
+        return false;
+    }
+}
+
+/** Phone / tablet / Play Store WebView — not a laptop browser. */
+export function isMobileUpiClient(): boolean {
+    if (typeof window === 'undefined') return false;
+    try {
+        if (Capacitor.isNativePlatform()) return true;
+    } catch {
+        /* ignore */
+    }
+    return /Android|iPhone|iPad|iPod|Mobile|webOS/i.test(userAgent());
+}
+
+export function isUpiAppLaunchSupported(): boolean {
+    return isMobileUpiClient();
 }
 
 export function isDesktopBrowser(): boolean {
     if (typeof window === 'undefined') return false;
-    if (Capacitor.isNativePlatform()) return false;
-    return !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    return !isMobileUpiClient();
+}
+
+function navigateToUpi(url: string) {
+    window.location.assign(url);
 }
 
 /** Opens UPI app chooser on Android native / Android Chrome. Returns false on desktop. */
 export function openUpiPayment(params: UpiPayParams): boolean {
     if (!params.vpa?.trim() || params.amount <= 0) return false;
-
-    const upiUri = buildUpiPayUri(params);
-
-    if (Capacitor.isNativePlatform()) {
-        window.location.href = buildAndroidIntentUri(upiUri);
-        return true;
-    }
-
-    if (/Android/i.test(navigator.userAgent)) {
-        window.location.href = upiUri;
-        return true;
-    }
-
-    return false;
+    return openUpiUri(buildUpiPayUri(params));
 }
 
-/** Open a pre-built `upi://` URI (OE-277 exact-amount intent) via native Intent or Android Chrome. */
+/** Open a pre-built `upi://` URI via Android Intent chooser, or upi:// on iOS/Chrome. */
 export function openUpiUri(upiUri: string): boolean {
-    if (!upiUri.startsWith('upi://')) return false;
+    if (!upiUri || !upiUri.startsWith('upi://')) return false;
+    if (typeof window === 'undefined') return false;
 
-    if (Capacitor.isNativePlatform()) {
-        window.location.href = buildAndroidIntentUri(upiUri);
+    const androidUa = /Android/i.test(userAgent());
+    if (isNativeAndroid() || androidUa) {
+        navigateToUpi(buildAndroidIntentUri(upiUri));
         return true;
     }
 
-    if (typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent)) {
-        window.location.href = upiUri;
+    if (isMobileUpiClient()) {
+        navigateToUpi(upiUri);
         return true;
     }
 
