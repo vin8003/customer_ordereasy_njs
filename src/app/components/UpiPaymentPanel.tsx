@@ -5,7 +5,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import toast from '@/lib/toast';
 import { Button } from '@/app/components/ui/Button';
 import { buildTxnRef, buildUpiIntentUri, formatUpiAmount } from '@/lib/upiIntent';
-import { isUpiAppLaunchSupported, openUpiUri } from '@/utils/upiPay';
+import { isDesktopBrowser, isUpiAppLaunchSupported, openUpiUri } from '@/utils/upiPay';
 import styles from '../orders/detail/OrderDetails.module.css';
 
 interface UpiPaymentPanelProps {
@@ -43,23 +43,25 @@ export default function UpiPaymentPanel({
     );
     const vpa = retailerUpiId?.trim() || '';
     const showAppButton = isUpiAppLaunchSupported() && !!upiIntentUri;
+    const showGeneratedQr = isDesktopBrowser() && !!upiIntentUri;
+    const showShopQr = isDesktopBrowser() && !upiIntentUri && !!retailerUpiQrCode;
 
     useEffect(() => {
-        if (!autoOpen || !upiIntentUri || !showAppButton) return;
+        if (!upiIntentUri || !showAppButton) return;
         const timer = setTimeout(() => {
             openUpiUri(upiIntentUri);
-        }, 400);
+        }, autoOpen ? 400 : 300);
         return () => clearTimeout(timer);
     }, [autoOpen, upiIntentUri, showAppButton]);
 
     const handlePay = () => {
         if (!upiIntentUri) {
-            toast.error('Open this page on your phone, or scan the QR below.');
+            toast.error('UPI is not available for this order. Copy the UPI ID and pay in your app.');
             return;
         }
         const opened = openUpiUri(upiIntentUri);
         if (!opened) {
-            toast.error('Open this page on your phone, or scan the QR below.');
+            toast.error('Could not open a UPI app. Install PhonePe, Google Pay, or Paytm and try again.');
         }
     };
 
@@ -85,11 +87,17 @@ export default function UpiPaymentPanel({
                 </div>
             )}
 
-            {upiIntentUri ? (
+            {showAppButton && (
+                <Button fullWidth onClick={handlePay} className="mb-3">
+                    Pay with PhonePe, GPay or Paytm
+                </Button>
+            )}
+
+            {showGeneratedQr ? (
                 <>
                     <div className={styles.qrWrapper}>
                         <QRCodeSVG
-                            value={upiIntentUri}
+                            value={upiIntentUri!}
                             size={140}
                             className={styles.qrImage}
                             title={`UPI payment QR for order ${orderNumber}`}
@@ -99,7 +107,7 @@ export default function UpiPaymentPanel({
                         Scan with any UPI app to pay <strong>₹{amountLabel}</strong> for this order.
                     </p>
                 </>
-            ) : retailerUpiQrCode ? (
+            ) : showShopQr ? (
                 <>
                     <div className={styles.qrWrapper}>
                         <img src={retailerUpiQrCode} alt="UPI QR Code" className={styles.qrImage} />
@@ -108,11 +116,17 @@ export default function UpiPaymentPanel({
                         Scan this shop QR and enter <strong>₹{amountLabel}</strong> manually.
                     </p>
                 </>
+            ) : !showAppButton && !vpa ? (
+                <div className="text-sm text-gray-500 italic text-center">
+                    This shop has not added a UPI ID yet. Please contact the shop to complete payment.
+                </div>
+            ) : showAppButton ? (
+                <p className="text-xs text-gray-500 text-center mb-2">
+                    If no app opens, tap the button above to choose PhonePe, Google Pay, or Paytm.
+                </p>
             ) : (
                 <div className="text-sm text-gray-500 italic text-center">
-                    {vpa
-                        ? 'Exact-amount QR unavailable for this order. Please pay using the UPI ID below.'
-                        : 'This shop has not added a UPI ID yet. Please contact the shop to complete payment.'}
+                    Exact-amount QR unavailable for this order. Please pay using the UPI ID below.
                 </div>
             )}
 
@@ -132,12 +146,6 @@ export default function UpiPaymentPanel({
                     )}
                 </div>
             </div>
-
-            {showAppButton && (
-                <Button fullWidth onClick={handlePay} className="mt-3">
-                    Pay with UPI app
-                </Button>
-            )}
         </div>
     );
 }

@@ -9,6 +9,7 @@ import { Button } from '@/app/components/ui/Button';
 import { City } from '@/config/cities';
 import { cityId } from '@/config/india-locations';
 import { getPersistedLocation, hasConfirmedLocation } from '@/utils/location';
+import { formatChipCurrency, mergeRetailerChipFields } from '@/utils/retailerChips';
 import styles from './Retailers.module.css';
 
 interface Retailer {
@@ -55,8 +56,21 @@ export default function RetailersPage() {
                 state: city.state,
             };
             const data = await apiService.getRetailers(params);
-            const results = data.results || [];
+            const results = (data.results || []).map((row: Retailer) => mergeRetailerChipFields(row));
             setRetailers(results);
+
+            void Promise.all(
+                results.map(async (row: Retailer) => {
+                    try {
+                        const details = await apiService.getRetailerDetails(String(row.id));
+                        return mergeRetailerChipFields(row, details);
+                    } catch {
+                        return row;
+                    }
+                })
+            ).then((enriched) => {
+                setRetailers(enriched);
+            });
 
             if (results.length === 0) {
                 setLoadingOpsCities(true);
@@ -119,12 +133,6 @@ export default function RetailersPage() {
         if (!path) return null;
         if (path.startsWith('http')) return path;
         return `https://api.ordereasy.win${path.startsWith('/') ? '' : '/'}${path}`;
-    };
-
-    const formatCurrency = (value?: number | string) => {
-        const num = Number(value);
-        if (!Number.isFinite(num) || num <= 0) return null;
-        return `₹${num % 1 === 0 ? num : num.toFixed(2)}`;
     };
 
     const locationLabel = selectedCity
@@ -277,7 +285,7 @@ export default function RetailersPage() {
 
                             <div className={styles.cardFooter}>
                                 <div className={styles.tags}>
-                                    {retailer.is_currently_open !== undefined && (
+                                    {typeof retailer.is_currently_open === 'boolean' && (
                                         <span
                                             className={
                                                 retailer.is_currently_open
@@ -288,19 +296,22 @@ export default function RetailersPage() {
                                             {retailer.is_currently_open ? 'Open' : 'Closed'}
                                         </span>
                                     )}
-                                    {formatCurrency(retailer.minimum_order_amount) && (
+                                    {formatChipCurrency(retailer.minimum_order_amount) && (
                                         <span className={styles.chipInfo}>
-                                            Min {formatCurrency(retailer.minimum_order_amount)}
+                                            Min {formatChipCurrency(retailer.minimum_order_amount)}
                                         </span>
                                     )}
-                                    {formatCurrency(retailer.delivery_charge) && (
+                                    {retailer.delivery_charge === 0 && (
+                                        <span className={styles.chipInfo}>Free delivery</span>
+                                    )}
+                                    {formatChipCurrency(retailer.delivery_charge) && (
                                         <span className={styles.chipInfo}>
-                                            Delivery {formatCurrency(retailer.delivery_charge)}
+                                            Delivery {formatChipCurrency(retailer.delivery_charge)}
                                         </span>
                                     )}
-                                    {formatCurrency(retailer.free_delivery_threshold) && (
+                                    {formatChipCurrency(retailer.free_delivery_threshold) && (
                                         <span className={styles.chipInfo}>
-                                            Free above {formatCurrency(retailer.free_delivery_threshold)}
+                                            Free above {formatChipCurrency(retailer.free_delivery_threshold)}
                                         </span>
                                     )}
                                     {retailer.offers_delivery && (
