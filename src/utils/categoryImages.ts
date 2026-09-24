@@ -47,7 +47,7 @@ export async function getCategoryIcon(
 
             const products = filterInStockProducts(
                 Array.isArray(prodData) ? prodData : (prodData.results || [])
-            );
+            ) as Array<{ image?: string }>;
 
             if (products.length > 0 && products[0].image) {
                 const imageUrl = products[0].image;

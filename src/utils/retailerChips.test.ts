@@ -23,7 +23,12 @@ describe('formatChipCurrency', () => {
 describe('mergeRetailerChipFields', () => {
     it('prefers shop-detail fields and aliases', () => {
         const merged = mergeRetailerChipFields(
-            { shop_name: 'A', offers_delivery: true },
+            { minimum_order_amount: 0 } as {
+                is_currently_open?: boolean;
+                minimum_order_amount?: number;
+                delivery_charge?: number;
+                free_delivery_threshold?: number;
+            },
             {
                 is_open: true,
                 min_order_amount: '50',
