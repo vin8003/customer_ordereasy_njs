@@ -185,7 +185,7 @@ function CategoryProducts() {
                 }
             }
 
-            const processedProducts = processRetailerProductList(rawProducts);
+            const processedProducts = processRetailerProductList<Product>(rawProducts);
 
             setProducts(prev => {
                 // Prevent duplicates just in case

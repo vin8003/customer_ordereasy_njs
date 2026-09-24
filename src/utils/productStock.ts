@@ -66,7 +66,9 @@ export function mapRetailerProduct<T extends Record<string, unknown>>(product: T
     };
 }
 
-export function processRetailerProductList(data: unknown) {
+export function processRetailerProductList<T extends StockAwareProduct>(data: unknown): T[] {
     const list = Array.isArray(data) ? data : (data as { results?: unknown[] })?.results || [];
-    return filterInStockProducts(list.map((item) => mapRetailerProduct(item as Record<string, unknown>)));
+    return filterInStockProducts(
+        list.map((item) => mapRetailerProduct(item as unknown as Record<string, unknown>))
+    ) as T[];
 }

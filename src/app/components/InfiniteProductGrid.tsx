@@ -65,8 +65,8 @@ export default function InfiniteProductGrid({ retailerId, offersDelivery, offers
             }
 
             const inStockProducts = filterInStockProducts(
-                newProducts.map((product) => mapRetailerProduct(product as Record<string, unknown>))
-            ) as Product[];
+                newProducts.map((product) => mapRetailerProduct(product as unknown as Record<string, unknown>))
+            ) as unknown as Product[];
 
             setProducts(prev => {
                 const existingIds = new Set(prev.map(p => p.id));

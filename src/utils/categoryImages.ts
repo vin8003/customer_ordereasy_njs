@@ -49,8 +49,11 @@ export async function getCategoryIcon(
                 Array.isArray(prodData) ? prodData : (prodData.results || [])
             );
 
-            if (products.length > 0 && products[0].image) {
-                const imageUrl = products[0].image;
+            const firstImage = products.length > 0
+                ? (products[0] as { image?: string }).image
+                : undefined;
+            if (firstImage) {
+                const imageUrl = firstImage;
                 categoryImageCache.set(cacheKey, imageUrl);
                 return imageUrl;
             }

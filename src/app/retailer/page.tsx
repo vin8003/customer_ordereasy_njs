@@ -223,7 +223,7 @@ function RetailerHome() {
             const offersData = await apiService.getRetailerOffers(retailerId);
             setOffers(Array.isArray(offersData) ? offersData : offersData.results || []);
 
-            const processProducts = (data: unknown) => processRetailerProductList(data);
+            const processProducts = (data: unknown) => processRetailerProductList<Product>(data);
 
             setFeaturedProducts(processProducts(featData));
             setBestSellingProducts(processProducts(bestData)); // Removed .data || []
