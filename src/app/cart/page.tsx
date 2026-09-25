@@ -15,6 +15,7 @@ import { ProductImage } from '@/app/components/ProductImage';
 import { useCartContext } from '@/context/CartContext';
 import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
 import { resolveStockQuantity } from '@/utils/productStock';
+import CouponSection, { AppliedCoupon } from '@/app/components/CouponSection';
 import styles from './Cart.module.css';
 
 interface CartItem {
@@ -155,6 +156,8 @@ export default function CartPage() {
 
     const [savings, setSavings] = useState(0);
     const [appliedOffers, setAppliedOffers] = useState<{ name?: string; discount?: number }[]>([]);
+    const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+    const [couponError, setCouponError] = useState<string | null>(null);
     const [potentialPoints, setPotentialPoints] = useState(0);
     const [fetchError, setFetchError] = useState('');
     const [retailerSettings, setRetailerSettings] = useState<{
@@ -222,6 +225,8 @@ export default function CartPage() {
                     setAppliedOffers([]);
                 }
                 setPotentialPoints(cartData.potential_points || 0);
+                setAppliedCoupon(cartData.applied_coupon || null);
+                setCouponError(cartData.coupon_error || null);
             } else {
                 // Guest Logic
                 const productIds = Object.keys(contextItems).map(Number);
@@ -273,6 +278,8 @@ export default function CartPage() {
                 setSavings(0);
                 setAppliedOffers([]);
                 setPotentialPoints(0);
+                setAppliedCoupon(null);
+                setCouponError(null);
             }
         } catch (error) {
             console.error("Failed to fetch data", error);
@@ -386,6 +393,18 @@ export default function CartPage() {
                         isWishlisted={isWishlisted}
                     />
                 ))}
+
+                {retailerId && (
+                    <div className="mt-2">
+                        <CouponSection
+                            retailerId={retailerId}
+                            appliedCoupon={appliedCoupon}
+                            couponError={couponError}
+                            onCouponChanged={() => fetchData(retailerId)}
+                            disabled={isGuest}
+                        />
+                    </div>
+                )}
             </div>
             {retailerId && (
                 <aside className={styles.fbtSidebar}>
@@ -403,13 +422,23 @@ export default function CartPage() {
                     <span className={styles.totalValue}>₹{(totalAmount + Number(savings)).toFixed(2)}</span>
                 </div>
                 {Number(savings) > 0 && (
-                    <div className="flex justify-between items-center text-green-600 font-medium py-2">
-                        <span>Savings</span>
+                    <div className="flex justify-between items-center text-green-600 font-medium py-1">
+                        <span>Total Savings</span>
                         <span>-₹{Number(savings).toFixed(2)}</span>
                     </div>
                 )}
+                {appliedCoupon && (
+                    <div className="flex justify-between items-center text-purple-700 text-xs font-semibold py-1">
+                        <span>🎟️ Coupon ({appliedCoupon.code})</span>
+                        <span>
+                            {appliedCoupon.benefit_type === 'credit_points'
+                                ? `+${appliedCoupon.points || 0} pts cashback`
+                                : `-₹${Number(appliedCoupon.discount || 0).toFixed(2)}`}
+                        </span>
+                    </div>
+                )}
                 {appliedOffers.length > 0 && (
-                    <p className="text-xs text-green-700 mb-2">
+                    <p className="text-xs text-green-700 mb-1">
                         {appliedOffers.length} offer{appliedOffers.length > 1 ? 's' : ''} applied
                     </p>
                 )}

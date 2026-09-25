@@ -485,6 +485,31 @@ export const apiService = {
         return response.data;
     },
 
+    // Coupons
+    applyCoupon: async (retailerId: string | number, couponCode: string) => {
+        const response = await api.post('cart/apply-coupon/', {
+            retailer_id: retailerId,
+            coupon_code: couponCode.trim().toUpperCase()
+        });
+        Object.keys(CACHE).forEach(k => { if (k.startsWith('cart_')) delete CACHE[k]; });
+        window.dispatchEvent(new CustomEvent('cart-updated'));
+        return response.data;
+    },
+
+    removeCoupon: async (retailerId: string | number) => {
+        const response = await api.post('cart/remove-coupon/', {
+            retailer_id: retailerId
+        });
+        Object.keys(CACHE).forEach(k => { if (k.startsWith('cart_')) delete CACHE[k]; });
+        window.dispatchEvent(new CustomEvent('cart-updated'));
+        return response.data;
+    },
+
+    getAvailableCoupons: async (retailerId: string | number) => {
+        const response = await api.get(`offers/public/retailer/${retailerId}/available-coupons/`);
+        return response.data;
+    },
+
     // Wishlist
     getWishlist: async () => {
         const key = 'customer_wishlist';

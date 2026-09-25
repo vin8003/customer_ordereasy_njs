@@ -5,6 +5,7 @@ export interface PlaceOrderInput {
     paymentMethod: string;
     specialInstructions: string;
     useRewardPoints: boolean;
+    couponCode?: string | null;
 }
 
 /** Matches the historical `orders/place/` request body used before Phases 1–3. */
@@ -15,6 +16,7 @@ export interface PlaceOrderPayload {
     special_instructions: string;
     use_reward_points: boolean;
     address_id: number | null;
+    coupon_code?: string | null;
 }
 
 export function resolvePlaceOrderPaymentMode(paymentMethod: string): string {
@@ -38,5 +40,6 @@ export function buildPlaceOrderPayload(input: PlaceOrderInput): PlaceOrderPayloa
         payment_mode: resolvePlaceOrderPaymentMode(input.paymentMethod),
         special_instructions: input.specialInstructions,
         use_reward_points: input.useRewardPoints,
+        coupon_code: input.couponCode ? input.couponCode.trim().toUpperCase() : null,
     };
 }

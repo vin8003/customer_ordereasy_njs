@@ -57,6 +57,8 @@ interface OrderDetail {
     payment_status?: string;
     payment_edit_count?: number;
     is_payment_locked?: boolean;
+    coupon_code?: string | null;
+    points_earned?: number;
 }
 
 function OrderDetails() {
@@ -502,6 +504,19 @@ function OrderDetails() {
                                 <span className={styles.discount}>-₹{order.discount_amount}</span>
                             </div>
                         )}
+                        {order.coupon_code && (
+                            <div className={styles.summaryRow}>
+                                <span>Coupon Applied</span>
+                                <span className="font-mono font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded text-xs border border-purple-200">
+                                    🎟️ {order.coupon_code}
+                                </span>
+                            </div>
+                        )}
+                        {order.points_earned && order.points_earned > 0 ? (
+                            <div className="bg-purple-50 text-purple-800 text-xs p-2 rounded mb-2 border border-purple-200">
+                                🎉 <strong>+{order.points_earned} Cashback Points</strong> {order.status === 'delivered' ? 'credited' : 'will be credited upon delivery'}!
+                            </div>
+                        ) : null}
                         {parseFloat(order.discount_from_points) > 0 && (
                             <div className={styles.summaryRow}>
                                 <span>Points Redeemed</span>

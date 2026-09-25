@@ -11,6 +11,7 @@ import styles from './Checkout.module.css';
 import PhoneVerification from '@/app/components/auth/PhoneVerification';
 import { hasValidAddressCoordinates, parseCoordinate } from '@/utils/addressLocation';
 import { buildPlaceOrderPayload } from '@/utils/placeOrder';
+import CouponSection, { AppliedCoupon } from '@/app/components/CouponSection';
 
 interface Address {
     id: number;
@@ -47,6 +48,9 @@ export default function CheckoutPage() {
     const [cartTotal, setCartTotal] = useState(0);
     const [offerSavings, setOfferSavings] = useState(0);
     const [hasActiveOffers, setHasActiveOffers] = useState(false);
+    const [retailerId, setRetailerId] = useState<string | null>(null);
+    const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+    const [couponError, setCouponError] = useState<string | null>(null);
 
     // Order Details
     const [deliveryMode, setDeliveryMode] = useState<'delivery' | 'pickup'>('delivery');
@@ -109,9 +113,11 @@ export default function CheckoutPage() {
     }, [deliveryMode, retailerSettings, cartTotal]);
 
     const loadData = async () => {
+        const storedId = localStorage.getItem('current_retailer_id');
+        setRetailerId(storedId);
         await Promise.all([
             loadAddresses(),
-            loadCartSummary(),
+            loadCartSummary(storedId),
             loadRewardData(),
             checkUserVerification(),
             loadRetailerSettings()
@@ -203,12 +209,12 @@ export default function CheckoutPage() {
         }
     };
 
-    const loadCartSummary = async () => {
+    const loadCartSummary = async (rId?: string | null) => {
         // Here we might need the retailer ID to fetch the specific cart
         // If we don't have it, we might need a "get active cart" endpoint or logic
         // For MVP, assuming user comes from Cart page which had a retailer context.
         // Let's rely on stored retailer id from localStorage for now (from CartPage logic)
-        const storedId = localStorage.getItem('current_retailer_id');
+        const storedId = rId || retailerId || localStorage.getItem('current_retailer_id');
         if (storedId) {
             try {
                 const data = await apiService.getCart(storedId);
@@ -222,6 +228,8 @@ export default function CheckoutPage() {
                 setOfferSavings(offerSavings);
                 setHasActiveOffers(offerSavings > 0);
                 setCartItems(data.items || []);
+                setAppliedCoupon(data.applied_coupon || null);
+                setCouponError(data.coupon_error || null);
             } catch (e) {
                 console.error(e);
             }
@@ -343,6 +351,7 @@ export default function CheckoutPage() {
                 paymentMethod,
                 specialInstructions,
                 useRewardPoints,
+                couponCode: appliedCoupon?.code || null,
             });
         } catch (payloadError) {
             toast.error(payloadError instanceof Error ? payloadError.message : 'Could not prepare order.');
@@ -587,6 +596,15 @@ export default function CheckoutPage() {
                     </div>
                 </section>
 
+                {retailerId && (
+                    <CouponSection
+                        retailerId={retailerId}
+                        appliedCoupon={appliedCoupon}
+                        couponError={couponError}
+                        onCouponChanged={() => loadCartSummary(retailerId)}
+                    />
+                )}
+
                 <section className={styles.section}>
                     <h2 className={styles.sectionTitle}>Order Summary</h2>
                     <div className={styles.summaryRow}>
@@ -597,6 +615,22 @@ export default function CheckoutPage() {
                         <div className={`${styles.summaryRow} text-green-600`}>
                             <span>Offer Discount</span>
                             <span>-₹{offerSavings.toFixed(2)}</span>
+                        </div>
+                    )}
+                    {appliedCoupon && (
+                        <div className={`${styles.summaryRow} text-purple-700 font-medium`}>
+                            <span>🎟️ Coupon ({appliedCoupon.code})</span>
+                            <span>
+                                {appliedCoupon.benefit_type === 'credit_points'
+                                    ? `+${appliedCoupon.points || 0} pts cashback`
+                                    : `-₹${Number(appliedCoupon.discount || 0).toFixed(2)}`}
+                            </span>
+                        </div>
+                    )}
+                    {appliedCoupon?.benefit_type === 'credit_points' && (
+                        <div className="bg-purple-50 text-purple-800 text-xs p-2.5 rounded-lg mb-2 border border-purple-200 flex items-center gap-2">
+                            <span>🎉</span>
+                            <span><strong>{appliedCoupon.points} Cashback Points</strong> will be credited upon delivery!</span>
                         </div>
                     )}
                     {deliveryMode === 'delivery' && retailerSettings && retailerSettings.freeDeliveryThreshold > 0 && cartTotal < retailerSettings.freeDeliveryThreshold && (
