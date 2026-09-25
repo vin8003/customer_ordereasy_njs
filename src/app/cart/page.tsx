@@ -432,8 +432,8 @@ export default function CartPage() {
                         <span>🎟️ Coupon ({appliedCoupon.code})</span>
                         <span>
                             {appliedCoupon.benefit_type === 'credit_points'
-                                ? `+${appliedCoupon.points || 0} pts cashback`
-                                : `-₹${Number(appliedCoupon.discount || 0).toFixed(2)}`}
+                                ? `+${(appliedCoupon.points ?? appliedCoupon.savings ?? 0)} pts cashback`
+                                : `-₹${Number(appliedCoupon.discount ?? appliedCoupon.savings ?? 0).toFixed(2)}`}
                         </span>
                     </div>
                 )}

@@ -622,15 +622,15 @@ export default function CheckoutPage() {
                             <span>🎟️ Coupon ({appliedCoupon.code})</span>
                             <span>
                                 {appliedCoupon.benefit_type === 'credit_points'
-                                    ? `+${appliedCoupon.points || 0} pts cashback`
-                                    : `-₹${Number(appliedCoupon.discount || 0).toFixed(2)}`}
+                                    ? `+${(appliedCoupon.points ?? appliedCoupon.savings ?? 0)} pts cashback`
+                                    : `-₹${Number(appliedCoupon.discount ?? appliedCoupon.savings ?? 0).toFixed(2)}`}
                             </span>
                         </div>
                     )}
                     {appliedCoupon?.benefit_type === 'credit_points' && (
                         <div className="bg-purple-50 text-purple-800 text-xs p-2.5 rounded-lg mb-2 border border-purple-200 flex items-center gap-2">
                             <span>🎉</span>
-                            <span><strong>{appliedCoupon.points} Cashback Points</strong> will be credited upon delivery!</span>
+                            <span><strong>+{(appliedCoupon.points ?? appliedCoupon.savings ?? 0)} Cashback Points</strong> will be credited upon delivery!</span>
                         </div>
                     )}
                     {deliveryMode === 'delivery' && retailerSettings && retailerSettings.freeDeliveryThreshold > 0 && cartTotal < retailerSettings.freeDeliveryThreshold && (

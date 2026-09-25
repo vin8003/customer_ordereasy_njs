@@ -10,6 +10,7 @@ export interface AppliedCoupon {
     name?: string;
     discount?: number;
     points?: number;
+    savings?: number;
     benefit_type?: string;
 }
 
@@ -20,7 +21,10 @@ export interface AvailableCoupon {
     offer_type: string;
     benefit_type: string;
     value: number;
+    value_type?: string;
+    min_order_value?: number;
     minimum_order_amount?: number;
+    max_discount_amount?: number;
     maximum_discount?: number;
     end_date?: string | null;
 }
@@ -140,8 +144,8 @@ export default function CouponSection({
                             </div>
                             <p className="text-xs text-emerald-700 font-medium mt-0.5">
                                 {appliedCoupon.benefit_type === 'credit_points'
-                                    ? `+${appliedCoupon.points || 0} Shop Cashback Points`
-                                    : `₹${Number(appliedCoupon.discount || 0).toFixed(2)} savings with this coupon`}
+                                    ? `+${(appliedCoupon.points ?? appliedCoupon.savings ?? 0)} Shop Cashback Points`
+                                    : `₹${Number(appliedCoupon.discount ?? appliedCoupon.savings ?? 0).toFixed(2)} savings with this coupon`}
                             </p>
                         </div>
                     </div>
@@ -256,14 +260,26 @@ export default function CouponSection({
                                             <h4 className="text-sm font-semibold text-gray-900">{coupon.name}</h4>
                                             <p className="text-xs text-gray-500">
                                                 {coupon.benefit_type === 'credit_points' ? (
-                                                    <span>Earn {coupon.value} points on purchase</span>
-                                                ) : coupon.offer_type === 'percentage' ? (
-                                                    <span>Get {coupon.value}% off{coupon.maximum_discount ? ` up to ₹${coupon.maximum_discount}` : ''}</span>
+                                                    (coupon.offer_type === 'percentage' || coupon.value_type === 'percent') ? (
+                                                        <span>
+                                                            Get {coupon.value}% cashback
+                                                            {(coupon.max_discount_amount ?? coupon.maximum_discount) ? ` up to ${(coupon.max_discount_amount ?? coupon.maximum_discount)} pts` : ''}
+                                                        </span>
+                                                    ) : (
+                                                        <span>Get {coupon.value} flat cashback pts</span>
+                                                    )
                                                 ) : (
-                                                    <span>Get ₹{coupon.value} flat discount</span>
+                                                    (coupon.offer_type === 'percentage' || coupon.value_type === 'percent') ? (
+                                                        <span>
+                                                            Get {coupon.value}% off
+                                                            {(coupon.max_discount_amount ?? coupon.maximum_discount) ? ` up to ₹${(coupon.max_discount_amount ?? coupon.maximum_discount)}` : ''}
+                                                        </span>
+                                                    ) : (
+                                                        <span>Get ₹{coupon.value} flat discount</span>
+                                                    )
                                                 )}
-                                                {coupon.minimum_order_amount && coupon.minimum_order_amount > 0 ? (
-                                                    <span> · Min. order ₹{coupon.minimum_order_amount}</span>
+                                                {((coupon.min_order_value ?? coupon.minimum_order_amount) || 0) > 0 ? (
+                                                    <span> · Min. order ₹{coupon.min_order_value ?? coupon.minimum_order_amount}</span>
                                                 ) : null}
                                             </p>
                                             {coupon.end_date && (
