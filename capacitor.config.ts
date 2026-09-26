@@ -6,6 +6,10 @@ const config: CapacitorConfig = {
   webDir: 'out',
   // Production must load bundled files in webDir. A server.url makes the
   // Play Store app inject native plugins only on some Android WebViews.
+  server: {
+    androidScheme: 'https',
+    hostname: 'customer.ordereasy.win',
+  },
   plugins: {
     GoogleAuth: {
       scopes: ["profile", "email"],
