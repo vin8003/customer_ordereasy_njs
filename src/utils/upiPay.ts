@@ -71,6 +71,17 @@ export function openUpiPayment(params: UpiPayParams): boolean {
     return openUpiUri(buildUpiPayUri(params));
 }
 
+/**
+ * Picks the URL passed to `window.location` for Android UPI launches.
+ * Capacitor WebView must use `upi://` directly (Bridge.launchIntent → ACTION_VIEW).
+ * Mobile Chrome needs the `intent://` wrapper.
+ */
+export function resolveAndroidUpiLaunchUrl(upiUri: string, nativeAndroid: boolean): string | null {
+    if (!upiUri?.startsWith('upi://')) return null;
+    if (nativeAndroid) return upiUri;
+    return buildAndroidIntentUri(upiUri);
+}
+
 /** Open a pre-built `upi://` URI via Android Intent chooser, or upi:// on iOS/Chrome. */
 export function openUpiUri(upiUri: string): boolean {
     if (!upiUri || !upiUri.startsWith('upi://')) return false;
@@ -78,7 +89,9 @@ export function openUpiUri(upiUri: string): boolean {
 
     const androidUa = /Android/i.test(userAgent());
     if (isNativeAndroid() || androidUa) {
-        navigateToUpi(buildAndroidIntentUri(upiUri));
+        const launchUrl = resolveAndroidUpiLaunchUrl(upiUri, isNativeAndroid());
+        if (!launchUrl) return false;
+        navigateToUpi(launchUrl);
         return true;
     }
 
