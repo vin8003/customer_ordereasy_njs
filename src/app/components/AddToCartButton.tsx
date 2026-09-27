@@ -35,7 +35,9 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
     const { getItemQuantity, addToCart, updateQuantity } = useCartContext();
     const quantity = getItemQuantity(productId);
     const [loading, setLoading] = useState(false);
-    const outOfStock = isOutOfStock(trackInventory, stockQuantity);
+    const outOfStock = (trackInventory !== undefined || stockQuantity !== undefined)
+        ? isOutOfStock(trackInventory, stockQuantity)
+        : false;
 
     const handleAdd = async (e: React.MouseEvent) => {
         e.stopPropagation();

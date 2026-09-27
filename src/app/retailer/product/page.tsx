@@ -304,6 +304,9 @@ function ProductDetail() {
                         <div className="w-full h-12">
                             <AddToCartButton
                                 productId={product.id}
+                                trackInventory={product.track_inventory}
+                                stockQuantity={product.stock_quantity}
+                                retailerId={retailerId}
                                 minimumOrderQuantity={product.minimum_order_quantity}
                                 maximumOrderQuantity={product.maximum_order_quantity}
                                 className="w-full h-full text-lg"

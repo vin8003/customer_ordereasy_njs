@@ -199,15 +199,15 @@ export default function CouponSection({
             {/* Available Coupons Drawer/Modal */}
             {isSheetOpen && (
                 <div 
-                    className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4"
+                    className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4"
                     onClick={() => setIsSheetOpen(false)}
                 >
                     <div
-                        className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[85vh] flex flex-col shadow-2xl animate-in fade-in slide-in-from-bottom duration-200"
+                        className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[85vh] flex flex-col shadow-2xl animate-in fade-in slide-in-from-bottom duration-200 pb-[env(safe-area-inset-bottom)] sm:pb-0"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Header */}
-                        <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                        <div className="flex items-center justify-between p-4 border-b border-gray-100 shrink-0">
                             <div className="flex items-center gap-2">
                                 <div className="p-1.5 bg-purple-50 text-purple-600 rounded-lg">
                                     <Sparkles size={18} />
@@ -224,7 +224,7 @@ export default function CouponSection({
                         </div>
 
                         {/* List */}
-                        <div className="p-4 overflow-y-auto space-y-3 flex-1">
+                        <div className="p-4 pb-6 overflow-y-auto space-y-3 flex-1 min-h-0">
                             {isLoadingCoupons ? (
                                 <div className="py-12 text-center text-gray-400 flex flex-col items-center gap-2">
                                     <Loader2 size={24} className="animate-spin text-primary" />
