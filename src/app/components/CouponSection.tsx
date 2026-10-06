@@ -203,7 +203,7 @@ export default function CouponSection({
                     onClick={() => setIsSheetOpen(false)}
                 >
                     <div
-                        className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-t-[var(--r-xl)] bg-white pb-[env(safe-area-inset-bottom)] shadow-[var(--sh-lg)] animate-in fade-in slide-in-from-bottom-8 duration-300 sm:rounded-[var(--r-xl)] sm:pb-0"
+                        className="flex max-h-[85vh] w-full max-w-md flex-col rounded-t-[var(--r-xl)] bg-white pb-[env(safe-area-inset-bottom)] shadow-[var(--sh-lg)] animate-in fade-in slide-in-from-bottom-8 duration-300 sm:rounded-[var(--r-xl)] sm:pb-0"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Header */}

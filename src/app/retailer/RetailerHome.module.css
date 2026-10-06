@@ -1,5 +1,5 @@
 .container {
-    min-height: 100dvh;
+    min-height: calc(var(--vh) * 100);
     background: var(--canvas);
     padding-bottom: var(--bottom-nav-space);
 }
@@ -470,10 +470,6 @@
 /* ---------- Sections ---------- */
 .section {
     margin: 0 0 28px;
-}
-
-.section:first-of-type {
-    margin-top: 0;
 }
 
 .sectionHeader {
@@ -1075,18 +1071,6 @@
 }
 
 /* ---------- Skeletons ---------- */
-.skeleton {
-    background: linear-gradient(90deg, var(--surface-3) 0%, var(--surface-2) 50%, var(--surface-3) 100%);
-    background-size: 200% 100%;
-    animation: shimmer 1.4s ease-in-out infinite;
-    border-radius: var(--r-sm);
-}
-
-@keyframes shimmer {
-    0% { background-position: 100% 0; }
-    100% { background-position: -100% 0; }
-}
-
 .skeletonBanner {
     height: 164px;
     margin: 16px var(--gutter) 28px;
@@ -1113,7 +1097,7 @@
 
 /* ---------- Not found ---------- */
 .notFound {
-    min-height: 70dvh;
+    min-height: calc(var(--vh) * 70);
     display: flex;
     flex-direction: column;
     align-items: center;

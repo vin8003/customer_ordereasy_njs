@@ -33,7 +33,7 @@ export default function SupportPage() {
     ];
 
     return (
-        <div className="min-h-dvh bg-[var(--canvas)] pb-[var(--bottom-nav-space)]">
+        <div className="min-h-screen bg-[var(--canvas)] pb-[var(--bottom-nav-space)]">
             <PageHeader title="Help & Support" subtitle="We're here to help" onBack={handleBack} />
 
             <main className="mx-auto max-w-2xl space-y-6 px-[var(--gutter)] py-4">

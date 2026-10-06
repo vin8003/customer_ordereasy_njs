@@ -1,11 +1,11 @@
 .container {
-    min-height: 100dvh;
+    min-height: calc(var(--vh) * 100);
     background: var(--canvas);
     padding-bottom: var(--bottom-nav-space);
 }
 
 .emptyState {
-    min-height: 80dvh;
+    min-height: calc(var(--vh) * 80);
     display: flex;
     align-items: center;
     justify-content: center;

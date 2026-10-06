@@ -1,5 +1,5 @@
 .container {
-    min-height: 100dvh;
+    min-height: calc(var(--vh) * 100);
     background: var(--canvas);
     padding-bottom: var(--bottom-nav-space);
 }

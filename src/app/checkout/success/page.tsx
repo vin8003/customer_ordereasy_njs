@@ -7,7 +7,7 @@ import { Button } from '@/app/components/ui/Button';
 
 export default function CheckoutSuccessPage() {
     return (
-        <div className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-[var(--canvas)] px-6 py-12 text-center">
+        <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[var(--canvas)] px-6 py-12 text-center">
             <div
                 aria-hidden="true"
                 className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-[radial-gradient(60%_80%_at_50%_0%,rgb(34_168_90/0.18)_0%,transparent_70%)]"

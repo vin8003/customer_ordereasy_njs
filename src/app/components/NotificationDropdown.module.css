@@ -3,7 +3,7 @@
     top: 58px;
     right: var(--gutter);
     width: min(380px, calc(100vw - 2 * var(--gutter)));
-    max-height: min(480px, 70dvh);
+    max-height: min(480px, calc(var(--vh) * 70));
     display: flex;
     flex-direction: column;
     background: var(--surface);

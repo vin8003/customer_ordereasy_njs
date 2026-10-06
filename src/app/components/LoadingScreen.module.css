@@ -10,7 +10,7 @@
 .fullScreen {
     position: fixed;
     inset: 0;
-    min-height: 100dvh;
+    min-height: calc(var(--vh) * 100);
     background:
         radial-gradient(60% 40% at 50% 0%, var(--brand-50) 0%, transparent 70%),
         var(--canvas);

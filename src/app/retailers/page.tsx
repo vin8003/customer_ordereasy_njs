@@ -11,6 +11,7 @@ import { City } from '@/config/cities';
 import { cityId } from '@/config/india-locations';
 import { getPersistedLocation, hasConfirmedLocation } from '@/utils/location';
 import { formatChipCurrency, mergeRetailerChipFields } from '@/utils/retailerChips';
+import { resolveMediaUrl } from '@/utils/mediaUrl';
 import styles from './Retailers.module.css';
 
 interface Retailer {
@@ -137,11 +138,6 @@ export default function RetailersPage() {
         router.push(`/retailer?id=${id}`);
     };
 
-    const getImageUrl = (path?: string) => {
-        if (!path) return null;
-        if (path.startsWith('http')) return path;
-        return `https://api.ordereasy.win${path.startsWith('/') ? '' : '/'}${path}`;
-    };
 
     const locationLabel = selectedCity
         ? selectedCity.pincode
@@ -297,7 +293,7 @@ export default function RetailersPage() {
                                             <div className={styles.retailerIconContainer}>
                                                 {retailer.shop_image ? (
                                                     <img
-                                                        src={getImageUrl(retailer.shop_image) || ''}
+                                                        src={resolveMediaUrl(retailer.shop_image) || ''}
                                                         alt={retailer.shop_name}
                                                         className={styles.retailerImage}
                                                     />

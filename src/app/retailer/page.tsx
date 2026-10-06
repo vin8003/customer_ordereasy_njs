@@ -18,6 +18,7 @@ import { Button } from '@/app/components/ui/Button';
 import LazyProductLane from '@/app/components/LazyProductLane';
 import InfiniteProductGrid from '@/app/components/InfiniteProductGrid';
 import { processRetailerProductList } from '@/utils/productStock';
+import { resolveMediaUrl } from '@/utils/mediaUrl';
 import styles from './RetailerHome.module.css';
 
 interface Category {
@@ -66,6 +67,7 @@ function RetailerHome() {
     const [currentOfferIndex, setCurrentOfferIndex] = useState(0);
     const [touchStartX, setTouchStartX] = useState<number | null>(null);
     const [isScrolled, setIsScrolled] = useState(false);
+    const [shopImageFailed, setShopImageFailed] = useState(false);
     const [isBannerHovered, setIsBannerHovered] = useState(false);
     const [userLoyalty, setUserLoyalty] = useState<{ points: number } | null>(null);
     const [activeRewardTab, setActiveRewardTab] = useState<'offers' | 'refer' | 'points'>('offers');
@@ -323,8 +325,12 @@ function RetailerHome() {
                             aria-label="Change store"
                         >
                             <span className={styles.shopAvatar}>
-                                {retailer.shop_image ? (
-                                    <img src={retailer.shop_image} alt="" />
+                                {retailer.shop_image && !shopImageFailed ? (
+                                    <img
+                                        src={resolveMediaUrl(retailer.shop_image) || ''}
+                                        alt=""
+                                        onError={() => setShopImageFailed(true)}
+                                    />
                                 ) : (
                                     (retailer.shop_name || 'S').charAt(0).toUpperCase()
                                 )}
@@ -347,7 +353,7 @@ function RetailerHome() {
                             <button
                                 type="button"
                                 className={styles.iconBtn}
-                                onMouseDown={(e) => e.stopPropagation()}
+                                data-notification-trigger
                                 onClick={() => setShowNotifications(!showNotifications)}
                                 aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
                                 aria-expanded={showNotifications}
@@ -438,10 +444,12 @@ function RetailerHome() {
                                 <Star size={12} fill="currentColor" /> {Number(retailer.average_rating).toFixed(1)}
                             </span>
                         ) : null}
-                        <span className={retailer.is_currently_open ? styles.statusOpen : styles.statusClosed}>
-                            <span className={styles.statusDot} />
-                            {retailer.is_currently_open ? 'Open now' : 'Closed'}
-                        </span>
+                        {typeof retailer.is_currently_open === 'boolean' && (
+                            <span className={retailer.is_currently_open ? styles.statusOpen : styles.statusClosed}>
+                                <span className={styles.statusDot} />
+                                {retailer.is_currently_open ? 'Open now' : 'Closed'}
+                            </span>
+                        )}
                         {retailer.offers_delivery && (
                             <span className={styles.metaChip}><Bike size={13} /> Delivery</span>
                         )}

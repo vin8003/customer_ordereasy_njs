@@ -1,5 +1,5 @@
 .container {
-    min-height: 100dvh;
+    min-height: calc(var(--vh) * 100);
     background: var(--canvas);
     padding-bottom: calc(96px + env(safe-area-inset-bottom));
 }
@@ -124,8 +124,8 @@
 /* ---------- Order type ---------- */
 .toggleGroup {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
     grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
     gap: 10px;
 }
 

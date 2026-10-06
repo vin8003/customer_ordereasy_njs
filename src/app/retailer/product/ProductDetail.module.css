@@ -1,5 +1,5 @@
 .container {
-    min-height: 100dvh;
+    min-height: calc(var(--vh) * 100);
     background: var(--canvas);
     padding-bottom: calc(88px + env(safe-area-inset-bottom));
 }
@@ -372,7 +372,7 @@
 }
 
 .notFound {
-    min-height: 70dvh;
+    min-height: calc(var(--vh) * 70);
     display: flex;
     flex-direction: column;
     align-items: center;

@@ -4,7 +4,7 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ShoppingBag, ChevronRight } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 import { apiService } from '@/services/api';
 import PageHeader from '@/app/components/PageHeader';
 import { getCategoryIcon } from '@/utils/categoryImages';
@@ -76,7 +76,6 @@ function Categories() {
                                 )}
                             </div>
                             <span className={styles.name}>{cat.name}</span>
-                            <ChevronRight size={16} className={styles.chevron} />
                         </Link>
                     );
                 })}

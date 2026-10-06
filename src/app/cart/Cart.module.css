@@ -1,5 +1,5 @@
 .container {
-    min-height: 100dvh;
+    min-height: calc(var(--vh) * 100);
     background: var(--canvas);
     /* sticky checkout bar + bottom nav */
     padding-bottom: calc(var(--bottom-nav-space) + 84px);

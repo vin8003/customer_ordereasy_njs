@@ -1,5 +1,5 @@
 .container {
-    min-height: 100dvh;
+    min-height: calc(var(--vh) * 100);
     background:
         radial-gradient(90% 280px at 50% 0%, var(--brand-50) 0%, transparent 100%),
         var(--canvas);

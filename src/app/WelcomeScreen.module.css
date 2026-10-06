@@ -1,6 +1,6 @@
 .container {
     position: relative;
-    min-height: 100dvh;
+    min-height: calc(var(--vh) * 100);
     display: flex;
     align-items: center;
     justify-content: center;

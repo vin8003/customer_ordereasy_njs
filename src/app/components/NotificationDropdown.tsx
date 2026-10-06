@@ -18,7 +18,10 @@ export default function NotificationDropdown({ isOpen, onClose }: NotificationDr
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+            const target = event.target as Element | null;
+            // The bell toggles the dropdown itself; closing here too would make it reopen on the same tap.
+            if (target?.closest?.('[data-notification-trigger]')) return;
+            if (dropdownRef.current && !dropdownRef.current.contains(target as Node)) {
                 onClose();
             }
         };
