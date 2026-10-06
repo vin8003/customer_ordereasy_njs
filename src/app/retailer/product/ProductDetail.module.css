@@ -1,401 +1,455 @@
 .container {
-    min-height: 100vh;
-    background-color: #ffffff;
-    padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
-    /* Space for fixed footer + Android/iOS system navigation */
-    font-family: var(--font-inter), sans-serif;
+    min-height: 100dvh;
+    background: var(--canvas);
+    padding-bottom: calc(88px + env(safe-area-inset-bottom));
 }
 
+/* Floating header over the hero image */
 .header {
-    position: sticky;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
+    z-index: 40;
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    padding: 1rem;
-    z-index: 50;
-    background: rgba(255, 255, 255, 0.82);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(241, 245, 249, 0.8);
+    padding: calc(10px + env(safe-area-inset-top)) var(--gutter) 10px;
+    pointer-events: none;
 }
 
-/* Image Section */
-.imageSection {
-    width: 100%;
-    height: 350px;
-    /* Fixed height for consistency */
-    background: #f8fafc;
-    /* Slate-50 */
+.headerActions {
+    display: flex;
+    gap: 8px;
+}
+
+.headerBtn {
+    pointer-events: auto;
+    width: 42px;
+    height: 42px;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 2rem;
-    margin-bottom: 0;
-    /* Removed overlap */
+    border: 1px solid rgb(255 255 255 / 0.6);
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.88);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: var(--ink);
+    box-shadow: var(--sh-sm);
+    transition: transform 150ms var(--ease-out), background-color 150ms var(--ease-out);
 }
 
-.productImageWrapper {
+.headerBtn:hover {
+    background: #fff;
+}
+
+.headerBtn:active {
+    transform: scale(0.92);
+}
+
+.layout {
+    max-width: var(--page-max);
+    margin: 0 auto;
+}
+
+.imageSection {
+    position: relative;
+    background: linear-gradient(180deg, #ffffff 0%, var(--surface-2) 100%);
+    border-bottom: 1px solid var(--line);
+    padding: calc(64px + env(safe-area-inset-top)) 32px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.productImageWrapper,
+.imagePlaceholder {
+    width: 100%;
+    max-width: 340px;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.productImageWrapper img {
     width: 100%;
     height: 100%;
-    display: flex;
-    justify-content: center;
+    object-fit: contain;
+    mix-blend-mode: multiply;
+    animation: fadeIn 400ms var(--ease-out) both;
 }
 
 .imagePlaceholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #cbd5e1;
+    color: var(--ink-4);
 }
 
-/* Details Section */
+.imageBadge {
+    position: absolute;
+    left: var(--gutter);
+    bottom: 16px;
+    padding: 5px 10px;
+    border-radius: 8px;
+    background: var(--brand-600);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+}
+
 .details {
-    padding: 1.5rem;
-    background: #fff;
-    border-top-left-radius: 0;
-    /* Removed border radius hack */
-    border-top-right-radius: 0;
-    margin-top: 0;
-    /* Removed negative margin */
+    padding: 20px var(--gutter) 8px;
+    min-width: 0;
+}
+
+.unitTag {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 10px;
+    margin-bottom: 10px;
+    border-radius: var(--r-pill);
+    background: var(--surface-3);
+    color: var(--ink-2);
+    font-size: 0.75rem;
+    font-weight: 700;
 }
 
 .title {
-    font-size: 1.35rem;
-    font-weight: 700;
-    color: #0f172a;
-    /* Slate-900 */
-    line-height: 1.4;
-    margin-bottom: 0.5rem;
+    font-size: clamp(1.25rem, 4.5vw, 1.75rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+    color: var(--ink);
+    text-wrap: balance;
 }
 
-.groupTag {
-    display: inline-block;
-    background: #f1f5f9;
-    color: #64748b;
-    font-size: 0.75rem;
+.offlineNotice {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: var(--r-md);
+    background: var(--rose-50);
+    border: 1px solid var(--rose-100);
+    color: #9f1239;
+    font-size: 0.8125rem;
     font-weight: 600;
-    padding: 4px 8px;
-    border-radius: 6px;
-    margin-bottom: 1rem;
 }
 
 .priceBlock {
+    margin-top: 14px;
     display: flex;
-    align-items: flex-end;
-    /* Align baseline */
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px;
 }
 
 .price {
-    font-size: 1.75rem;
+    font-size: 1.875rem;
     font-weight: 800;
-    color: #0f172a;
-    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
 }
 
 .mrp {
-    font-size: 1rem;
-    color: #94a3b8;
-    /* Slate-400 */
-    text-decoration: line-through;
+    font-size: 0.9375rem;
     font-weight: 500;
-    margin-bottom: 4px;
+    color: var(--ink-4);
+    text-decoration: line-through;
 }
 
 .discount {
-    background: #dcfce7;
-    /* Green-100 */
-    color: #166534;
-    /* Green-800 */
-    font-size: 0.75rem;
-    font-weight: 700;
-    padding: 4px 8px;
+    align-self: center;
+    padding: 3px 8px;
     border-radius: 6px;
-    margin-bottom: 6px;
+    background: var(--fresh-50);
+    color: var(--fresh-700);
+    font-size: 0.75rem;
+    font-weight: 800;
 }
 
-.divider {
-    height: 1px;
-    background: #e2e8f0;
-    /* Slate-200 */
-    margin: 1.5rem 0;
+.priceMeta {
+    margin-top: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: var(--ink-4);
 }
 
-.sectionTitle {
-    font-size: 1rem;
+.savedBadge {
+    color: var(--fresh-700);
     font-weight: 700;
-    color: #334155;
-    /* Slate-700 */
-    margin-bottom: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
 }
 
-.description {
-    font-size: 0.95rem;
-    color: #475569;
-    /* Slate-600 */
-    line-height: 1.7;
+.desktopCta {
+    display: none;
 }
 
-.moqBox {
-    margin-top: 1rem;
-    padding: 0.75rem 1rem;
-    background: #eff6ff;
-    /* Blue-50 */
-    border: 1px solid #dbeafe;
-    /* Blue-100 */
-    border-radius: 8px;
-    color: #1e40af;
-    /* Blue-800 */
-    font-size: 0.875rem;
-    font-weight: 500;
-}
-
-/* Footer / Actions */
-.footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: #ffffff;
-    padding: 1rem 1.5rem calc(1rem + env(safe-area-inset-bottom, 0px));
-    border-top: 1px solid #f1f5f9;
-    box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
-    /* Softer shadow */
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    z-index: 100;
-}
-
-.qtyControl {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 120px;
-    height: 48px;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    background: #f8fafc;
-    flex-shrink: 0;
-}
-
-.qtyControl button {
-    width: 36px;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    color: #0f172a;
-    transition: background 0.2s;
-}
-
-.qtyControl button:hover:not(:disabled) {
-    background: #e2e8f0;
-}
-
-.qtyControl button:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
-.qtyControl span {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #0f172a;
-    width: 30px;
-    text-align: center;
-}
-
-/* Desktop Responsiveness */
-@media (min-width: 768px) {
-    .container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-        max-width: 1100px;
-        margin: 0 auto;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 4rem;
-        align-items: start;
-        min-height: auto;
-    }
-
-    .header {
-        position: absolute;
-        /* Reset from sticky */
-        background: transparent;
-        backdrop-filter: none;
-        width: 100%;
-        max-width: 1100px;
-        padding: 0;
-        top: 2rem;
-        z-index: 10;
-        pointer-events: none;
-        /* Let clicks pass through */
-    }
-
-    .header>* {
-        pointer-events: auto;
-        /* Re-enable pointer events for buttons */
-    }
-
-    .imageSection {
-        height: 500px;
-        border-radius: 24px;
-        position: sticky;
-        top: 2rem;
-        border: 1px solid #f1f5f9;
-    }
-
-    .details {
-        padding: 2rem 0;
-        /* Remove horizontal padding as grid handles it */
-    }
-
-    .title {
-        font-size: 2.25rem;
-        /* Larger title on desktop */
-    }
-
-    .footer {
-        position: static;
-        box-shadow: none;
-        border: none;
-        padding: 2rem 0 0;
-        background: transparent;
-        margin-top: 2rem;
-        flex-direction: row;
-        width: 100%;
-    }
-
-    .qtyControl {
-        width: 140px;
-    }
-}
-
-/* Offers Section */
 .offerSection {
-    margin-top: 1rem;
+    margin-top: 18px;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 8px;
 }
 
 .offerItem {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 0.85rem;
-    color: #4b5563;
-    /* Gray-600 */
-    background: #fff;
-    border: 1px dashed #cbd5e1;
-    /* Slate-300 */
-    padding: 0.5rem;
-    border-radius: 6px;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px dashed var(--amber-500);
+    border-radius: var(--r-md);
+    background: var(--amber-50);
+    color: #78350f;
+    font-size: 0.8125rem;
+    font-weight: 600;
 }
 
 .offerIcon {
-    color: #16a34a;
-    /* Green-600 */
+    width: 26px;
+    height: 26px;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: var(--amber-500);
+    color: #fff;
 }
 
-.savedBadge {
-    background: #ef4444;
-    /* Red-500 */
-    color: white;
-    font-size: 0.75rem;
-    font-weight: 700;
-    padding: 2px 6px;
-    border-radius: 4px;
-    margin-left: 0.5rem;
-    display: inline-block;
-    align-self: center;
-    /* Vertical center alignment */
-}
-
-/* Variant Pack Selector Sizing Styles (KAN-13) */
 .variantSection {
-    margin: 1.5rem 0;
-    padding: 1rem 0;
-    border-top: 1px solid #f1f5f9;
-    border-bottom: 1px solid #f1f5f9;
+    margin-top: 22px;
 }
 
 .variantTitle {
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
     display: block;
-    margin-bottom: 0.75rem;
+    margin-bottom: 10px;
+    font-size: 0.9375rem;
+    font-weight: 750;
+    color: var(--ink);
 }
 
 .productsGrid {
     display: flex;
-    gap: 1rem;
+    gap: 10px;
     overflow-x: auto;
-    padding: 0.5rem 0 1rem;
-    scroll-behavior: smooth;
-    scrollbar-width: none; /* Hide scrollbar for Firefox */
-    -webkit-overflow-scrolling: touch;
-    scroll-snap-type: x mandatory;
-}
-
-.productsGrid > * {
-    scroll-snap-align: start;
+    padding: 2px 2px 6px;
+    margin: 0 -2px;
+    scrollbar-width: none;
 }
 
 .productsGrid::-webkit-scrollbar {
-    display: none; /* Hide scrollbar for Chrome/Safari */
+    display: none;
 }
 
-/* Style for ADD button inside footer on Product Page */
-.footer button[class*="addButton"] {
-    background: var(--primary-color) !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 24px !important;
-    font-weight: 700 !important;
-    font-size: 1.1rem !important;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2) !important;
-    transition: all 0.2s ease !important;
-    width: 100% !important;
-    height: 100% !important;
+.variantCard {
+    flex: 0 0 150px;
+    display: flex;
 }
 
-.footer button[class*="addButton"]:active {
-    transform: scale(0.98) !important;
-    background: var(--primary-hover) !important;
+.variantCard > * {
+    flex: 1;
 }
 
-/* Style for Quantity selector container in footer */
-.footer div[class*="quantityControl"] {
-    background-color: var(--primary-color) !important;
-    border-radius: 24px !important;
-    width: 100% !important;
-    height: 100% !important;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2) !important;
+.moqBox {
+    margin-top: 16px;
+    padding: 10px 12px;
+    border-radius: var(--r-md);
+    background: var(--brand-50);
+    color: var(--brand-800);
+    font-size: 0.8125rem;
+    font-weight: 600;
 }
 
-.footer div[class*="quantityControl"] button {
-    font-size: 20px !important;
-    font-weight: 600 !important;
+.infoCard {
+    margin-top: 22px;
+    padding: 16px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
 }
 
-.footer div[class*="quantityControl"] span {
-    font-size: 16px !important;
-    font-weight: 700 !important;
+.sectionTitle {
+    margin-bottom: 8px;
+    font-size: 0.9375rem;
+    font-weight: 750;
+    color: var(--ink);
+}
+
+.description {
+    font-size: 0.875rem;
+    line-height: 1.65;
+    color: var(--ink-3);
+    white-space: pre-line;
+}
+
+.groupTag {
+    display: inline-flex;
+    margin-top: 12px;
+    padding: 4px 10px;
+    border-radius: var(--r-pill);
+    background: var(--surface-2);
+    color: var(--ink-2);
+    font-size: 0.75rem;
+    font-weight: 650;
+}
+
+.fbt {
+    max-width: var(--page-max);
+    margin: 0 auto;
+    padding: 20px var(--gutter) 8px;
+}
+
+/* Sticky purchase bar */
+.footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 45;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px var(--gutter) calc(12px + env(safe-area-inset-bottom));
+    background: rgb(255 255 255 / 0.94);
+    backdrop-filter: saturate(180%) blur(18px);
+    -webkit-backdrop-filter: saturate(180%) blur(18px);
+    border-top: 1px solid var(--line);
+    box-shadow: 0 -10px 30px -16px rgb(15 23 42 / 0.25);
+}
+
+.footerPrice {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.15;
+}
+
+.footerPriceValue {
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+}
+
+.footerMrp {
+    font-size: 0.75rem;
+    color: var(--ink-4);
+    text-decoration: line-through;
+}
+
+.footerUnit {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--ink-3);
+}
+
+.footerCta {
+    flex: 1;
+    max-width: 260px;
+    margin-left: auto;
+}
+
+.footer .ctaButton,
+.desktopCta .ctaButton {
+    width: 100%;
+    height: 50px;
+    border-radius: 14px;
+    font-size: 0.9375rem;
+    letter-spacing: 0.02em;
+}
+
+.footer .ctaButton:not(:disabled) {
+    background: var(--fresh-600);
+    color: #fff;
+    box-shadow: var(--sh-fresh);
+}
+
+.notFound {
+    min-height: 70dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--ink-4);
+}
+
+.notFound h1 {
+    font-size: 1.125rem;
+    font-weight: 750;
+    color: var(--ink);
+}
+
+/* ---------- Desktop: two-column ---------- */
+@media (min-width: 900px) {
+    .container {
+        padding-top: 72px;
+        padding-bottom: 48px;
+    }
+
+    .header {
+        position: absolute;
+        max-width: var(--page-max);
+        margin: 0 auto;
+        padding-top: 16px;
+    }
+
+    .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 40px;
+        padding: 0 var(--gutter);
+        align-items: start;
+    }
+
+    .imageSection {
+        position: sticky;
+        top: 24px;
+        padding: 40px;
+        border: 1px solid var(--line);
+        border-radius: var(--r-xl);
+        background: #fff;
+    }
+
+    .productImageWrapper,
+    .imagePlaceholder {
+        max-width: 440px;
+    }
+
+    .imageBadge {
+        left: 20px;
+        bottom: auto;
+        top: 20px;
+    }
+
+    .details {
+        padding: 8px 0 0;
+    }
+
+    .desktopCta {
+        display: block;
+        margin-top: 20px;
+        max-width: 320px;
+    }
+
+    .desktopCta .ctaButton:not(:disabled) {
+        background: var(--fresh-600);
+        color: #fff;
+        box-shadow: var(--sh-fresh);
+    }
+
+    .footer {
+        display: none;
+    }
+
+    .fbt {
+        padding-top: 40px;
+    }
 }

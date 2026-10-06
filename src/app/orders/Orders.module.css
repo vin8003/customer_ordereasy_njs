@@ -1,49 +1,168 @@
 .container {
-    min-height: 100vh;
-    background-color: var(--background-color);
-}
-
-.header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1rem;
-    background: #fff;
-    box-shadow: var(--shadow-sm);
-}
-
-.header h1 {
-    font-size: 1.25rem;
-    font-weight: 700;
+    min-height: 100dvh;
+    background: var(--canvas);
+    padding-bottom: var(--bottom-nav-space);
 }
 
 .list {
-    padding: 1rem;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 16px var(--gutter);
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 12px;
+}
+
+.skeleton {
+    height: 148px;
+    border-radius: var(--r-lg);
 }
 
 .card {
-    background: #fff;
-    padding: 1.25rem;
-    border-radius: var(--radius-lg);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.01);
-    border: 1px solid rgba(241, 245, 249, 0.8);
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 100%;
+    padding: 14px;
+    text-align: left;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    box-shadow: var(--sh-xs);
+    transition: transform 200ms var(--ease-out), box-shadow 200ms var(--ease-out), border-color 200ms var(--ease-out);
+    animation: fadeIn 300ms var(--ease-out) both;
 }
 
-.card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.04);
+@media (hover: hover) {
+    .card:hover {
+        border-color: var(--line-strong);
+        box-shadow: var(--sh-md);
+    }
 }
 
 .card:active {
-    transform: scale(0.98);
+    transform: scale(0.99);
 }
 
 .cardHeader {
     display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.storeIcon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: var(--brand-50);
+    color: var(--brand-600);
+}
+
+.cardTitle {
+    flex: 1;
+    min-width: 0;
+}
+
+.cardTitle h3 {
+    font-size: 0.9375rem;
+    font-weight: 750;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cardTitle p {
+    margin-top: 2px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--ink-3);
+}
+
+.status {
+    flex-shrink: 0;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 10px;
+    border-radius: var(--r-pill);
+    font-size: 0.6875rem;
+    font-weight: 750;
+    text-transform: capitalize;
+    white-space: nowrap;
+}
+
+.toneSuccess { background: var(--fresh-50); color: var(--fresh-700); }
+.toneDanger { background: var(--rose-50); color: var(--rose-600); }
+.toneWarn { background: var(--amber-50); color: var(--amber-700); }
+.toneInfo { background: var(--brand-50); color: var(--brand-700); }
+
+.tags {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.tagWarn,
+.tagDanger,
+.tagRating {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 24px;
+    padding: 0 9px;
+    border-radius: 7px;
+    font-size: 0.6875rem;
+    font-weight: 700;
+}
+
+.tagWarn { background: var(--amber-50); color: var(--amber-700); }
+.tagDanger { background: var(--rose-50); color: var(--rose-600); }
+.tagRating { background: #fefce8; color: #a16207; }
+
+.cardFooter {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--line);
+    display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: flex-start;
+}
+
+.amount {
+    display: flex;
+    flex-direction: column;
+}
+
+.amountLabel {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--ink-4);
+}
+
+.amountValue {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.amountValue s {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--ink-4);
+}
+
+.viewDetails {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--brand-600);
 }

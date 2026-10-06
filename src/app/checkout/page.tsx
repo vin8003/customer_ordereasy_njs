@@ -4,9 +4,10 @@ import toast from '@/lib/toast';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
-import { ArrowLeft, CheckCircle } from 'lucide-react';
+import { Clock, Bike, Store, MapPin, Plus, Wallet, Smartphone, Banknote, MessageSquareText, Gem, ShoppingBag, Ban, ShieldCheck, Sparkles } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
+import PageHeader from '@/app/components/PageHeader';
 import styles from './Checkout.module.css';
 import PhoneVerification from '@/app/components/auth/PhoneVerification';
 import { hasValidAddressCoordinates, parseCoordinate } from '@/utils/addressLocation';
@@ -394,21 +395,16 @@ export default function CheckoutPage() {
                 }}
             />
 
-            <header className={styles.header}>
-                <Button variant="outline" onClick={handleBack}>
-                    <ArrowLeft size={20} />
-                </Button>
-                <h1>Checkout</h1>
-                <div className="h-5" />
-            </header>
+            <PageHeader title="Checkout" subtitle={retailerSettings?.shopName || undefined} onBack={handleBack} />
 
             <main className={styles.main}>
+                <div className={styles.primaryCol}>
                 {/* Store Closed Warning */}
                 {retailerSettings && retailerSettings.isCurrentlyOpen === false && (
-                    <div className="mx-4 mt-4 mb-2 p-3 bg-orange-50 border border-orange-200 rounded-lg flex items-start gap-3 text-orange-800">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                        <div className="text-sm">
-                            <span className="font-semibold block mb-1">Store is currently closed</span>
+                    <div className={styles.noticeWarn}>
+                        <Clock size={18} />
+                        <div>
+                            <strong>Store is currently closed</strong>
                             You can still place your order now. It will be scheduled for processing when the store opens next
                             {retailerSettings.nextOpenTime ? ` at ${retailerSettings.nextOpenTime}` : ''}.
                         </div>
@@ -417,47 +413,67 @@ export default function CheckoutPage() {
 
                 {/* Delivery Mode Toggle */}
                 <section className={styles.section}>
-                    <h2 className={styles.sectionTitle}>Order Type</h2>
-                    <p className="text-xs text-gray-500 mb-3 leading-relaxed">
-                        {deliveryMode === 'delivery'
-                            ? 'Home delivery to your address. Delivery fee may apply. Orders placed when the shop is closed are processed when it opens.'
-                            : 'Collect from the shop. No delivery fee. Pay cash at pickup if you chose Cash on Pickup.'}
-                    </p>
+                    <h2 className={styles.sectionTitle}>
+                        <span className={styles.sectionIcon}><Bike size={16} /></span>
+                        Order type
+                    </h2>
                     {retailerSettings && !retailerSettings.offersDelivery && !retailerSettings.offersPickup ? (
-                        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium flex items-center gap-3">
-                            <span className="text-xl">🚫</span>
+                        <div className={styles.noticeDanger}>
+                            <Ban size={18} />
                             This store is currently not accepting online orders (Delivery & Pickup disabled).
                         </div>
                     ) : (
                         <div className={styles.toggleGroup}>
                             {retailerSettings?.offersDelivery !== false && (
                                 <button
+                                    type="button"
                                     className={`${styles.toggleBtn} ${deliveryMode === 'delivery' ? styles.active : ''}`}
                                     onClick={() => setDeliveryMode('delivery')}
+                                    aria-pressed={deliveryMode === 'delivery'}
                                 >
-                                    Home Delivery
+                                    <Bike size={20} />
+                                    <span>
+                                        <strong>Home Delivery</strong>
+                                        <small>To your address</small>
+                                    </span>
                                 </button>
                             )}
                             {retailerSettings?.offersPickup !== false && (
                                 <button
+                                    type="button"
                                     className={`${styles.toggleBtn} ${deliveryMode === 'pickup' ? styles.active : ''}`}
                                     onClick={() => setDeliveryMode('pickup')}
+                                    aria-pressed={deliveryMode === 'pickup'}
                                 >
-                                    Store Pickup
+                                    <Store size={20} />
+                                    <span>
+                                        <strong>Store Pickup</strong>
+                                        <small>No delivery fee</small>
+                                    </span>
                                 </button>
                             )}
                         </div>
                     )}
+                    <p className={styles.helpText}>
+                        {deliveryMode === 'delivery'
+                            ? 'Home delivery to your address. Delivery fee may apply. Orders placed when the shop is closed are processed when it opens.'
+                            : 'Collect from the shop. No delivery fee. Pay cash at pickup if you chose Cash on Pickup.'}
+                    </p>
                 </section>
 
                 {/* Address Selection */}
                 {deliveryMode === 'delivery' && (
                     <section className={styles.section}>
-                        <h2 className={styles.sectionTitle}>Delivery Address</h2>
+                        <h2 className={styles.sectionTitle}>
+                            <span className={styles.sectionIcon}><MapPin size={16} /></span>
+                            Delivery address
+                        </h2>
                         {addresses.length === 0 ? (
-                            <div className="text-center p-4 border rounded-lg border-dashed">
-                                <p className="mb-2 text-sm text-gray-500">No address found</p>
-                                <Button onClick={() => router.push('/addresses/create')}>Add Address</Button>
+                            <div className={styles.emptyAddress}>
+                                <p>No saved address yet</p>
+                                <Button onClick={() => router.push('/addresses/create')}>
+                                    <Plus size={16} /> Add Address
+                                </Button>
                             </div>
                         ) : (
                             <div className={styles.addressList}>
@@ -466,44 +482,49 @@ export default function CheckoutPage() {
                                         parseCoordinate(addr.latitude),
                                         parseCoordinate(addr.longitude)
                                     );
+                                    const isSelected = selectedAddressId === addr.id;
                                     return (
                                     <div
                                         key={addr.id}
-                                        className={`${styles.addressCard} ${selectedAddressId === addr.id ? styles.selected : ''}`}
+                                        role="radio"
+                                        aria-checked={isSelected}
+                                        tabIndex={0}
+                                        className={`${styles.addressCard} ${isSelected ? styles.selected : ''}`}
                                         onClick={() => setSelectedAddressId(addr.id)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault();
+                                                setSelectedAddressId(addr.id);
+                                            }
+                                        }}
                                     >
-                                        <div className="flex items-start gap-3">
-                                            <div className={`mt-1 ${selectedAddressId === addr.id ? 'text-primary' : 'text-gray-400'}`}>
-                                                {selectedAddressId === addr.id ? <CheckCircle size={20} className="fill-blue-100 text-blue-600" /> : <div className="w-5 h-5 rounded-full border-2 border-gray-300" />}
-                                            </div>
-                                            <div>
-                                                <span className={styles.addressType}>{addr.address_type}</span>
-                                                <p className={styles.addressText}>
-                                                    {addr.address_line1}, {addr.city}, {addr.pincode}
+                                        <span className={`${styles.radio} ${isSelected ? styles.radioOn : ''}`} />
+                                        <div className="min-w-0 flex-1">
+                                            <span className={styles.addressType}>{addr.address_type}</span>
+                                            <p className={styles.addressText}>
+                                                {addr.address_line1}, {addr.city}, {addr.pincode}
+                                            </p>
+                                            {!hasMapLocation && (
+                                                <p className={styles.addressWarn}>
+                                                    Map location required —{' '}
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            router.push(`/addresses/edit?id=${addr.id}`);
+                                                        }}
+                                                    >
+                                                        update address
+                                                    </button>
                                                 </p>
-                                                {!hasMapLocation && (
-                                                    <p className="text-xs text-amber-600 mt-1">
-                                                        Map location required —{' '}
-                                                        <button
-                                                            type="button"
-                                                            className="underline font-medium"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                router.push(`/addresses/edit?id=${addr.id}`);
-                                                            }}
-                                                        >
-                                                            update address
-                                                        </button>
-                                                    </p>
-                                                )}
-                                            </div>
+                                            )}
                                         </div>
                                     </div>
                                     );
                                 })}
-                                <Button variant="outline" className="text-primary text-sm mt-2" onClick={() => router.push('/addresses/create')}>
-                                    + Add New Address
-                                </Button>
+                                <button type="button" className={styles.addAddressBtn} onClick={() => router.push('/addresses/create')}>
+                                    <Plus size={16} /> Add New Address
+                                </button>
                             </div>
                         )}
                     </section>
@@ -511,34 +532,63 @@ export default function CheckoutPage() {
 
                 {/* Payment Method */}
                 <section className={styles.section}>
-                    <h2 className={styles.sectionTitle}>Payment Method</h2>
+                    <h2 className={styles.sectionTitle}>
+                        <span className={styles.sectionIcon}><Wallet size={16} /></span>
+                        Payment method
+                    </h2>
                     {!retailerSettings?.acceptsCod && !retailerSettings?.acceptsUpi ? (
-                        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium flex items-center gap-3">
-                            <span className="text-xl">🚫</span>
+                        <div className={styles.noticeDanger}>
+                            <Ban size={18} />
                             This retailer is not accepting any payments at the moment.
                         </div>
                     ) : (
                         <div className={styles.paymentOptions}>
                             {retailerSettings?.acceptsCod !== false && (
                                 <div
+                                    role="radio"
+                                    tabIndex={0}
+                                    aria-checked={['cod', 'cash_pickup'].includes(paymentMethod)}
                                     className={`${styles.paymentCard} ${['cod', 'cash_pickup'].includes(paymentMethod) ? styles.selected : ''}`}
                                     onClick={() => setPaymentMethod(deliveryMode === 'delivery' ? 'cod' : 'cash_pickup')}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            setPaymentMethod(deliveryMode === 'delivery' ? 'cod' : 'cash_pickup');
+                                        }
+                                    }}
                                 >
-                                    <span className="font-bold">{deliveryMode === 'delivery' ? 'Cash on Delivery' : 'Cash on Pickup'}</span>
-                                    {['cod', 'cash_pickup'].includes(paymentMethod) && <CheckCircle size={18} className="text-blue-600" />}
+                                    <span className={styles.payIcon}><Banknote size={20} /></span>
+                                    <span className={styles.payLabel}>
+                                        <strong>{deliveryMode === 'delivery' ? 'Cash on Delivery' : 'Cash on Pickup'}</strong>
+                                        <small>Pay when you receive your order</small>
+                                    </span>
+                                    <span className={`${styles.radio} ${['cod', 'cash_pickup'].includes(paymentMethod) ? styles.radioOn : ''}`} />
                                 </div>
                             )}
                             {upiAvailable && (
                                 <div
+                                    role="radio"
+                                    tabIndex={0}
+                                    aria-checked={paymentMethod === 'upi'}
                                     className={`${styles.paymentCard} ${paymentMethod === 'upi' ? styles.selected : ''}`}
                                     onClick={() => setPaymentMethod('upi')}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            setPaymentMethod('upi');
+                                        }
+                                    }}
                                 >
-                                    <span className="font-bold">UPI (Paytm, PhonePe, GPay)</span>
-                                    {paymentMethod === 'upi' && <CheckCircle size={18} className="text-blue-600" />}
+                                    <span className={`${styles.payIcon} ${styles.payIconUpi}`}><Smartphone size={20} /></span>
+                                    <span className={styles.payLabel}>
+                                        <strong>UPI</strong>
+                                        <small>Paytm, PhonePe, GPay &amp; more</small>
+                                    </span>
+                                    <span className={`${styles.radio} ${paymentMethod === 'upi' ? styles.radioOn : ''}`} />
                                 </div>
                             )}
                             {retailerSettings?.acceptsUpi !== false && !retailerSettings?.retailerUpiId && (
-                                <p className="text-xs text-amber-600 mt-2">
+                                <p className={styles.addressWarn}>
                                     UPI is not available — this shop has not added a UPI ID yet.
                                 </p>
                             )}
@@ -548,7 +598,11 @@ export default function CheckoutPage() {
 
                 {/* Special Instructions */}
                 <section className={styles.section}>
-                    <h2 className={styles.sectionTitle}>Special Instructions</h2>
+                    <h2 className={styles.sectionTitle}>
+                        <span className={styles.sectionIcon}><MessageSquareText size={16} /></span>
+                        Special instructions
+                        <span className={styles.optional}>Optional</span>
+                    </h2>
                     <textarea
                         className={styles.textarea}
                         placeholder="Any notes for the retailer or delivery partner?"
@@ -559,8 +613,11 @@ export default function CheckoutPage() {
                 {/* Rewards Section */}
                 {rewardConfig && userRewardPoints > 0 && (
                     <section className={styles.section}>
-                        <h2 className={styles.sectionTitle}>Rewards</h2>
-                        <div className={styles.rewardCard}>
+                        <h2 className={styles.sectionTitle}>
+                            <span className={styles.sectionIcon}><Gem size={16} /></span>
+                            Rewards
+                        </h2>
+                        <label htmlFor="useRewards" className={`${styles.rewardCard} ${useRewardPoints ? styles.rewardOn : ''}`}>
                             <div className={styles.rewardContent}>
                                 <input
                                     type="checkbox"
@@ -569,28 +626,32 @@ export default function CheckoutPage() {
                                     onChange={(e) => setUseRewardPoints(e.target.checked)}
                                     className={styles.checkbox}
                                 />
-                                <label htmlFor="useRewards" className={styles.rewardLabel}>
-                                    <p className={styles.rewardPointsText}>Use Reward Points</p>
-                                    <p className={styles.availablePoints}>Available: {userRewardPoints} pts (₹{userRewardPoints * parseFloat(rewardConfig.conversion_rate)})</p>
-                                </label>
+                                <span className={styles.rewardLabel}>
+                                    <span className={styles.rewardPointsText}>Use Reward Points</span>
+                                    <span className={styles.availablePoints}>Available: {userRewardPoints} pts (₹{userRewardPoints * parseFloat(rewardConfig.conversion_rate)})</span>
+                                </span>
                             </div>
                             {useRewardPoints && discountFromPoints > 0 && (
                                 <p className={styles.discountApplied}>-₹{discountFromPoints.toFixed(2)} savings applied</p>
                             )}
-                        </div>
+                        </label>
                     </section>
                 )}
+                </div>
 
+                <div className={styles.secondaryCol}>
                 <section className={styles.section}>
-                    <h2 className={styles.sectionTitle}>Order Items</h2>
+                    <h2 className={styles.sectionTitle}>
+                        <span className={styles.sectionIcon}><ShoppingBag size={16} /></span>
+                        Order items
+                        <span className={styles.optional}>{cartItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0)} items</span>
+                    </h2>
                     <div className={styles.itemsList}>
                         {cartItems.map((item) => (
-                            <div key={item.id || item.product} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
-                                <div className="flex gap-2">
-                                    <span className="text-gray-500 font-medium">{item.quantity}x</span>
-                                    <span>{item.product_name}</span>
-                                </div>
-                                <span className="font-medium">₹{(Number(item.product_price) * item.quantity).toFixed(2)}</span>
+                            <div key={item.id || item.product} className={styles.itemRow}>
+                                <span className={styles.itemQty}>{item.quantity}×</span>
+                                <span className={styles.itemName}>{item.product_name}</span>
+                                <span className={styles.itemPrice}>₹{(Number(item.product_price) * item.quantity).toFixed(2)}</span>
                             </div>
                         ))}
                     </div>
@@ -606,20 +667,20 @@ export default function CheckoutPage() {
                 )}
 
                 <section className={styles.section}>
-                    <h2 className={styles.sectionTitle}>Order Summary</h2>
+                    <h2 className={styles.sectionTitle}>Order summary</h2>
                     <div className={styles.summaryRow}>
                         <span>Subtotal</span>
                         <span>₹{(cartTotal + offerSavings).toFixed(2)}</span>
                     </div>
                     {hasActiveOffers && (
-                        <div className={`${styles.summaryRow} text-green-600`}>
+                        <div className={`${styles.summaryRow} ${styles.discount}`}>
                             <span>Offer Discount</span>
                             <span>-₹{offerSavings.toFixed(2)}</span>
                         </div>
                     )}
                     {appliedCoupon && (
-                        <div className={`${styles.summaryRow} text-purple-700 font-medium`}>
-                            <span>🎟️ Coupon ({appliedCoupon.code})</span>
+                        <div className={`${styles.summaryRow} ${styles.couponRow}`}>
+                            <span>Coupon ({appliedCoupon.code})</span>
                             <span>
                                 {appliedCoupon.benefit_type === 'credit_points'
                                     ? `+${(appliedCoupon.points ?? appliedCoupon.savings ?? 0)} pts cashback`
@@ -628,21 +689,21 @@ export default function CheckoutPage() {
                         </div>
                     )}
                     {appliedCoupon?.benefit_type === 'credit_points' && (
-                        <div className="bg-purple-50 text-purple-800 text-xs p-2.5 rounded-lg mb-2 border border-purple-200 flex items-center gap-2">
-                            <span>🎉</span>
+                        <div className={styles.cashbackNote}>
+                            <Sparkles size={14} />
                             <span><strong>+{(appliedCoupon.points ?? appliedCoupon.savings ?? 0)} Cashback Points</strong> will be credited upon delivery!</span>
                         </div>
                     )}
                     {deliveryMode === 'delivery' && retailerSettings && retailerSettings.freeDeliveryThreshold > 0 && cartTotal < retailerSettings.freeDeliveryThreshold && (
-                        <div className="bg-blue-50 text-blue-800 text-sm p-2 rounded mb-2 border border-blue-200 flex justify-between items-center">
+                        <div className={styles.freeDeliveryNote}>
                             <span>Add items worth ₹{(retailerSettings.freeDeliveryThreshold - cartTotal).toFixed(0)} more for FREE Delivery!</span>
-                            <Button variant="ghost" className="text-blue-700 h-auto py-0 px-2 text-xs hover:bg-blue-100" onClick={handleBack}>
+                            <button type="button" onClick={handleBack}>
                                 Add Items
-                            </Button>
+                            </button>
                         </div>
                     )}
                     {minOrder > 0 && (
-                        <div className={`${styles.summaryRow} ${belowMinOrder ? 'text-orange-600 font-medium' : ''}`}>
+                        <div className={`${styles.summaryRow} ${belowMinOrder ? styles.warnRow : styles.mutedRow}`}>
                             <span>Min. order</span>
                             <span>
                                 ₹{minOrder.toFixed(0)}
@@ -662,23 +723,43 @@ export default function CheckoutPage() {
                             <span>-₹{discountFromPoints.toFixed(2)}</span>
                         </div>
                     )}
-                    <div className="flex justify-between items-center py-2 border-t border-dashed border-gray-200 mt-2">
-                        <span className="font-bold text-lg">Total Amount</span>
-                        <span className="font-bold text-xl text-primary">₹{payableTotal.toFixed(2)}</span>
+                    <div className={styles.totalRow}>
+                        <span>Total Amount</span>
+                        <span>₹{payableTotal.toFixed(2)}</span>
                     </div>
+
+                    <Button
+                        fullWidth
+                        size="lg"
+                        className={styles.desktopPlace}
+                        onClick={handlePlaceOrder}
+                        isLoading={isLoading}
+                        disabled={belowMinOrder}
+                    >
+                        {belowMinOrder
+                            ? `Add ₹${minOrderGap.toFixed(0)} more to order`
+                            : `Place Order (₹${payableTotal.toFixed(2)})`}
+                    </Button>
+                    <p className={styles.secureNote}><ShieldCheck size={13} /> Your order goes directly to the store</p>
                 </section>
+                </div>
             </main>
 
             <div className={styles.footer}>
-                <Button 
-                    fullWidth 
-                    onClick={handlePlaceOrder} 
+                <div className={styles.footerTotal}>
+                    <span>₹{payableTotal.toFixed(2)}</span>
+                    <small>Total payable</small>
+                </div>
+                <Button
+                    size="lg"
+                    className={styles.footerBtn}
+                    onClick={handlePlaceOrder}
                     isLoading={isLoading}
                     disabled={belowMinOrder}
                 >
                     {belowMinOrder
-                        ? `Add ₹${minOrderGap.toFixed(0)} more to order`
-                        : `Place Order (₹${payableTotal.toFixed(2)})`}
+                        ? `Add ₹${minOrderGap.toFixed(0)} more`
+                        : 'Place Order'}
                 </Button>
             </div>
         </div>

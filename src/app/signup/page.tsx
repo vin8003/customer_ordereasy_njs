@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { apiService, setAuthToken } from '../../services/api';
+import BrandLogo from '@/app/components/BrandLogo';
 import styles from './Signup.module.css';
 import { Phone, Lock, User, Mail } from 'lucide-react';
 import { useCartContext } from '@/context/CartContext';
@@ -213,13 +213,7 @@ export default function SignupPage() {
             <div className={styles.card}>
                 <div className={styles.header}>
                     <div className={styles.logoWrapper}>
-                        <Image
-                            src="/assets/images/logo.png"
-                            alt="Order Easy Logo"
-                            width={100}
-                            height={100}
-                            className={styles.logo}
-                        />
+                        <BrandLogo size="md" />
                     </div>
                     <h1 className={styles.title}>
                         {showOtpModal 

@@ -80,15 +80,15 @@ export default function UpiPaymentPanel({
     return (
         <div className={styles.qrContainer}>
             {amountLabel && (
-                <div className="mb-3 text-center">
-                    <p className="text-sm text-gray-600">Pay exactly</p>
-                    <p className="text-2xl font-bold text-gray-900">₹{amountLabel}</p>
-                    <p className="text-xs text-gray-500 mt-1">to {retailerName}</p>
+                <div className="text-center">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[var(--ink-4)]">Pay exactly</p>
+                    <p className="mt-1 text-[2rem] font-extrabold leading-none tracking-tight text-[var(--ink)]">₹{amountLabel}</p>
+                    <p className="mt-1.5 text-xs text-[var(--ink-3)]">to {retailerName}</p>
                 </div>
             )}
 
             {showAppButton && (
-                <Button fullWidth onClick={handlePay} className="mb-3">
+                <Button fullWidth size="lg" onClick={handlePay}>
                     Pay with PhonePe, GPay or Paytm
                 </Button>
             )}
@@ -103,7 +103,7 @@ export default function UpiPaymentPanel({
                             title={`UPI payment QR for order ${orderNumber}`}
                         />
                     </div>
-                    <p className="text-sm text-gray-600 text-center">
+                    <p className="text-center text-[13px] text-[var(--ink-3)]">
                         Scan with any UPI app to pay <strong>₹{amountLabel}</strong> for this order.
                     </p>
                 </>
@@ -112,20 +112,20 @@ export default function UpiPaymentPanel({
                     <div className={styles.qrWrapper}>
                         <img src={retailerUpiQrCode} alt="UPI QR Code" className={styles.qrImage} />
                     </div>
-                    <p className="text-sm text-gray-600 text-center">
+                    <p className="text-center text-[13px] text-[var(--ink-3)]">
                         Scan this shop QR and enter <strong>₹{amountLabel}</strong> manually.
                     </p>
                 </>
             ) : !showAppButton && !vpa ? (
-                <div className="text-sm text-gray-500 italic text-center">
+                <div className="text-center text-[13px] text-[var(--ink-3)]">
                     This shop has not added a UPI ID yet. Please contact the shop to complete payment.
                 </div>
             ) : showAppButton ? (
-                <p className="text-xs text-gray-500 text-center mb-2">
+                <p className="text-center text-xs text-[var(--ink-3)]">
                     If no app opens, tap the button above to choose PhonePe, Google Pay, or Paytm.
                 </p>
             ) : (
-                <div className="text-sm text-gray-500 italic text-center">
+                <div className="text-center text-[13px] text-[var(--ink-3)]">
                     Exact-amount QR unavailable for this order. Please pay using the UPI ID below.
                 </div>
             )}
@@ -133,7 +133,7 @@ export default function UpiPaymentPanel({
             <div className={styles.upiIdContainer}>
                 <span className={styles.upiIdLabel}>UPI ID</span>
                 <div className={styles.upiIdValue}>{vpa || 'Not Provided'}</div>
-                <div className="flex flex-wrap gap-2 justify-center">
+                <div className="mt-2 flex flex-wrap justify-center gap-2">
                     {vpa && (
                         <button type="button" onClick={copyUpiId} className={styles.copyButton}>
                             Copy UPI ID

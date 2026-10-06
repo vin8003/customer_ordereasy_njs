@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, Suspense } from 'react';
-import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { apiService, getErrorMessage, setAuthToken } from '../../services/api';
+import BrandLogo from '@/app/components/BrandLogo';
 import styles from './VerifyEmail.module.css';
 import { Key, Info } from 'lucide-react';
 import LoadingScreen from '@/app/components/LoadingScreen';
@@ -130,13 +130,7 @@ function VerifyEmailContent() {
             <div className={styles.card}>
                 <div className={styles.header}>
                     <div className={styles.logoWrapper}>
-                        <Image
-                            src="/assets/images/logo.png"
-                            alt="Order Easy Logo"
-                            width={100}
-                            height={100}
-                            className={styles.logo}
-                        />
+                        <BrandLogo size="md" />
                     </div>
                     <h1 className={styles.title}>Verify Email</h1>
                     <p className={styles.subtitle}>Enter the 6-digit code sent to <strong>{email}</strong></p>
@@ -171,6 +165,7 @@ function VerifyEmailContent() {
                     <p>
                         Didn't receive the code?
                         <button
+                            type="button"
                             onClick={handleResend}
                             disabled={isResending || !cooldown.allowed}
                             className={styles.resendBtn}

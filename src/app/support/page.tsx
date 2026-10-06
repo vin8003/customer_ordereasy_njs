@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
-import { ArrowLeft, Mail, Phone, ChevronDown, ChevronUp, MessageCircle } from 'lucide-react';
+import { Mail, Phone, ChevronDown, MessageCircle, ChevronRight } from 'lucide-react';
+import PageHeader from '@/app/components/PageHeader';
 
 export default function SupportPage() {
     const { handleBack } = useAppNavigation();
@@ -32,47 +33,40 @@ export default function SupportPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20">
-            {/* Header */}
-            <header className="bg-white p-4 shadow-sm sticky top-0 z-10 flex items-center gap-4">
-                <button
-                    onClick={handleBack}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                    <ArrowLeft size={20} className="text-gray-600" />
-                </button>
-                <h1 className="text-lg font-bold text-gray-800">Help & Support</h1>
-            </header>
+        <div className="min-h-dvh bg-[var(--canvas)] pb-[var(--bottom-nav-space)]">
+            <PageHeader title="Help & Support" subtitle="We're here to help" onBack={handleBack} />
 
-            <main className="p-4 max-w-2xl mx-auto space-y-6">
+            <main className="mx-auto max-w-2xl space-y-6 px-[var(--gutter)] py-4">
 
                 {/* Contact Options */}
-                <section className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-                    <h2 className="text-base font-semibold text-gray-800 mb-4">Contact Us</h2>
-                    <div className="space-y-3">
-                        <a href="mailto:support@ordereasy.com" className="flex items-center gap-4 p-3 rounded-lg border border-gray-100 hover:bg-primary/5 transition-colors group">
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary/20">
-                                <Mail size={20} />
+                <section className="rounded-[var(--r-lg)] border border-[var(--line)] bg-white p-4">
+                    <h2 className="mb-3 text-base font-extrabold tracking-tight text-[var(--ink)]">Contact us</h2>
+                    <div className="space-y-2.5">
+                        <a href="mailto:support@ordereasy.com" className="group flex items-center gap-3 rounded-[var(--r-md)] border border-[var(--line)] p-3 transition-colors hover:border-[var(--brand-200)] hover:bg-[var(--brand-50)]">
+                            <div className="flex size-10 items-center justify-center rounded-xl bg-[var(--brand-50)] text-[var(--brand-600)]">
+                                <Mail size={19} />
                             </div>
-                            <div className="flex-1">
-                                <p className="font-medium text-gray-900">Email Support</p>
-                                <p className="text-sm text-gray-500">support@ordereasy.com</p>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-sm font-bold text-[var(--ink)]">Email Support</p>
+                                <p className="text-[13px] text-[var(--ink-3)]">support@ordereasy.com</p>
                             </div>
+                            <ChevronRight size={18} className="text-[var(--ink-4)]" />
                         </a>
 
-                        <a href="tel:+919876543210" className="flex items-center gap-4 p-3 rounded-lg border border-gray-100 hover:bg-primary/5 transition-colors group">
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary/20">
-                                <Phone size={20} />
+                        <a href="tel:+919876543210" className="group flex items-center gap-3 rounded-[var(--r-md)] border border-[var(--line)] p-3 transition-colors hover:border-[var(--fresh-100)] hover:bg-[var(--fresh-50)]">
+                            <div className="flex size-10 items-center justify-center rounded-xl bg-[var(--fresh-50)] text-[var(--fresh-700)]">
+                                <Phone size={19} />
                             </div>
-                            <div className="flex-1">
-                                <p className="font-medium text-gray-900">Call Us</p>
-                                <p className="text-sm text-gray-500">+91 98765 43210</p>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-sm font-bold text-[var(--ink)]">Call Us</p>
+                                <p className="text-[13px] text-[var(--ink-3)]">+91 98765 43210</p>
                             </div>
+                            <ChevronRight size={18} className="text-[var(--ink-4)]" />
                         </a>
 
-                        <div className="bg-primary/5 p-4 rounded-lg mt-4 flex items-start gap-3">
-                            <MessageCircle size={20} className="text-primary mt-1 shrink-0" />
-                            <p className="text-sm text-foreground">
+                        <div className="mt-3 flex items-start gap-3 rounded-[var(--r-md)] bg-[var(--amber-50)] p-3.5">
+                            <MessageCircle size={18} className="mt-0.5 shrink-0 text-[var(--amber-700)]" />
+                            <p className="text-[13px] leading-relaxed text-[#78350f]">
                                 For urgent issues with an ongoing order, please contact the Retailer directly from the Order Details page.
                             </p>
                         </div>
@@ -81,23 +75,24 @@ export default function SupportPage() {
 
                 {/* FAQs */}
                 <section>
-                    <h2 className="text-base font-semibold text-gray-800 mb-4 px-1">Frequently Asked Questions</h2>
-                    <div className="space-y-2">
+                    <h2 className="mb-3 px-1 text-base font-extrabold tracking-tight text-[var(--ink)]">Frequently asked questions</h2>
+                    <div className="overflow-hidden rounded-[var(--r-lg)] border border-[var(--line)] bg-white">
                         {faqs.map((faq, index) => (
-                            <div key={index} className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+                            <div key={index} className="border-[var(--line)] [&:not(:first-child)]:border-t">
                                 <button
+                                    type="button"
                                     onClick={() => toggleFaq(index)}
-                                    className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
+                                    aria-expanded={openFaq === index}
+                                    className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-[var(--surface-2)]"
                                 >
-                                    <span className="font-medium text-gray-700">{faq.question}</span>
-                                    {openFaq === index ? (
-                                        <ChevronUp size={18} className="text-gray-400" />
-                                    ) : (
-                                        <ChevronDown size={18} className="text-gray-400" />
-                                    )}
+                                    <span className="text-sm font-semibold text-[var(--ink)]">{faq.question}</span>
+                                    <ChevronDown
+                                        size={18}
+                                        className={`shrink-0 text-[var(--ink-4)] transition-transform duration-200 ${openFaq === index ? 'rotate-180' : ''}`}
+                                    />
                                 </button>
                                 {openFaq === index && (
-                                    <div className="px-4 pb-4 pt-0 text-sm text-gray-600 leading-relaxed border-t border-gray-50 mt-2 pt-3">
+                                    <div className="px-4 pb-4 text-[13px] leading-relaxed text-[var(--ink-3)] animate-in fade-in slide-in-from-top-1 duration-200">
                                         {faq.answer}
                                     </div>
                                 )}

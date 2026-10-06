@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import toast from '@/lib/toast';
-import { ShoppingCart } from 'lucide-react';
+import { Plus, Minus, Loader2 } from 'lucide-react';
 import { useCartContext } from '@/context/CartContext';
 import { isOutOfStock } from '@/utils/productStock';
 import styles from './AddToCartButton.module.css';
@@ -18,6 +18,8 @@ interface AddToCartButtonProps {
     offersDelivery?: boolean;
     offersPickup?: boolean;
     className?: string;
+    /** `block` renders a full-width "Add to cart" CTA (product page). */
+    variant?: 'compact' | 'block';
 }
 
 const AddToCartButton: React.FC<AddToCartButtonProps> = ({
@@ -30,7 +32,8 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
     offersPickup = true,
     trackInventory,
     stockQuantity,
-    className
+    className,
+    variant = 'compact'
 }) => {
     const { getItemQuantity, addToCart, updateQuantity } = useCartContext();
     const quantity = getItemQuantity(productId);
@@ -111,46 +114,62 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
         if (outOfStock) {
             return (
                 <button
-                    className={`${styles.addButton} ${styles.disabled} ${className || ''}`}
+                    className={`${styles.addButton} ${styles.soldOut} ${className || ''}`}
                     disabled
                     type="button"
                 >
-                    OUT
+                    Sold out
                 </button>
             );
         }
+        const isOffline = !offersDelivery && !offersPickup;
         return (
             <button
-                className={`${styles.addButton} ${className || ''} ${(!offersDelivery && !offersPickup) ? styles.disabled : ''}`}
+                type="button"
+                className={`${styles.addButton} ${variant === 'block' ? styles.block : ''} ${className || ''} ${isOffline ? styles.disabled : ''}`}
                 onClick={handleAdd}
-                disabled={loading || (!offersDelivery && !offersPickup)}
+                disabled={loading || isOffline}
+                aria-label="Add to cart"
             >
-                {loading ? '...' : (!offersDelivery && !offersPickup ? 'OFFLINE' : (
-                    <>
-                        <ShoppingCart size={14} />
-                        ADD
-                    </>
+                {loading ? <Loader2 size={15} className={styles.spin} /> : (isOffline ? 'Offline' : (
+                    variant === 'block' ? (
+                        <>
+                            <Plus size={18} strokeWidth={2.5} />
+                            Add to cart
+                        </>
+                    ) : (
+                        <>
+                            ADD
+                            <Plus size={13} strokeWidth={3} className={styles.addPlus} />
+                        </>
+                    )
                 ))}
             </button>
         );
     }
 
+    const atMax = !!maximumOrderQuantity && quantity >= maximumOrderQuantity;
+
     return (
-        <div className={`${styles.quantityControl} ${className || ''}`} onClick={(e) => e.stopPropagation()}>
+        <div className={`${styles.quantityControl} ${variant === 'block' ? styles.block : ''} ${loading ? styles.busy : ''} ${className || ''}`} onClick={(e) => e.stopPropagation()}>
             <button
+                type="button"
                 className={styles.controlBtn}
                 onClick={handleDecrement}
                 disabled={loading}
+                aria-label="Decrease quantity"
             >
-                -
+                <Minus size={15} strokeWidth={3} />
             </button>
-            <span className={styles.quantity}>{quantity}</span>
+            <span className={styles.quantity} aria-live="polite">{quantity}</span>
             <button
-                className={`${styles.controlBtn} ${(!!maximumOrderQuantity && quantity >= maximumOrderQuantity) ? styles.disabledBtn : ''}`}
+                type="button"
+                className={`${styles.controlBtn} ${atMax ? styles.disabledBtn : ''}`}
                 onClick={handleIncrement}
                 disabled={loading}
+                aria-label="Increase quantity"
             >
-                +
+                <Plus size={15} strokeWidth={3} />
             </button>
         </div>
     );

@@ -37,17 +37,18 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
     };
 
     return (
-        <div className={styles.overlay}>
-            <div className={styles.modal}>
+        <div className={styles.overlay} onClick={onClose}>
+            <div className={styles.modal} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Help & Support">
                 <div className={styles.header}>
                     <h2 className={styles.title}>Help & Support</h2>
-                    <button onClick={onClose} className={styles.closeBtn}>
-                        <X size={24} />
+                    <button type="button" onClick={onClose} className={styles.closeBtn} aria-label="Close">
+                        <X size={20} />
                     </button>
                 </div>
 
                 <div className={styles.tabs}>
                     <button
+                        type="button"
                         className={`${styles.tab} ${activeTab === 'faq' ? styles.activeTab : ''}`}
                         onClick={() => setActiveTab('faq')}
                     >
@@ -55,6 +56,7 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                         FAQs
                     </button>
                     <button
+                        type="button"
                         className={`${styles.tab} ${activeTab === 'feedback' ? styles.activeTab : ''}`}
                         onClick={() => setActiveTab('feedback')}
                     >
@@ -101,7 +103,8 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                                 <Button
                                     type="submit"
                                     disabled={!feedback.trim()}
-                                    className="w-full flex items-center justify-center gap-2"
+                                    size="lg"
+                                    className="w-full"
                                 >
                                     <Send size={16} /> Send Feedback
                                 </Button>

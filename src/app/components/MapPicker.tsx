@@ -9,8 +9,7 @@ import { hasValidAddressCoordinates } from '@/utils/addressLocation';
 
 const containerStyle = {
     width: '100%',
-    height: '300px',
-    borderRadius: '12px'
+    height: '280px',
 };
 
 const defaultCenter = {
@@ -102,12 +101,13 @@ export default function MapPicker({ onLocationSelect, initialLat, initialLng }: 
                 type="button"
                 onClick={handleUseMyLocation}
                 disabled={isLocating}
-                className="mb-3 w-full flex items-center justify-center gap-2 rounded-xl border-2 border-blue-600 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 disabled:opacity-60"
+                className="mb-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--brand-200)] bg-[var(--brand-50)] px-4 text-sm font-bold text-[var(--brand-700)] transition hover:bg-[var(--brand-100)] disabled:opacity-60"
             >
                 <Navigation size={18} />
                 {isLocating ? 'Getting your location…' : 'Use my location'}
             </button>
 
+            <div className="overflow-hidden rounded-[var(--r-md)] border border-[var(--line)]">
             <GoogleMap
                 mapContainerStyle={containerStyle}
                 center={markerPos}
@@ -122,7 +122,8 @@ export default function MapPicker({ onLocationSelect, initialLat, initialLng }: 
             >
                 <Marker position={markerPos} />
             </GoogleMap>
-            <div className="mt-2 text-xs text-center text-gray-500 flex items-center justify-center gap-1">
+            </div>
+            <div className="mt-2 flex items-center justify-center gap-1 text-center text-xs text-[var(--ink-3)]">
                 <MapPin size={12} />
                 <span>
                     {locationSet

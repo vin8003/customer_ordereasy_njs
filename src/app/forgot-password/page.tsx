@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { apiService, getErrorMessage } from '../../services/api';
+import BrandLogo from '@/app/components/BrandLogo';
 import styles from './ForgotPassword.module.css';
 import { Mail, Lock, Key } from 'lucide-react';
 
@@ -75,13 +75,7 @@ export default function ForgotPasswordPage() {
             <div className={styles.card}>
                 <div className={styles.header}>
                     <div className={styles.logoWrapper}>
-                        <Image
-                            src="/assets/images/logo.png"
-                            alt="Order Easy Logo"
-                            width={100}
-                            height={100}
-                            className={styles.logo}
-                        />
+                        <BrandLogo size="md" />
                     </div>
                     <h1 className={styles.title}>Reset Password</h1>
                     <p className={styles.subtitle}>
@@ -160,7 +154,7 @@ export default function ForgotPasswordPage() {
                             Reset Password
                         </Button>
 
-                        <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+                        <div className="mt-1 text-center">
                             <Button
                                 type="button"
                                 variant="outline"

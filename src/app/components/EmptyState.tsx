@@ -25,19 +25,21 @@ export function EmptyState({
     return (
         <div
             className={cn(
-                'flex min-h-[240px] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-primary/20 bg-primary/5 px-6 py-12 text-center',
+                'flex min-h-[260px] w-full max-w-md flex-col items-center justify-center gap-2 px-6 py-12 text-center mx-auto',
                 className
             )}
         >
-            <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary shadow-lg shadow-primary/10">
-                <Icon className="size-7" />
+            <div className="relative mb-3 flex size-20 items-center justify-center">
+                <div className="absolute inset-0 rounded-[28px] bg-[var(--brand-50)] rotate-6" />
+                <div className="absolute inset-0 rounded-[28px] border border-[var(--brand-100)] bg-white shadow-[var(--sh-md)]" />
+                <Icon className="relative size-9 text-[var(--brand-600)]" strokeWidth={1.75} />
             </div>
-            <h3 className="text-base font-semibold tracking-tight text-foreground">{title}</h3>
+            <h3 className="text-lg font-bold tracking-tight text-[var(--ink)]">{title}</h3>
             {description ? (
-                <p className="max-w-xs text-sm text-muted-foreground">{description}</p>
+                <p className="max-w-xs text-sm leading-relaxed text-[var(--ink-3)]">{description}</p>
             ) : null}
             {actionLabel && onAction ? (
-                <Button onClick={onAction} className="mt-2">
+                <Button onClick={onAction} size="lg" className="mt-4 min-w-[180px]">
                     {actionLabel}
                 </Button>
             ) : null}
