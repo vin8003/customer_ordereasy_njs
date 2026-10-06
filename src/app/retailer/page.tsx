@@ -17,7 +17,6 @@ import { ProductCard } from '@/app/components/ProductCard';
 import { Button } from '@/app/components/ui/Button';
 import LazyProductLane from '@/app/components/LazyProductLane';
 import InfiniteProductGrid from '@/app/components/InfiniteProductGrid';
-import { visibleSearchProductBrandName } from '@/lib/searchProductBrandName';
 import { visibleProductListUnit } from '@/lib/productListUnit';
 import { visibleProductListMrp } from '@/lib/productListMrp';
 import styles from './RetailerHome.module.css';
@@ -42,7 +41,6 @@ export interface Product {
     stock_quantity: number;
     track_inventory: boolean;
     unit?: string;
-    brand_name?: string | null;
     minimum_order_quantity?: number;
     maximum_order_quantity?: number | null;
 }
@@ -410,7 +408,6 @@ function RetailerHome() {
                             <div className={styles.noSuggestions}>Searching...</div>
                         ) : suggestions.length > 0 ? (
                             suggestions.map((product) => {
-                                const brandName = visibleSearchProductBrandName(product);
                                 const unit = visibleProductListUnit(product);
                                 const listMrp = visibleProductListMrp(product);
                                 return (
@@ -424,21 +421,12 @@ function RetailerHome() {
                                         </div>
                                         <div className={styles.suggestionInfo}>
                                             <div className={styles.suggestionName}>{product.name}</div>
-                                            {brandName ? (
-                                                <div className={styles.suggestionBrand}>{brandName}</div>
-                                            ) : null}
-                                            <div className={styles.suggestionMeta}>
-                                                <span className={styles.suggestionPrice}>₹{product.price}</span>
-                                                {product.unit && <span>• {product.unit}</span>}
                                             {unit ? <div className={styles.suggestionUnit}>{unit}</div> : null}
-                                            <div className={styles.suggestionMeta}>
-                                                <span className={styles.suggestionPrice}>₹{product.price}</span>
                                             <div className={styles.suggestionMeta}>
                                                 <span className={styles.suggestionPrice}>₹{product.price}</span>
                                                 {listMrp ? (
                                                     <span className={styles.suggestionMrp}>₹{listMrp}</span>
                                                 ) : null}
-                                                {product.unit && <span>• {product.unit}</span>}
                                             </div>
                                         </div>
                                     </div>

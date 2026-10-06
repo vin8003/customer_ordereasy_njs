@@ -18,6 +18,7 @@ import {
 } from '@/lib/productDetailBarcode';
 import { formatVisibleHsnCode, type OptionalHsnCode } from '@/lib/productHsnCode';
 import { getVisibleCategoryName } from '@/lib/productCategoryName';
+import {
     getVisibleProductTags,
     type OptionalProductTags,
 } from '@/lib/productDetailTags';
@@ -158,9 +159,6 @@ function ProductDetail() {
     const visibleBarcode = formatVisibleBarcode(product.barcode);
     const visibleHsnCode = formatVisibleHsnCode(product.hsn_code);
     const visibleCategoryName = getVisibleCategoryName(product.category_name);
-
-
-
     const visibleTags = getVisibleProductTags(product.tags);
 
     return (
@@ -197,10 +195,12 @@ function ProductDetail() {
 
             <div className={styles.details}>
                 <h1 className={styles.title}>{product.name}</h1>
-                {visibleBarcode ? (
-                    <p className={styles.barcode}>{visibleBarcode}</p>
                 {visibleCategoryName ? (
                     <p className={styles.categoryName}>{visibleCategoryName}</p>
+                ) : null}
+                {visibleBarcode ? (
+                    <p className={styles.barcode}>{visibleBarcode}</p>
+                ) : null}
                 {visibleTags.length > 0 ? (
                     <ul className={styles.tagChips} aria-label="Product tags">
                         {visibleTags.map((tag, index) => (

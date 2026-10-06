@@ -631,6 +631,8 @@ function OrderDetails() {
                             <div className={styles.mutedFeeRow}>
                                 <span>Loyalty Points</span>
                                 <span>{visibleLoyaltyPoints}</span>
+                            </div>
+                        )}
                         {visiblePointsEarned && (
                             <div className={styles.mutedFeeRow}>
                                 <span>Points Earned</span>
