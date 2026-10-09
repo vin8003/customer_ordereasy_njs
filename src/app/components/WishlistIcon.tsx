@@ -20,9 +20,9 @@ export const WishlistIcon: React.FC<WishlistIconProps> = ({
             onClick={onClick}
             className={className}
             style={{
-                fill: isWishlisted ? '#ef4444' : 'transparent',
-                color: isWishlisted ? '#ef4444' : '#d1d5db',
-                strokeWidth: isWishlisted ? 0 : 2,
+                fill: isWishlisted ? '#e11d48' : 'transparent',
+                color: isWishlisted ? '#e11d48' : '#5b6b83',
+                strokeWidth: isWishlisted ? 0 : 2.2,
                 cursor: 'pointer',
                 transition: 'all 0.2s ease'
             }}

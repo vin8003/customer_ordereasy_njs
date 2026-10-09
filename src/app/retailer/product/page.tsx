@@ -4,7 +4,7 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, ShoppingBag, Share2, Tag } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Share2, Tag, AlertTriangle } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { useWishlist } from '@/hooks/useWishlist';
@@ -144,7 +144,15 @@ function ProductDetail() {
     };
 
     if (isLoading) return <LoadingScreen message="Loading details..." />;
-    if (!product) return <div className="p-8 text-center">Product not found.</div>;
+    if (!product) {
+        return (
+            <div className={styles.notFound}>
+                <ShoppingBag size={36} strokeWidth={1.5} />
+                <h1>Product not found</h1>
+                <Button variant="outline" onClick={() => router.back()}>Go back</Button>
+            </div>
+        );
+    }
 
     // Use backend values if available, else calculate
     const hasDiscount = product.mrp > product.price;
@@ -159,135 +167,168 @@ function ProductDetail() {
 
 
 
+    const isOffline = !!retailerStatus && !retailerStatus.offersDelivery && !retailerStatus.offersPickup;
+    const productOutOfStock = product.track_inventory && product.stock_quantity === 0;
+
     return (
         <div className={styles.container}>
             <header className={styles.header}>
-                <Button variant="outline" onClick={() => router.back()}>
-                    <ArrowLeft size={20} />
-                </Button>
-                <div className="flex gap-2">
-                    <Button variant="outline" onClick={handleToggleWishlist}>
+                <button type="button" className={styles.headerBtn} onClick={() => router.back()} aria-label="Go back">
+                    <ArrowLeft size={20} strokeWidth={2.25} />
+                </button>
+                <div className={styles.headerActions}>
+                    <button
+                        type="button"
+                        className={styles.headerBtn}
+                        onClick={handleToggleWishlist}
+                        aria-label={isWishlisted(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                        aria-pressed={isWishlisted(product.id)}
+                    >
                         <WishlistIcon isWishlisted={isWishlisted(product.id)} size={20} />
-                    </Button>
-                    <Button variant="outline" onClick={handleShare}>
-                        <Share2 size={20} />
-                    </Button>
+                    </button>
+                    <button type="button" className={styles.headerBtn} onClick={handleShare} aria-label="Share product">
+                        <Share2 size={19} />
+                    </button>
                 </div>
             </header>
 
-            <div className={styles.imageSection}>
-                {product.image || product.image_url ? (
-                    <div className={styles.productImageWrapper}>
-                        <img
-                            src={product.image || product.image_url}
-                            alt={product.name}
-                            className="w-full h-full object-contain mix-blend-multiply"
-                        />
-                    </div>
-                ) : (
-                    <div className={styles.imagePlaceholder}>
-                        <ShoppingBag size={64} className="text-gray-300" />
-                    </div>
-                )}
-            </div>
-
-            <div className={styles.details}>
-                <h1 className={styles.title}>{product.name}</h1>
-
-                {retailerStatus && !retailerStatus.offersDelivery && !retailerStatus.offersPickup && (
-                    <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-xs font-bold animate-pulse flex items-center gap-2">
-                        <span>⚠️</span> This store is currently not accepting online orders.
-                    </div>
-                )}
-
-                <div className={styles.priceBlock}>
-                    <span className={styles.price}>₹{product.price}</span>
-                    {hasDiscount && (
-                        <>
-                            <span className={styles.mrp}>MRP ₹{product.mrp}</span>
-                            {discountPercent > 0 && (
-                                <span className={styles.discount}>{discountPercent}% OFF</span>
-                            )}
-                            {Number(savingsAmount) > 0 && (
-                                <span className={styles.savedBadge}>Save ₹{savingsAmount}</span>
-                            )}
-                        </>
+            <div className={styles.layout}>
+                <div className={styles.imageSection}>
+                    {product.image || product.image_url ? (
+                        <div className={styles.productImageWrapper}>
+                            <img
+                                src={product.image || product.image_url}
+                                alt={product.name}
+                            />
+                        </div>
+                    ) : (
+                        <div className={styles.imagePlaceholder}>
+                            <ShoppingBag size={64} strokeWidth={1.25} />
+                        </div>
+                    )}
+                    {discountPercent > 0 && hasDiscount && (
+                        <span className={styles.imageBadge}>{discountPercent}% OFF</span>
                     )}
                 </div>
 
-                {/* Offers Section - ONLY render if real offers exist */}
-                {product.offers && product.offers.length > 0 && (
-                    <div className={styles.offerSection}>
-                        {product.offers.map((offer, idx) => (
-                            <div key={idx} className={styles.offerItem}>
-                                <Tag size={16} className={styles.offerIcon} />
-                                <span>{offer.description || offer.name || "Special Offer"}</span>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                <div className={styles.details}>
+                    {product.unit && <div className={styles.unitTag}>{product.unit}</div>}
+                    <h1 className={styles.title}>{product.name}</h1>
 
-                <div className={styles.divider} />
-
-                <h2 className={styles.sectionTitle}>Product Details</h2>
-                <p className={styles.description}>
-                    {product.description || "No description available for this product."}
-                </p>
-
-                {product.product_group && (
-                    <div className={styles.groupTag}>
-                        {product.product_group}
-                    </div>
-                )}
-
-                {/* Pack Sizes (Variant Selector) */}
-                {product.group_variants && filterInStockProducts(product.group_variants).length > 0 && (
-                    <div className={styles.variantSection}>
-                        <span className={styles.variantTitle}>Available Pack Sizes</span>
-                        <div className={styles.productsGrid}>
-                            {filterInStockProducts(product.group_variants).map(variant => {
-                                const mappedProduct = {
-                                    id: variant.id,
-                                    name: variant.name,
-                                    price: variant.price,
-                                    mrp: variant.original_price || variant.price,
-                                    image: variant.image || variant.image_url || '',
-                                    unit: variant.unit,
-                                    minimum_order_quantity: variant.minimum_order_quantity || 1,
-                                    maximum_order_quantity: variant.maximum_order_quantity,
-                                    track_inventory: variant.track_inventory ?? true,
-                                    stock_quantity: variant.stock_quantity ?? 0,
-                                };
-                                return (
-                                    <div key={variant.id} style={{ minWidth: '150px', flexShrink: 0 }}>
-                                        <ProductCard
-                                            product={mappedProduct}
-                                            isWishlisted={isWishlisted(variant.id)}
-                                            onToggleWishlist={(e: React.MouseEvent) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                toggleWishlist(variant.id);
-                                            }}
-                                            onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${variant.id}`)}
-                                            offersDelivery={retailerStatus?.offersDelivery}
-                                            offersPickup={retailerStatus?.offersPickup}
-                                        />
-                                    </div>
-                                );
-                            })}
+                    {isOffline && (
+                        <div className={styles.offlineNotice}>
+                            <AlertTriangle size={16} /> This store is currently not accepting online orders.
                         </div>
+                    )}
+
+                    <div className={styles.priceBlock}>
+                        <span className={styles.price}>₹{product.price}</span>
+                        {hasDiscount && (
+                            <>
+                                <span className={styles.mrp}>MRP ₹{product.mrp}</span>
+                                {discountPercent > 0 && (
+                                    <span className={styles.discount}>{discountPercent}% OFF</span>
+                                )}
+                            </>
+                        )}
                     </div>
-                )}
-
-                {/* Show MOQ info if applicable */}
-                {product.minimum_order_quantity > 1 && (
-                    <div className={styles.moqBox}>
-                        Minimum order quantity: {product.minimum_order_quantity} {product.unit || 'units'}
+                    <div className={styles.priceMeta}>
+                        (Inclusive of all taxes)
+                        {hasDiscount && Number(savingsAmount) > 0 && (
+                            <span className={styles.savedBadge}>You save ₹{savingsAmount}</span>
+                        )}
                     </div>
-                )}
 
-                <div className={styles.divider} />
+                    <div className={styles.desktopCta}>
+                        {!productOutOfStock && (
+                            <AddToCartButton
+                                productId={product.id}
+                                trackInventory={product.track_inventory}
+                                stockQuantity={product.stock_quantity}
+                                retailerId={retailerId}
+                                minimumOrderQuantity={product.minimum_order_quantity}
+                                maximumOrderQuantity={product.maximum_order_quantity}
+                                className={styles.ctaButton}
+                                variant="block"
+                                offersDelivery={retailerStatus?.offersDelivery}
+                                offersPickup={retailerStatus?.offersPickup}
+                            />
+                        )}
+                    </div>
 
+                    {/* Offers Section - ONLY render if real offers exist */}
+                    {product.offers && product.offers.length > 0 && (
+                        <div className={styles.offerSection}>
+                            {product.offers.map((offer, idx) => (
+                                <div key={idx} className={styles.offerItem}>
+                                    <span className={styles.offerIcon}><Tag size={14} /></span>
+                                    <span>{offer.description || offer.name || "Special Offer"}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Pack Sizes (Variant Selector) */}
+                    {product.group_variants && filterInStockProducts(product.group_variants).length > 0 && (
+                        <div className={styles.variantSection}>
+                            <span className={styles.variantTitle}>Available pack sizes</span>
+                            <div className={styles.productsGrid}>
+                                {filterInStockProducts(product.group_variants).map(variant => {
+                                    const mappedProduct = {
+                                        id: variant.id,
+                                        name: variant.name,
+                                        price: variant.price,
+                                        mrp: variant.original_price || variant.price,
+                                        image: variant.image || variant.image_url || '',
+                                        unit: variant.unit,
+                                        minimum_order_quantity: variant.minimum_order_quantity || 1,
+                                        maximum_order_quantity: variant.maximum_order_quantity,
+                                        track_inventory: variant.track_inventory ?? true,
+                                        stock_quantity: variant.stock_quantity ?? 0,
+                                    };
+                                    return (
+                                        <div key={variant.id} className={styles.variantCard}>
+                                            <ProductCard
+                                                product={mappedProduct}
+                                                isWishlisted={isWishlisted(variant.id)}
+                                                onToggleWishlist={(e: React.MouseEvent) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    toggleWishlist(variant.id);
+                                                }}
+                                                onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${variant.id}`)}
+                                                offersDelivery={retailerStatus?.offersDelivery}
+                                                offersPickup={retailerStatus?.offersPickup}
+                                            />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Show MOQ info if applicable */}
+                    {product.minimum_order_quantity > 1 && (
+                        <div className={styles.moqBox}>
+                            Minimum order quantity: {product.minimum_order_quantity} {product.unit || 'units'}
+                        </div>
+                    )}
+
+                    <div className={styles.infoCard}>
+                        <h2 className={styles.sectionTitle}>Product details</h2>
+                        <p className={styles.description}>
+                            {product.description || "No description available for this product."}
+                        </p>
+                        {product.product_group && (
+                            <div className={styles.groupTag}>
+                                {product.product_group}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <div className={styles.fbt}>
                 <FrequentlyBoughtTogether
                     retailerId={retailerId}
                     productIds={product.id ? [product.id] : []}
@@ -297,23 +338,27 @@ function ProductDetail() {
             </div>
 
             <div className={styles.footer}>
-                <div className="flex-1">
-                    {product.track_inventory && product.stock_quantity === 0 ? (
-                        <Button fullWidth disabled className="bg-red-50 text-red-500 border-red-100">Out of Stock</Button>
+                <div className={styles.footerPrice}>
+                    <span className={styles.footerPriceValue}>₹{product.price}</span>
+                    {hasDiscount && <span className={styles.footerMrp}>₹{product.mrp}</span>}
+                    {product.unit && <span className={styles.footerUnit}>{product.unit}</span>}
+                </div>
+                <div className={styles.footerCta}>
+                    {productOutOfStock ? (
+                        <Button fullWidth disabled variant="secondary">Out of Stock</Button>
                     ) : (
-                        <div className="w-full h-12">
-                            <AddToCartButton
-                                productId={product.id}
-                                trackInventory={product.track_inventory}
-                                stockQuantity={product.stock_quantity}
-                                retailerId={retailerId}
-                                minimumOrderQuantity={product.minimum_order_quantity}
-                                maximumOrderQuantity={product.maximum_order_quantity}
-                                className="w-full h-full text-lg"
-                                offersDelivery={retailerStatus?.offersDelivery}
-                                offersPickup={retailerStatus?.offersPickup}
-                            />
-                        </div>
+                        <AddToCartButton
+                            productId={product.id}
+                            trackInventory={product.track_inventory}
+                            stockQuantity={product.stock_quantity}
+                            retailerId={retailerId}
+                            minimumOrderQuantity={product.minimum_order_quantity}
+                            maximumOrderQuantity={product.maximum_order_quantity}
+                            className={styles.ctaButton}
+                                variant="block"
+                            offersDelivery={retailerStatus?.offersDelivery}
+                            offersPickup={retailerStatus?.offersPickup}
+                        />
                     )}
                 </div>
             </div>

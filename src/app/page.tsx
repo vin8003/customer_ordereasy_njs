@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import { MapPin, Store, Truck, Gift, ChevronRight } from 'lucide-react';
 import LoadingScreen from '@/app/components/LoadingScreen';
 import { Button } from '@/app/components/ui/Button';
+import BrandLogo from '@/app/components/BrandLogo';
 import { hasConfirmedLocation, requestAndPersistLocation } from '@/utils/location';
 import styles from './WelcomeScreen.module.css';
 
@@ -47,33 +48,49 @@ export default function Home() {
 
     return (
         <div className={styles.container}>
-            <div className={styles.logoContainer}>
-                <Image
-                    src="/assets/images/logo.png"
-                    alt="Order Easy"
-                    width={150}
-                    height={150}
-                    className={styles.logo}
-                    priority
-                />
-            </div>
-            <h1 className={styles.title}>Order Easy</h1>
-            <p className={styles.subtitle}>
-                Find local shops near you and order groceries, essentials, and more for delivery or pickup.
-            </p>
-            <div className={styles.buttonGroup}>
-                <Button
-                    fullWidth
-                    onClick={handleUseLocation}
-                    isLoading={isLocating}
-                    className={styles.primaryButton}
-                >
-                    Use my location
-                </Button>
-                <button type="button" onClick={handleChooseCity} className={styles.secondaryButton}>
-                    Choose city manually
-                </button>
-            </div>
+            <div className={styles.glow} aria-hidden="true" />
+            <main className={styles.card}>
+                <BrandLogo size="lg" showTagline className={styles.brand} />
+
+                <h1 className={styles.title}>
+                    Your neighbourhood stores, <span>delivered.</span>
+                </h1>
+                <p className={styles.subtitle}>
+                    Find local shops near you and order groceries, essentials, and more for delivery or pickup.
+                </p>
+
+                <ul className={styles.features}>
+                    <li>
+                        <span className={styles.featureIcon}><Store size={18} /></span>
+                        <span><strong>Trusted local shops</strong>Prices set by stores you know</span>
+                    </li>
+                    <li>
+                        <span className={`${styles.featureIcon} ${styles.featureGreen}`}><Truck size={18} /></span>
+                        <span><strong>Delivery or pickup</strong>Choose what works for you</span>
+                    </li>
+                    <li>
+                        <span className={`${styles.featureIcon} ${styles.featureAmber}`}><Gift size={18} /></span>
+                        <span><strong>Rewards on every order</strong>Earn points &amp; cashback</span>
+                    </li>
+                </ul>
+
+                <div className={styles.buttonGroup}>
+                    <Button
+                        fullWidth
+                        size="lg"
+                        onClick={handleUseLocation}
+                        isLoading={isLocating}
+                        className={styles.primaryButton}
+                    >
+                        <MapPin size={18} />
+                        Use my location
+                    </Button>
+                    <button type="button" onClick={handleChooseCity} className={styles.secondaryButton}>
+                        Choose city manually
+                        <ChevronRight size={16} />
+                    </button>
+                </div>
+            </main>
         </div>
     );
 }

@@ -106,21 +106,21 @@ export default function CouponSection({
     };
 
     return (
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm mb-4">
+        <div className="rounded-[var(--r-lg)] border border-[var(--line)] bg-white p-4">
             <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                    <div className="p-1.5 bg-purple-50 text-purple-600 rounded-lg">
-                        <Ticket size={18} />
+                    <div className="flex size-8 items-center justify-center rounded-[10px] bg-violet-50 text-violet-600">
+                        <Ticket size={17} />
                     </div>
-                    <span className="font-semibold text-gray-900 text-sm">Coupons & Offers</span>
+                    <span className="text-[15px] font-bold tracking-tight text-[var(--ink)]">Coupons & offers</span>
                 </div>
                 {!appliedCoupon && (
                     <button
                         type="button"
                         onClick={handleOpenAvailable}
-                        className="text-xs font-semibold text-primary hover:text-primary/80 flex items-center gap-0.5"
+                        className="flex items-center gap-0.5 rounded-full px-2 py-1 text-[13px] font-bold text-[var(--brand-600)] hover:bg-[var(--brand-50)]"
                     >
-                        View All
+                        View all
                         <ChevronRight size={14} />
                     </button>
                 )}
@@ -128,21 +128,21 @@ export default function CouponSection({
 
             {appliedCoupon ? (
                 /* Applied Coupon State */
-                <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-3 flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3 rounded-[var(--r-md)] border border-dashed border-[var(--fresh-500)] bg-[var(--fresh-50)] p-3">
                     <div className="flex items-start gap-2.5">
-                        <div className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 mt-0.5">
+                        <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--fresh-600)] text-white">
                             <Check size={16} strokeWidth={2.5} />
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <span className="font-mono font-bold text-emerald-900 tracking-wide text-sm">
+                                <span className="font-mono text-sm font-bold tracking-wide text-[var(--fresh-700)]">
                                     {appliedCoupon.code}
                                 </span>
-                                <span className="bg-emerald-100 text-emerald-800 text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase">
+                                <span className="rounded-full bg-[var(--fresh-100)] px-2 py-0.5 text-[10px] font-bold uppercase text-[var(--fresh-700)]">
                                     Applied
                                 </span>
                             </div>
-                            <p className="text-xs text-emerald-700 font-medium mt-0.5">
+                            <p className="mt-0.5 text-xs font-medium text-[var(--fresh-700)]">
                                 {appliedCoupon.benefit_type === 'credit_points'
                                     ? `+${(appliedCoupon.points ?? appliedCoupon.savings ?? 0)} Shop Cashback Points`
                                     : `₹${Number(appliedCoupon.discount ?? appliedCoupon.savings ?? 0).toFixed(2)} savings with this coupon`}
@@ -153,7 +153,7 @@ export default function CouponSection({
                         type="button"
                         onClick={handleRemove}
                         disabled={isRemoving || disabled}
-                        className="text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 px-2.5 py-1.5 rounded-lg transition-colors border border-red-200"
+                        className="shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-bold text-[var(--rose-600)] transition-colors hover:bg-[var(--rose-50)]"
                     >
                         {isRemoving ? <Loader2 size={14} className="animate-spin" /> : 'Remove'}
                     </button>
@@ -165,7 +165,7 @@ export default function CouponSection({
                         <div className="relative flex-1">
                             <input
                                 type="text"
-                                placeholder="ENTER COUPON CODE"
+                                placeholder="Enter coupon code"
                                 value={couponInput}
                                 onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
                                 onKeyDown={(e) => {
@@ -175,21 +175,21 @@ export default function CouponSection({
                                     }
                                 }}
                                 disabled={isApplying || disabled}
-                                className="w-full text-xs font-mono font-semibold uppercase px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-gray-400 placeholder:font-sans placeholder:font-normal placeholder:normal-case"
+                                className="h-11 w-full rounded-xl border border-[var(--line-strong)] bg-white px-3.5 font-mono text-sm font-semibold uppercase tracking-wider text-[var(--ink)] placeholder:font-sans placeholder:font-normal placeholder:normal-case placeholder:tracking-normal placeholder:text-[var(--ink-4)] focus:border-[var(--brand-500)] focus:outline-none focus:ring-4 focus:ring-[var(--brand-100)]"
                             />
                         </div>
                         <button
                             type="button"
                             onClick={() => handleApply()}
                             disabled={!couponInput.trim() || isApplying || disabled}
-                            className="px-4 py-2.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center min-w-[70px]"
+                            className="flex h-11 min-w-[84px] items-center justify-center rounded-xl bg-[var(--ink)] px-4 text-sm font-bold text-white transition-all hover:bg-[var(--ink-2)] disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             {isApplying ? <Loader2 size={14} className="animate-spin" /> : 'Apply'}
                         </button>
                     </div>
 
                     {couponError && (
-                        <p className="text-xs text-red-600 font-medium mt-1">
+                        <p className="mt-1 text-xs font-semibold text-[var(--rose-600)]">
                             {couponError}
                         </p>
                     )}
@@ -199,44 +199,44 @@ export default function CouponSection({
             {/* Available Coupons Drawer/Modal */}
             {isSheetOpen && (
                 <div 
-                    className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4"
+                    className="fixed inset-0 z-[60] flex items-end justify-center bg-[rgb(11_19_36/0.45)] p-0 backdrop-blur-sm sm:items-center sm:p-4"
                     onClick={() => setIsSheetOpen(false)}
                 >
                     <div
-                        className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[85vh] flex flex-col shadow-2xl animate-in fade-in slide-in-from-bottom duration-200 pb-[env(safe-area-inset-bottom)] sm:pb-0"
+                        className="flex max-h-[85vh] w-full max-w-md flex-col rounded-t-[var(--r-xl)] bg-white pb-[env(safe-area-inset-bottom)] shadow-[var(--sh-lg)] animate-in fade-in slide-in-from-bottom-8 duration-300 sm:rounded-[var(--r-xl)] sm:pb-0"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Header */}
-                        <div className="flex items-center justify-between p-4 border-b border-gray-100 shrink-0">
+                        <div className="flex shrink-0 items-center justify-between border-b border-[var(--line)] px-5 py-4">
                             <div className="flex items-center gap-2">
-                                <div className="p-1.5 bg-purple-50 text-purple-600 rounded-lg">
-                                    <Sparkles size={18} />
+                                <div className="flex size-8 items-center justify-center rounded-[10px] bg-violet-50 text-violet-600">
+                                    <Sparkles size={17} />
                                 </div>
-                                <h3 className="font-bold text-gray-900 text-base">Available Coupons</h3>
+                                <h3 className="text-lg font-extrabold tracking-tight text-[var(--ink)]">Available coupons</h3>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => setIsSheetOpen(false)}
-                                className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+                                aria-label="Close" className="flex size-9 items-center justify-center rounded-[10px] bg-[var(--surface-2)] text-[var(--ink-2)] hover:bg-[var(--surface-3)]"
                             >
                                 <X size={20} />
                             </button>
                         </div>
 
                         {/* List */}
-                        <div className="p-4 pb-6 overflow-y-auto space-y-3 flex-1 min-h-0">
+                        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4 pb-6">
                             {isLoadingCoupons ? (
-                                <div className="py-12 text-center text-gray-400 flex flex-col items-center gap-2">
+                                <div className="flex flex-col items-center gap-2 py-12 text-center text-[var(--ink-4)]">
                                     <Loader2 size={24} className="animate-spin text-primary" />
                                     <span className="text-xs">Finding available offers...</span>
                                 </div>
                             ) : availableCoupons.length === 0 ? (
                                 <div className="py-10 text-center px-4">
-                                    <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-400 mx-auto flex items-center justify-center mb-3">
+                                    <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-2xl bg-[var(--surface-2)] text-[var(--ink-4)]">
                                         <Tag size={20} />
                                     </div>
-                                    <p className="text-sm font-semibold text-gray-800">No Public Coupons Right Now</p>
-                                    <p className="text-xs text-gray-500 mt-1 max-w-xs mx-auto">
+                                    <p className="text-sm font-bold text-[var(--ink)]">No Public Coupons Right Now</p>
+                                    <p className="mx-auto mt-1 max-w-xs text-xs leading-relaxed text-[var(--ink-3)]">
                                         If the shop shared a secret coupon code with you directly, enter it in the coupon box!
                                     </p>
                                 </div>
@@ -244,21 +244,21 @@ export default function CouponSection({
                                 availableCoupons.map((coupon) => (
                                     <div
                                         key={coupon.id}
-                                        className="border border-dashed border-gray-300 rounded-xl p-3.5 bg-gradient-to-r from-purple-50/50 via-white to-pink-50/30 hover:border-purple-300 transition-colors flex justify-between items-center gap-3"
+                                        className="relative flex items-center justify-between gap-3 overflow-hidden rounded-[var(--r-md)] border border-[var(--line)] bg-white p-3.5 pl-5 shadow-[var(--sh-xs)] transition-colors before:absolute before:inset-y-0 before:left-0 before:w-1.5 before:bg-violet-500 hover:border-violet-300"
                                     >
                                         <div className="space-y-1">
                                             <div className="flex items-center gap-2">
-                                                <span className="font-mono font-bold text-purple-900 bg-purple-100/80 px-2 py-0.5 rounded text-xs tracking-wider border border-purple-200">
+                                                <span className="rounded-md border border-dashed border-violet-300 bg-violet-50 px-2 py-0.5 font-mono text-xs font-bold tracking-wider text-violet-800">
                                                     {coupon.code}
                                                 </span>
                                                 {coupon.benefit_type === 'credit_points' && (
-                                                    <span className="text-[10px] bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded-full">
+                                                    <span className="rounded-full bg-[var(--amber-100)] px-2 py-0.5 text-[10px] font-bold text-[var(--amber-700)]">
                                                         Cashback
                                                     </span>
                                                 )}
                                             </div>
-                                            <h4 className="text-sm font-semibold text-gray-900">{coupon.name}</h4>
-                                            <p className="text-xs text-gray-500">
+                                            <h4 className="text-sm font-bold text-[var(--ink)]">{coupon.name}</h4>
+                                            <p className="text-xs leading-relaxed text-[var(--ink-3)]">
                                                 {coupon.benefit_type === 'credit_points' ? (
                                                     (coupon.offer_type === 'percentage' || coupon.value_type === 'percent') ? (
                                                         <span>
@@ -283,7 +283,7 @@ export default function CouponSection({
                                                 ) : null}
                                             </p>
                                             {coupon.end_date && (
-                                                <p className="text-[11px] text-gray-400">
+                                                <p className="text-[11px] text-[var(--ink-4)]">
                                                     Valid till {new Date(coupon.end_date).toLocaleDateString()}
                                                 </p>
                                             )}
@@ -292,7 +292,7 @@ export default function CouponSection({
                                             type="button"
                                             onClick={() => handleApply(coupon.code)}
                                             disabled={isApplying || disabled}
-                                            className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-lg shrink-0 transition-colors shadow-sm"
+                                            className="shrink-0 rounded-[10px] border border-[var(--brand-600)] px-3.5 py-2 text-xs font-bold text-[var(--brand-700)] transition-colors hover:bg-[var(--brand-600)] hover:text-white disabled:opacity-50"
                                         >
                                             Apply
                                         </button>

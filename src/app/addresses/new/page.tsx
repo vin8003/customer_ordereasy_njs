@@ -4,7 +4,6 @@ import toast from '@/lib/toast';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
-import { ArrowLeft } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { Input } from '@/app/components/ui/Input';
@@ -12,6 +11,7 @@ import MapPicker from '@/app/components/MapPicker';
 import { AVAILABLE_CITIES } from '@/config/cities';
 import { getPersistedLocation, matchAvailableCity } from '@/utils/location';
 import { hasValidAddressCoordinates } from '@/utils/addressLocation';
+import PageHeader from '@/app/components/PageHeader';
 import styles from './AddressForm.module.css';
 
 export default function NewAddressPage() {
@@ -87,17 +87,11 @@ export default function NewAddressPage() {
 
     return (
         <div className={styles.container}>
-            <header className={styles.header}>
-                <Button variant="outline" onClick={handleBack}>
-                    <ArrowLeft size={20} />
-                </Button>
-                <h1>Add Address</h1>
-                <div className="h-5" />
-            </header>
+            <PageHeader title="Add Address" onBack={handleBack} />
 
             <form className={styles.form} onSubmit={handleSubmit}>
                 <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                    <label className="mb-1.5 block text-[13px] font-semibold text-[var(--ink-2)]">Location</label>
                     <MapPicker onLocationSelect={handleLocationSelect} initialLat={formData.latitude || undefined} initialLng={formData.longitude || undefined} />
                 </div>
 
@@ -106,12 +100,12 @@ export default function NewAddressPage() {
                 </div>
 
                 <div className={styles.field}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Address Type</label>
+                    <label className="mb-1.5 block text-[13px] font-semibold text-[var(--ink-2)]">Address Type</label>
                     <select
                         name="address_type"
                         value={formData.address_type}
                         onChange={handleChange}
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="h-12 w-full appearance-none rounded-xl border border-[var(--line-strong)] bg-white bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%235b6b83%22 stroke-width=%222.5%22><path d=%22m6 9 6 6 6-6%22/></svg>')] bg-[length:16px] bg-[position:right_14px_center] bg-no-repeat px-3.5 pr-10 text-[15px] text-[var(--ink)] hover:border-[var(--ink-4)] focus:border-[var(--brand-500)] focus:outline-none focus:ring-4 focus:ring-[var(--brand-100)] disabled:cursor-not-allowed disabled:bg-[var(--surface-2)] disabled:text-[var(--ink-4)]"
                     >
                         <option value="home">Home</option>
                         <option value="office">Office</option>
@@ -127,9 +121,9 @@ export default function NewAddressPage() {
                     <Input label="Address Line 2 (Optional)" name="address_line2" value={formData.address_line2} onChange={handleChange} placeholder="Street, Area" />
                 </div>
 
-                <div className="flex gap-4">
+                <div className="grid grid-cols-2 gap-4">
                     <div className={styles.field}>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+                        <label className="mb-1.5 block text-[13px] font-semibold text-[var(--ink-2)]">State</label>
                         <select
                             name="state"
                             value={formData.state}
@@ -140,7 +134,7 @@ export default function NewAddressPage() {
                                     city: '' // Reset city when state changes
                                 });
                             }}
-                            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="h-12 w-full appearance-none rounded-xl border border-[var(--line-strong)] bg-white bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%235b6b83%22 stroke-width=%222.5%22><path d=%22m6 9 6 6 6-6%22/></svg>')] bg-[length:16px] bg-[position:right_14px_center] bg-no-repeat px-3.5 pr-10 text-[15px] text-[var(--ink)] hover:border-[var(--ink-4)] focus:border-[var(--brand-500)] focus:outline-none focus:ring-4 focus:ring-[var(--brand-100)] disabled:cursor-not-allowed disabled:bg-[var(--surface-2)] disabled:text-[var(--ink-4)]"
                             required
                         >
                             <option value="">Select State</option>
@@ -150,7 +144,7 @@ export default function NewAddressPage() {
                         </select>
                     </div>
                     <div className={styles.field}>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                        <label className="mb-1.5 block text-[13px] font-semibold text-[var(--ink-2)]">City</label>
                         <select
                             name="city"
                             value={formData.city}
@@ -162,7 +156,7 @@ export default function NewAddressPage() {
                                     pincode: city?.pincode || formData.pincode
                                 });
                             }}
-                            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                            className="h-12 w-full appearance-none rounded-xl border border-[var(--line-strong)] bg-white bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%235b6b83%22 stroke-width=%222.5%22><path d=%22m6 9 6 6 6-6%22/></svg>')] bg-[length:16px] bg-[position:right_14px_center] bg-no-repeat px-3.5 pr-10 text-[15px] text-[var(--ink)] hover:border-[var(--ink-4)] focus:border-[var(--brand-500)] focus:outline-none focus:ring-4 focus:ring-[var(--brand-100)] disabled:cursor-not-allowed disabled:bg-[var(--surface-2)] disabled:text-[var(--ink-4)]"
                             required
                             disabled={!formData.state}
                         >
@@ -181,7 +175,7 @@ export default function NewAddressPage() {
                     <Input label="Pincode" name="pincode" value={formData.pincode} onChange={handleChange} required maxLength={6} placeholder="000000" />
                 </div>
 
-                <Button type="submit" isLoading={isLoading} fullWidth>
+                <Button type="submit" size="lg" isLoading={isLoading} fullWidth>
                     Save Address
                 </Button>
             </form>

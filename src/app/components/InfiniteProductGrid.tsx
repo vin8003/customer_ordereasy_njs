@@ -81,6 +81,11 @@ export default function InfiniteProductGrid({ retailerId, offersDelivery, offers
         }
     }, [retailerId, hasMore, isLoading]);
 
+    // Hearts reflect the saved wishlist (hook state is per-instance)
+    useEffect(() => {
+        if (apiService.isAuthenticated()) loadWishlist();
+    }, [loadWishlist]);
+
     // Initial load
     useEffect(() => {
         if (products.length === 0 && hasMore && !isLoading && !error) {
@@ -99,9 +104,9 @@ export default function InfiniteProductGrid({ retailerId, offersDelivery, offers
 
     if (products.length === 0 && !isLoading) {
         return (
-            <div className={`${styles.section} mb-24`}>
+            <div className={styles.section}>
                 <div className={styles.sectionHeader}>
-                    <h2 className={styles.sectionTitle}>All Products</h2>
+                    <h2 className={styles.sectionTitle}>All products</h2>
                 </div>
                 <EmptyState
                     icon={Package}
@@ -113,9 +118,9 @@ export default function InfiniteProductGrid({ retailerId, offersDelivery, offers
     }
 
     return (
-        <div className={`${styles.section} mb-24`}>
+        <div className={styles.section}>
             <div className={styles.sectionHeader}>
-                <h2 className={styles.sectionTitle}>All Products</h2>
+                <h2 className={styles.sectionTitle}>All products</h2>
             </div>
 
             <div className={styles.productsGrid}>
@@ -145,21 +150,19 @@ export default function InfiniteProductGrid({ retailerId, offersDelivery, offers
             </div>
 
             {isLoading && (
-                <div className={`${styles.productsGrid} mt-4`}>
+                <div className={`${styles.productsGrid} mt-3`}>
                     {Array(4).fill(0).map((_, i) => (
-                        <Skeleton key={`skeleton-${i}`} className="h-48 w-full rounded-xl" />
+                        <Skeleton key={`skeleton-${i}`} className={`oe-skeleton ${styles.skeletonCard}`} />
                     ))}
                 </div>
             )}
 
             {error && (
-                <div className="text-center text-sm text-red-500 py-8">{error}</div>
+                <div className="py-8 text-center text-sm font-medium text-[var(--ink-3)]">{error}</div>
             )}
 
             {!hasMore && products.length > 0 && (
-                <div className="text-center text-sm text-gray-400 py-12">
-                    — End of catalog —
-                </div>
+                <div className={styles.gridEnd}>You&apos;ve reached the end</div>
             )}
 
             {/* Invisible trigger element */}
