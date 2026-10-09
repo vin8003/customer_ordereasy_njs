@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Geist, Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import BottomNav from "@/app/components/BottomNav";
 import { Toaster } from "@/components/ui/sonner";
@@ -19,9 +19,11 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const inter = Inter({
-  variable: "--font-inter",
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -34,6 +36,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   viewportFit: "cover",
+  themeColor: "#1556f0",
 };
 
 export default function RootLayout({
@@ -43,8 +46,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} font-sans antialiased overflow-x-hidden`}>
-        <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_oklch(0.585_0.233_264.376_/_0.06),_transparent_60%)]" />
+      <body className={`${geistSans.variable} ${geistMono.variable} ${jakarta.variable} font-sans antialiased overflow-x-hidden`}>
         <CartProvider>
           <NotificationProvider>
             <Toaster />

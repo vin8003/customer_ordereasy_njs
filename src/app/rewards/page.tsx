@@ -5,7 +5,8 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
-import { ArrowLeft, CheckCircle, Users, Gem, History, Clock, Info, TrendingUp, TrendingDown } from 'lucide-react';
+import { CheckCircle, Users, Gem, History, Clock, Info, TrendingUp, TrendingDown } from 'lucide-react';
+import PageHeader from '@/app/components/PageHeader';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { ReferralCard } from '@/app/components/ReferralCard';
@@ -81,12 +82,7 @@ export default function RewardsPage() {
 
     return (
         <div className={styles.container}>
-            <header className={styles.header}>
-                <Button variant="ghost" onClick={handleBack} className="p-0">
-                    <ArrowLeft size={24} />
-                </Button>
-                <h1>Rewards & Referrals</h1>
-            </header>
+            <PageHeader title="Rewards & Referrals" onBack={handleBack} />
 
             <div className={styles.content}>
 
@@ -102,14 +98,14 @@ export default function RewardsPage() {
                     {/* Active Schemes List */}
                     {stats?.active_referral_schemes?.length > 0 && (
                         <div className={styles.activeSchemesList}>
-                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">Active Offers Nearby</h4>
+                            <h4 className={styles.schemesTitle}>Active offers nearby</h4>
                             {stats.active_referral_schemes.map((scheme: any) => (
                                 <div key={scheme.retailer_id} className={styles.schemeItem}>
                                     <div className="flex justify-between items-center">
-                                        <span className="font-bold text-sm text-gray-800">{scheme.retailer_name}</span>
-                                        <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded">₹{scheme.referral_reward_points} Reward</span>
+                                        <span className="text-sm font-bold text-[var(--ink)]">{scheme.retailer_name}</span>
+                                        <span className="rounded-md bg-[var(--fresh-50)] px-2 py-0.5 text-xs font-bold text-[var(--fresh-700)]">₹{scheme.referral_reward_points} Reward</span>
                                     </div>
-                                    <p className="text-[10px] text-gray-500 mt-1">Min order: ₹{scheme.min_referral_order_amount} | Your friend gets ₹{scheme.referee_reward_points}</p>
+                                    <p className="mt-1 text-[11px] text-[var(--ink-3)]">Min order: ₹{scheme.min_referral_order_amount} | Your friend gets ₹{scheme.referee_reward_points}</p>
                                 </div>
                             ))}
                         </div>
@@ -119,7 +115,7 @@ export default function RewardsPage() {
                 {/* Section: Your Loyalty Points */}
                 <div className={styles.card}>
                     <div className={styles.cardTitle}>
-                        <Gem size={20} className="text-indigo-500" />
+                        <span className={styles.titleIcon}><Gem size={16} /></span>
                         <span>Store Points Balance</span>
                     </div>
                     {loyaltyPoints.length === 0 ? (
@@ -149,7 +145,7 @@ export default function RewardsPage() {
                                             )}
                                             <Button 
                                                 variant="outline" 
-                                                className="h-8 px-3 text-xs font-bold border-indigo-200 text-indigo-600"
+                                                size="sm" className="h-8 px-3 text-xs font-bold"
                                                 onClick={() => router.push(`/retailer?id=${lp.retailer_id}`)}
                                             >
                                                 Shop
@@ -168,7 +164,7 @@ export default function RewardsPage() {
                 {/* Section: Loyalty History */}
                 <div className={styles.card}>
                     <div className={styles.cardTitle}>
-                        <History size={20} className="text-blue-500" />
+                        <span className={styles.titleIcon}><History size={16} /></span>
                         <span>Transaction History</span>
                     </div>
 
@@ -182,9 +178,9 @@ export default function RewardsPage() {
                                 <div key={tx.id} className={styles.transactionItem}>
                                     <div className={styles.txIconBox}>
                                         {tx.transaction_type === 'earn' || tx.transaction_type === 'refund' ? (
-                                            <TrendingUp size={16} className="text-green-500" />
+                                            <TrendingUp size={16} className="text-[var(--fresh-600)]" />
                                         ) : (
-                                            <TrendingDown size={16} className="text-red-500" />
+                                            <TrendingDown size={16} className="text-[var(--rose-600)]" />
                                         )}
                                     </div>
                                     <div className={styles.txInfo}>
@@ -211,7 +207,7 @@ export default function RewardsPage() {
                 {/* Section: Apply Code */}
                 <div className={styles.card}>
                     <div className={styles.cardTitle}>
-                        <CheckCircle size={20} className="text-green-500" />
+                        <span className={`${styles.titleIcon} ${styles.titleIconGreen}`}><CheckCircle size={16} /></span>
                         <span>Have a Referral Code?</span>
                     </div>
 
@@ -242,6 +238,7 @@ export default function RewardsPage() {
                         </div>
 
                         <button
+                            type="button"
                             className={styles.applyButton}
                             onClick={handleApplyCode}
                             disabled={!selectedRetailer || !referralCode || applying}
@@ -254,7 +251,7 @@ export default function RewardsPage() {
                 {/* Section: History */}
                 <div className={styles.card}>
                     <div className={styles.cardTitle}>
-                        <Users size={20} className="text-blue-500" />
+                        <span className={styles.titleIcon}><Users size={16} /></span>
                         <span>Referral History</span>
                     </div>
 
@@ -277,20 +274,20 @@ export default function RewardsPage() {
                                     </div>
                                     
                                     {ref.reward_rules && (
-                                        <div className="mt-2 pt-2 border-t border-gray-50 flex justify-between items-center">
+                                        <div className="mt-2 flex items-center justify-between border-t border-[var(--line)] pt-2">
                                             <div className="flex gap-3">
                                                 <div className="flex flex-col">
-                                                    <span className="text-[9px] text-gray-400 uppercase font-bold">You'll Get</span>
-                                                    <span className="text-xs font-bold text-blue-600">₹{ref.reward_rules.your_reward}</span>
+                                                    <span className="text-[9px] font-bold uppercase text-[var(--ink-4)]">You'll Get</span>
+                                                    <span className="text-xs font-bold text-[var(--brand-600)]">₹{ref.reward_rules.your_reward}</span>
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <span className="text-[9px] text-gray-400 uppercase font-bold">They'll Get</span>
-                                                    <span className="text-xs font-bold text-indigo-600">₹{ref.reward_rules.friend_reward}</span>
+                                                    <span className="text-[9px] font-bold uppercase text-[var(--ink-4)]">They'll Get</span>
+                                                    <span className="text-xs font-bold text-[var(--fresh-700)]">₹{ref.reward_rules.friend_reward}</span>
                                                 </div>
                                             </div>
                                             <div className="text-right">
-                                                <span className="text-[9px] text-gray-400 uppercase font-bold block">Condition</span>
-                                                <span className="text-[10px] text-gray-600">Order {'>'} ₹{ref.reward_rules.min_order_condition}</span>
+                                                <span className="block text-[9px] font-bold uppercase text-[var(--ink-4)]">Condition</span>
+                                                <span className="text-[10px] text-[var(--ink-2)]">Order {'>'} ₹{ref.reward_rules.min_order_condition}</span>
                                             </div>
                                         </div>
                                     )}

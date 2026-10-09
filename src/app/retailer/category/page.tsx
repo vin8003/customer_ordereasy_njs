@@ -4,9 +4,10 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 import React, { useState, useEffect, Suspense, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, ShoppingBag, Filter, Loader2 } from 'lucide-react';
+import { ShoppingBag, Loader2, LayoutGrid } from 'lucide-react';
 import { apiService } from '@/services/api';
-import { Button } from '@/app/components/ui/Button';
+import PageHeader from '@/app/components/PageHeader';
+import { EmptyState } from '@/app/components/EmptyState';
 import { ProductCard } from '@/app/components/ProductCard';
 import { processRetailerProductList } from '@/utils/productStock';
 import { useWishlist } from '@/hooks/useWishlist';
@@ -112,11 +113,10 @@ function CategoryProducts() {
                     setSubcategories(subs);
 
                     // Fetch dynamic icons for each subcategory
-                    const icons: Record<string, string | null> = {};
-                    for (const sub of subs) {
-                        icons[sub.id] = await getCategoryIcon(retailerId, sub.id);
-                    }
-                    setSubcategoryIcons(prev => ({ ...prev, ...icons }));
+                    const entries = await Promise.all(
+                        subs.map(async (sub: { id: number | string }) => [sub.id, await getCategoryIcon(retailerId, sub.id)] as const)
+                    );
+                    setSubcategoryIcons(prev => ({ ...prev, ...Object.fromEntries(entries) }));
                 })
                 .catch(err => console.error("Failed to fetch subcategories", err));
         }
@@ -132,11 +132,13 @@ function CategoryProducts() {
                     setProductGroups(groups);
 
                     // Fetch dynamic icons for each group
-                    const icons: Record<string, string | null> = {};
-                    for (const group of groups) {
-                        icons[group.id] = await getCategoryIcon(retailerId, subcategoryId, group.name);
-                    }
-                    setProductGroupIcons(prev => ({ ...prev, ...icons }));
+                    const entries = await Promise.all(
+                        groups.map(async (group: { id: string; name: string }) => [
+                            group.id,
+                            await getCategoryIcon(retailerId, subcategoryId, group.name),
+                        ] as const)
+                    );
+                    setProductGroupIcons(prev => ({ ...prev, ...Object.fromEntries(entries) }));
                 })
                 .catch(err => console.error("Failed to fetch product groups", err));
         } else {
@@ -206,25 +208,21 @@ function CategoryProducts() {
 
     return (
         <div className={styles.container}>
-            <header className={styles.header}>
-                <Button variant="outline" onClick={() => router.back()}>
-                    <ArrowLeft size={20} />
-                </Button>
-                <h1>{categoryName}</h1>
-                <Button variant="outline">
-                    <Filter size={18} />
-                </Button>
-            </header>
+            <PageHeader
+                title={categoryName}
+                subtitle={subcategoryId && categoryName !== mainCategoryName ? mainCategoryName : undefined}
+                onBack={() => router.back()}
+            />
 
             {/* Subcategories (Circular Slider) */}
             {subcategories.length > 0 && (
-                <div className={styles.productGroupSlider}>
+                <div className={`${styles.productGroupSlider} no-scrollbar`}>
                     <div
                         className={`${styles.productGroupItem} ${!subcategoryId ? styles.productGroupItemActive : ''}`}
                         onClick={() => router.push(`/retailer/category?retailerId=${retailerId}&categoryId=${categoryId}${mainCategoryName !== 'Products' ? `&categoryName=${encodeURIComponent(mainCategoryName)}` : ''}`)}
                     >
                         <div className={styles.productGroupIcon}>
-                            <ShoppingBag className="text-gray-400" size={24} />
+                            <LayoutGrid size={16} />
                         </div>
                         <span className={styles.productGroupName}>All</span>
                     </div>
@@ -243,7 +241,7 @@ function CategoryProducts() {
                                     {iconUrl ? (
                                         <img src={iconUrl} alt={cat.name} />
                                     ) : (
-                                        <ShoppingBag className="text-gray-400" size={24} />
+                                        <ShoppingBag size={16} />
                                     )}
                                 </div>
                                 <span className={styles.productGroupName}>{cat.name}</span>
@@ -255,13 +253,13 @@ function CategoryProducts() {
 
             {/* Product Groups Slider */}
             {subcategoryId && productGroups.length > 0 && (
-                <div className={styles.productGroupSlider}>
+                <div className={`${styles.productGroupSlider} no-scrollbar`}>
                     <div
                         className={`${styles.productGroupItem} ${!groupId ? styles.productGroupItemActive : ''}`}
                         onClick={() => router.push(`/retailer/category?retailerId=${retailerId}&categoryId=${categoryId}&subcategoryId=${subcategoryId}${mainCategoryName !== 'Products' ? `&categoryName=${encodeURIComponent(mainCategoryName)}` : ''}`)}
                     >
                         <div className={styles.productGroupIcon}>
-                            <ShoppingBag className="text-gray-400" size={24} />
+                            <LayoutGrid size={16} />
                         </div>
                         <span className={styles.productGroupName}>All {subcategories.find(c => String(c.id) === subcategoryId)?.name}</span>
                     </div>
@@ -280,7 +278,7 @@ function CategoryProducts() {
                                     {iconUrl ? (
                                         <img src={iconUrl} alt={group.name} />
                                     ) : (
-                                        <ShoppingBag className="text-gray-400" size={24} />
+                                        <ShoppingBag size={16} />
                                     )}
                                 </div>
                                 <span className={styles.productGroupName}>{group.name}</span>
@@ -291,10 +289,11 @@ function CategoryProducts() {
             )}
 
             {products.length === 0 && !isLoading ? (
-                <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-                    <ShoppingBag size={48} className="mb-4 text-gray-300" />
-                    <p>No products found in this category.</p>
-                </div>
+                <EmptyState
+                    icon={ShoppingBag}
+                    title="No products here yet"
+                    description="This category doesn't have any items in stock right now."
+                />
             ) : (
                 <div className={styles.grid}>
                     {products.map((product) => (
@@ -315,7 +314,7 @@ function CategoryProducts() {
 
             {isMoreLoading && (
                 <div className="flex justify-center p-4 w-full col-span-full">
-                    <Loader2 className="animate-spin text-gray-400" size={24} />
+                    <Loader2 className="animate-spin text-[var(--brand-600)]" size={24} />
                 </div>
             )}
 

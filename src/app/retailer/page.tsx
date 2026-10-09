@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import NotificationDropdown from '@/app/components/NotificationDropdown';
 import { useNotification } from '@/context/NotificationContext';
-import { ShoppingBag, Search, MapPin, ChevronRight, Copy, Star, Heart, Bell, Gem } from 'lucide-react';
+import { ShoppingBag, Search, MapPin, ChevronRight, ChevronDown, Copy, Star, Bell, Gem, Gift, Users, Clock, AlertTriangle, Bike, PackageCheck, Sparkles, X } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useCartContext } from '@/context/CartContext';
@@ -18,6 +18,7 @@ import { Button } from '@/app/components/ui/Button';
 import LazyProductLane from '@/app/components/LazyProductLane';
 import InfiniteProductGrid from '@/app/components/InfiniteProductGrid';
 import { processRetailerProductList } from '@/utils/productStock';
+import { resolveMediaUrl } from '@/utils/mediaUrl';
 import styles from './RetailerHome.module.css';
 
 interface Category {
@@ -66,6 +67,7 @@ function RetailerHome() {
     const [currentOfferIndex, setCurrentOfferIndex] = useState(0);
     const [touchStartX, setTouchStartX] = useState<number | null>(null);
     const [isScrolled, setIsScrolled] = useState(false);
+    const [shopImageFailed, setShopImageFailed] = useState(false);
     const [isBannerHovered, setIsBannerHovered] = useState(false);
     const [userLoyalty, setUserLoyalty] = useState<{ points: number } | null>(null);
     const [activeRewardTab, setActiveRewardTab] = useState<'offers' | 'refer' | 'points'>('offers');
@@ -251,40 +253,42 @@ function RetailerHome() {
         return (
             <div className={styles.container}>
                 <header className={styles.header}>
-                    <div className="flex justify-between items-center mb-4">
-                        <div className="flex flex-col gap-2">
-                            <div className={`${styles.skeleton} h-4 w-24 rounded`}></div>
-                            <div className={`${styles.skeleton} h-6 w-40 rounded`}></div>
+                    <div className={styles.headerInner}>
+                        <div className={styles.topBar}>
+                            <div className="flex items-center gap-3">
+                                <div className="oe-skeleton" style={{ width: 40, height: 40, borderRadius: 12 }} />
+                                <div className="flex flex-col gap-2">
+                                    <div className="oe-skeleton" style={{ width: 70, height: 10 }} />
+                                    <div className="oe-skeleton" style={{ width: 150, height: 16 }} />
+                                </div>
+                            </div>
+                            <div className="oe-skeleton" style={{ width: 40, height: 40, borderRadius: 12 }} />
                         </div>
-                        <div className="flex gap-2">
-                            <div className={`${styles.skeleton} h-10 w-10 rounded-full`}></div>
-                            <div className={`${styles.skeleton} h-10 w-10 rounded-full`}></div>
-                        </div>
+                        <div className="oe-skeleton" style={{ height: 46, borderRadius: 14 }} />
                     </div>
-                    <div className={`${styles.skeleton} h-12 w-full rounded-2xl`}></div>
                 </header>
                 <main className={styles.main}>
+                    <div className={`oe-skeleton ${styles.skeletonBanner}`} />
                     <section className={styles.section}>
-                        <div className="flex justify-between px-5 mb-4">
-                            <div className={`${styles.skeleton} h-6 w-32 rounded`}></div>
-                            <div className={`${styles.skeleton} h-6 w-16 rounded`}></div>
+                        <div className={styles.sectionHeader}>
+                            <div className="oe-skeleton" style={{ width: 160, height: 18 }} />
                         </div>
-                        <div className={styles.categoriesScroll}>
-                            {[...Array(6)].map((_, i) => (
+                        <div className={styles.categoriesGrid}>
+                            {[...Array(8)].map((_, i) => (
                                 <div key={i} className={styles.categoryItem}>
-                                    <div className={`${styles.skeleton} ${styles.skeletonCatIcon}`}></div>
-                                    <div className={`${styles.skeleton} ${styles.skeletonCatText}`}></div>
+                                    <div className={`oe-skeleton ${styles.skeletonCatIcon}`}></div>
+                                    <div className={`oe-skeleton ${styles.skeletonCatText}`}></div>
                                 </div>
                             ))}
                         </div>
                     </section>
                     <section className={styles.section}>
-                        <div className="flex justify-between px-5 mb-4">
-                            <div className={`${styles.skeleton} h-6 w-40 rounded`}></div>
+                        <div className={styles.sectionHeader}>
+                            <div className="oe-skeleton" style={{ width: 140, height: 18 }} />
                         </div>
                         <div className={styles.productsScroll}>
-                            {[...Array(4)].map((_, i) => (
-                                <div key={i} className={`${styles.skeleton} ${styles.skeletonCard}`}></div>
+                            {[...Array(5)].map((_, i) => (
+                                <div key={i} className={`oe-skeleton ${styles.skeletonCard}`}></div>
                             ))}
                         </div>
                     </section>
@@ -292,165 +296,229 @@ function RetailerHome() {
             </div>
         );
     }
-    if (!retailer) return <div className="p-8 text-center">Retailer not found</div>;
+    if (!retailer) {
+        return (
+            <div className={styles.notFound}>
+                <div className={styles.notFoundIcon}><ShoppingBag size={28} /></div>
+                <h1>Store not found</h1>
+                <p>This store may be unavailable right now.</p>
+                <Button onClick={() => router.push('/retailers')}>Browse stores</Button>
+            </div>
+        );
+    }
+
+    const isOffline = !retailer.offers_delivery && !retailer.offers_pickup;
+    const showRewards = offers.length > 0 ||
+        (retailer.is_referral_enabled && (referralCode || apiService.isAuthenticated())) ||
+        (retailer.is_reward_active || (userLoyalty && userLoyalty.points > 0));
 
     return (
         <div className={styles.container}>
             {/* Header */}
             <header className={`${styles.header} ${isScrolled ? styles.scrolled : ''}`}>
-                <div className={styles.topBar}>
-                    <div
-                        className={styles.locationBar}
-                        onClick={() => router.push('/city-selection')}
-                        style={{ cursor: 'pointer' }}
-                    >
-                        <MapPin size={14} className={styles.locationIcon} />
-                        <span>{selectedCity?.name || 'Select City'} {selectedCity?.pincode ? `(${selectedCity.pincode})` : ''}</span>
-                    </div>
-
-                    <div className={styles.authContainer}>
-                        {isAuthenticated && (
-                            <span className={styles.userName} style={{ marginRight: '8px' }}>Hi, {userName}</span>
-                        )}
-
-                        {!isAuthenticated && (
-                            <Link href="/login">
-                                <Button variant="outline" className={styles.loginBtn} style={{ padding: '4px 10px', fontSize: '0.8rem' }}>Login</Button>
-                            </Link>
-                        )}
-
+                <div className={styles.headerInner}>
+                    <div className={styles.topBar}>
                         <button
-                            className={styles.actionBtn}
-                            onClick={() => setShowNotifications(!showNotifications)}
-                            style={{ marginLeft: '8px' }}
+                            type="button"
+                            className={styles.shopSelector}
+                            onClick={() => router.push('/retailers')}
+                            aria-label="Change store"
                         >
-                            <div className={styles.iconWrapper}>
-                                <Bell size={20} />
-                                {unreadCount > 0 && <span className={styles.badge}>{unreadCount}</span>}
-                            </div>
+                            <span className={styles.shopAvatar}>
+                                {retailer.shop_image && !shopImageFailed ? (
+                                    <img
+                                        src={resolveMediaUrl(retailer.shop_image) || ''}
+                                        alt=""
+                                        onError={() => setShopImageFailed(true)}
+                                    />
+                                ) : (
+                                    (retailer.shop_name || 'S').charAt(0).toUpperCase()
+                                )}
+                            </span>
+                            <span className={styles.shopText}>
+                                <span className={styles.shoppingAtLabel}>Shopping at</span>
+                                <span className={styles.shopNameRow}>
+                                    <span className={styles.shopName}>{retailer.shop_name}</span>
+                                    <ChevronDown size={16} className={styles.rotateIcon} />
+                                </span>
+                            </span>
                         </button>
-                    </div>
-                </div>
 
-                <NotificationDropdown
-                    isOpen={showNotifications}
-                    onClose={() => setShowNotifications(false)}
-                />
-
-                <div className={styles.storeHeaderInfo}>
-                    <div className={styles.shoppingAtLabel}>Shopping at:</div>
-                    <div className={styles.storeHeaderRow}>
-                        <div className={styles.shopSelector} onClick={() => router.push('/retailers')}>
-                            <h1 className={styles.shopName}>{retailer?.shop_name || 'Loading...'}</h1>
-                            <ChevronRight size={16} className={styles.rotateIcon} />
+                        <div className={styles.authContainer}>
+                            {!isAuthenticated && (
+                                <Link href="/login" className={styles.loginBtn}>
+                                    Log in
+                                </Link>
+                            )}
+                            <button
+                                type="button"
+                                className={styles.iconBtn}
+                                data-notification-trigger
+                                onClick={() => setShowNotifications(!showNotifications)}
+                                aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
+                                aria-expanded={showNotifications}
+                            >
+                                <Bell size={20} />
+                                {unreadCount > 0 && <span className={styles.badge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
+                            </button>
+                            {isAuthenticated && (
+                                <Link href="/profile" className={styles.avatar} aria-label="Your profile">
+                                    {(userName || 'U').charAt(0).toUpperCase()}
+                                </Link>
+                            )}
                         </div>
-                        {retailer?.average_rating && (
-                            <div className={styles.ratingBadge}>
-                                ★ {retailer.average_rating} stars
+                    </div>
+
+                    <NotificationDropdown
+                        isOpen={showNotifications}
+                        onClose={() => setShowNotifications(false)}
+                    />
+
+                    <form className={styles.searchBar} onSubmit={handleSearch} role="search">
+                        <Search className={styles.searchIcon} size={19} />
+                        <input
+                            type="search"
+                            placeholder={`Search in ${retailer.shop_name || 'store'}…`}
+                            aria-label="Search products"
+                            className={styles.searchInput}
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onFocus={() => searchQuery.trim().length >= 2 && setShowSuggestions(true)}
+                            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                        />
+                        {searchQuery && (
+                            <button
+                                type="button"
+                                className={styles.searchClear}
+                                onClick={() => setSearchQuery('')}
+                                aria-label="Clear search"
+                            >
+                                <X size={16} />
+                            </button>
+                        )}
+
+                        {showSuggestions && (
+                            <div className={styles.suggestionsContainer}>
+                                {isSearching ? (
+                                    <div className={styles.noSuggestions}>Searching…</div>
+                                ) : suggestions.length > 0 ? (
+                                    <>
+                                        {suggestions.map((product) => (
+                                            <div
+                                                key={product.id}
+                                                className={styles.suggestionItem}
+                                                onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
+                                            >
+                                                <div className={styles.suggestionImage}>
+                                                    <ProductImage src={product.image} alt={product.name} />
+                                                </div>
+                                                <div className={styles.suggestionInfo}>
+                                                    <div className={styles.suggestionName}>{product.name}</div>
+                                                    <div className={styles.suggestionMeta}>
+                                                        <span className={styles.suggestionPrice}>₹{product.price}</span>
+                                                        {product.unit && <span>· {product.unit}</span>}
+                                                    </div>
+                                                </div>
+                                                <ChevronRight size={16} className={styles.suggestionChevron} />
+                                            </div>
+                                        ))}
+                                        <button type="submit" className={styles.suggestionAll}>
+                                            <Search size={14} /> See all results for &ldquo;{searchQuery.trim()}&rdquo;
+                                        </button>
+                                    </>
+                                ) : (
+                                    <div className={styles.noSuggestions}>No products found for &ldquo;{searchQuery}&rdquo;</div>
+                                )}
                             </div>
                         )}
-                    </div>
-                    <div className={styles.storeAddress}>
-                        {retailer?.address_line1 || `${retailer?.city || ''}, ${retailer?.state || ''}`}
-                    </div>
-
-                    {retailer && !retailer.is_currently_open && (
-                        <div className="mt-1.5">
-                            <div className="inline-block text-[10px] font-medium text-indigo-800 bg-indigo-50 px-2 py-1 rounded border border-indigo-200 leading-relaxed">
-                                🌙 <span className="font-bold">Closed.</span> Orders placed now will be processed starting at <span className="font-bold whitespace-nowrap">{retailer.next_open_time || 'next open time'}</span>.
-                            </div>
-                        </div>
-                    )}
-                    {retailer && !retailer.offers_delivery && !retailer.offers_pickup && (
-                        <div className="mt-1.5">
-                            <div className="inline-block text-[10px] font-bold text-red-800 bg-red-50 px-2 py-1 rounded border border-red-200 leading-relaxed animate-pulse">
-                                ⚠️ <span className="uppercase">Not Accepting Orders.</span> This store is currently offline.
-                            </div>
-                        </div>
-                    )}
+                    </form>
                 </div>
             </header>
 
-            <div className={styles.logoContainer}>
-                <img
-                    src="/assets/images/logo.png"
-                    alt="Order Easy Logo"
-                    className={styles.logo}
-                />
-            </div>
-
-            <form className={styles.searchBar} onSubmit={handleSearch}>
-                <Search className={styles.searchIcon} size={20} />
-                <input
-                    type="text"
-                    placeholder="Search for products..."
-                    className={styles.searchInput}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onFocus={() => searchQuery.trim().length >= 2 && setShowSuggestions(true)}
-                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                />
-
-                {showSuggestions && (
-                    <div className={styles.suggestionsContainer}>
-                        {isSearching ? (
-                            <div className={styles.noSuggestions}>Searching...</div>
-                        ) : suggestions.length > 0 ? (
-                            suggestions.map((product) => (
-                                <div
-                                    key={product.id}
-                                    className={styles.suggestionItem}
-                                    onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
-                                >
-                                    <div className={styles.suggestionImage}>
-                                        <ProductImage src={product.image} alt={product.name} />
-                                    </div>
-                                    <div className={styles.suggestionInfo}>
-                                        <div className={styles.suggestionName}>{product.name}</div>
-                                        <div className={styles.suggestionMeta}>
-                                            <span className={styles.suggestionPrice}>₹{product.price}</span>
-                                            {product.unit && <span>• {product.unit}</span>}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <div className={styles.noSuggestions}>No products found for "{searchQuery}"</div>
+            <main className={styles.main}>
+                {/* Store info */}
+                <section className={styles.storeHeaderInfo}>
+                    <div className={styles.storeMetaRow}>
+                        {retailer.average_rating ? (
+                            <span className={styles.ratingBadge}>
+                                <Star size={12} fill="currentColor" /> {Number(retailer.average_rating).toFixed(1)}
+                            </span>
+                        ) : null}
+                        {typeof retailer.is_currently_open === 'boolean' && (
+                            <span className={retailer.is_currently_open ? styles.statusOpen : styles.statusClosed}>
+                                <span className={styles.statusDot} />
+                                {retailer.is_currently_open ? 'Open now' : 'Closed'}
+                            </span>
+                        )}
+                        {retailer.offers_delivery && (
+                            <span className={styles.metaChip}><Bike size={13} /> Delivery</span>
+                        )}
+                        {retailer.offers_pickup && (
+                            <span className={styles.metaChip}><PackageCheck size={13} /> Pickup</span>
                         )}
                     </div>
-                )}
-            </form>
+                    <button
+                        type="button"
+                        className={styles.storeAddress}
+                        onClick={() => router.push('/city-selection')}
+                    >
+                        <MapPin size={13} />
+                        <span>
+                            {retailer.address_line1 || `${retailer.city || ''}, ${retailer.state || ''}`}
+                            {selectedCity?.name ? ` · Delivering to ${selectedCity.name}${selectedCity?.pincode ? ` (${selectedCity.pincode})` : ''}` : ''}
+                        </span>
+                    </button>
 
-            <main className={styles.main}>
+                    {!retailer.is_currently_open && (
+                        <div className={styles.noticeInfo}>
+                            <Clock size={16} />
+                            <span>
+                                <strong>Store is closed.</strong> Orders placed now will be processed from{' '}
+                                <strong className="whitespace-nowrap">{retailer.next_open_time || 'next open time'}</strong>.
+                            </span>
+                        </div>
+                    )}
+                    {isOffline && (
+                        <div className={styles.noticeDanger}>
+                            <AlertTriangle size={16} />
+                            <span><strong>Not accepting orders.</strong> This store is currently offline.</span>
+                        </div>
+                    )}
+                </section>
 
                 {/* ===== Combined Rewards Strip (Offers + Refer + Loyalty) ===== */}
-                {(offers.length > 0 || 
-                  (retailer.is_referral_enabled && (referralCode || apiService.isAuthenticated())) ||
-                  (retailer.is_reward_active || (userLoyalty && userLoyalty.points > 0))
-                ) && (
+                {showRewards && (
                     <div className={styles.rewardsPanel}>
-                        {/* Tab switcher */}
-                        <div className={styles.rewardsTabs}>
+                        <div className={styles.rewardsTabs} role="tablist">
                             <button
+                                type="button"
+                                role="tab"
+                                aria-selected={activeRewardTab === 'offers'}
                                 className={`${styles.rewardsTab} ${activeRewardTab === 'offers' ? styles.activeTab : ''}`}
                                 onClick={() => setActiveRewardTab('offers')}
                             >
-                                🎁 Offers
+                                <Gift size={15} /> Offers
                             </button>
                             {retailer.is_referral_enabled && (
                                 <button
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={activeRewardTab === 'refer'}
                                     className={`${styles.rewardsTab} ${activeRewardTab === 'refer' ? styles.activeTab : ''}`}
                                     onClick={() => setActiveRewardTab('refer')}
                                 >
-                                    ⭐ Refer
+                                    <Users size={15} /> Refer
                                 </button>
                             )}
                             {(retailer.is_reward_active || (userLoyalty && userLoyalty.points > 0)) && (
                                 <button
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={activeRewardTab === 'points'}
                                     className={`${styles.rewardsTab} ${activeRewardTab === 'points' ? styles.activeTab : ''}`}
                                     onClick={() => setActiveRewardTab('points')}
                                 >
-                                    💎 Points
+                                    <Gem size={15} /> Points
                                 </button>
                             )}
                         </div>
@@ -458,112 +526,115 @@ function RetailerHome() {
                         <div className={styles.rewardsContent}>
                             {/* Offers Tab */}
                             {activeRewardTab === 'offers' && offers.length > 0 && (
-                                <div>
-                                    <div
-                                        className={styles.slimBannerStack}
-                                        onTouchStart={handleTouchStart}
-                                        onTouchEnd={handleTouchEnd}
-                                        onMouseEnter={() => setIsBannerHovered(true)}
-                                        onMouseLeave={() => setIsBannerHovered(false)}
-                                    >
-                                        {offers.map((offer, idx) => (
-                                            <div
-                                                key={offer.id}
-                                                className={`${styles.bannerItem} ${idx === currentOfferIndex ? styles.activeBanner : ''}`}
-                                                onClick={() => router.push(`/retailer/products?retailerId=${retailerId}&offerId=${offer.id}&title=${encodeURIComponent(offer.name)}`)}
-                                            >
-                                                {offer.banner_image ? (
-                                                    <img src={offer.banner_image} alt={offer.name} className={styles.bannerImage} />
-                                                ) : (
-                                                    <div className={styles.offerFallback}>
-                                                        <div className={styles.offerName}>{offer.name}</div>
-                                                        <div className={styles.offerDesc}>{offer.description || 'Limited Time Offer!'}</div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
-                                        {offers.length > 1 && (
-                                            <div className={styles.sliderDots}>
-                                                {offers.map((_, idx) => (
-                                                    <button
-                                                        key={idx}
-                                                        className={`${styles.dot} ${idx === currentOfferIndex ? styles.activeDot : ''}`}
-                                                        onClick={() => setCurrentOfferIndex(idx)}
-                                                    />
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
+                                <div
+                                    className={styles.slimBannerStack}
+                                    onTouchStart={handleTouchStart}
+                                    onTouchEnd={handleTouchEnd}
+                                    onMouseEnter={() => setIsBannerHovered(true)}
+                                    onMouseLeave={() => setIsBannerHovered(false)}
+                                >
+                                    {offers.map((offer, idx) => (
+                                        <div
+                                            key={offer.id}
+                                            className={`${styles.bannerItem} ${idx === currentOfferIndex ? styles.activeBanner : ''}`}
+                                            onClick={() => router.push(`/retailer/products?retailerId=${retailerId}&offerId=${offer.id}&title=${encodeURIComponent(offer.name)}`)}
+                                        >
+                                            {offer.banner_image ? (
+                                                <img src={offer.banner_image} alt={offer.name} className={styles.bannerImage} />
+                                            ) : (
+                                                <div className={`${styles.offerFallback} ${styles[`offerTone${idx % 3}`]}`}>
+                                                    <span className={styles.offerEyebrow}><Sparkles size={12} /> Limited offer</span>
+                                                    <div className={styles.offerName}>{offer.name}</div>
+                                                    <div className={styles.offerDesc}>{offer.description || 'Limited Time Offer!'}</div>
+                                                    <span className={styles.offerCta}>Shop now <ChevronRight size={14} /></span>
+                                                    <Gift className={styles.offerArt} size={120} strokeWidth={1.25} />
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                    {offers.length > 1 && (
+                                        <div className={styles.sliderDots}>
+                                            {offers.map((_, idx) => (
+                                                <button
+                                                    type="button"
+                                                    key={idx}
+                                                    aria-label={`Show offer ${idx + 1}`}
+                                                    className={`${styles.dot} ${idx === currentOfferIndex ? styles.activeDot : ''}`}
+                                                    onClick={() => setCurrentOfferIndex(idx)}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                             {activeRewardTab === 'offers' && offers.length === 0 && (
-                                <div style={{ textAlign: 'center', padding: '16px', color: '#94a3b8', fontSize: '14px' }}>
-                                    No active offers right now. Check back soon! 🛒
+                                <div className={styles.rewardsEmpty}>
+                                    <Gift size={22} />
+                                    No active offers right now. Check back soon!
                                 </div>
                             )}
 
                             {/* Refer & Earn Tab */}
                             {activeRewardTab === 'refer' && retailer.is_referral_enabled && (
                                 <div className={styles.referContent}>
-                                    <div className={styles.referTitle}>
-                                        <Star className="text-yellow-300 fill-yellow-300" size={20} />
-                                        Refer & Earn {retailer.referral_reward_points > 0 ? `(₹${retailer.referral_reward_points})` : ''}
+                                    <div className={styles.referText}>
+                                        <div className={styles.referTitle}>
+                                            <Star className="fill-amber-300 text-amber-300" size={18} />
+                                            Refer & Earn {retailer.referral_reward_points > 0 ? `(₹${retailer.referral_reward_points})` : ''}
+                                        </div>
+                                        <p className={styles.referSubtitle}>
+                                            Earn {retailer.referral_reward_points} pts on your friend&apos;s first order above ₹{retailer.min_referral_order_amount}!
+                                        </p>
                                     </div>
-                                    <p className={styles.referSubtitle}>
-                                        Earn {retailer.referral_reward_points} pts on your friend's first order above ₹{retailer.min_referral_order_amount}!
-                                    </p>
                                     {referralCode ? (
                                         <div className={styles.codeBox}>
                                             <span className={styles.code}>{referralCode}</span>
-                                            <div className={styles.referralActions}>
-                                                <button
-                                                    className={styles.actionBtn}
-                                                    onClick={() => {
-                                                        navigator.clipboard.writeText(referralCode);
-                                                        toast.success("Code copied!");
-                                                    }}
-                                                >
-                                                    <Copy size={14} /> Copy
-                                                </button>
-                                            </div>
+                                            <button
+                                                type="button"
+                                                className={styles.copyBtn}
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(referralCode);
+                                                    toast.success("Code copied!");
+                                                }}
+                                            >
+                                                <Copy size={14} /> Copy
+                                            </button>
                                         </div>
                                     ) : apiService.isAuthenticated() ? (
-                                        <div className="text-center" style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>
-                                            Code unavailable. <button onClick={() => window.location.reload()} style={{ textDecoration: 'underline', background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}>Retry</button>
+                                        <div className={styles.referHint}>
+                                            Code unavailable. <button type="button" onClick={() => window.location.reload()}>Retry</button>
                                         </div>
                                     ) : (
-                                        <div className="text-center">
-                                            <Link href="/login" className="text-white font-bold underline">Login to view code</Link>
-                                        </div>
+                                        <Link href="/login" className={styles.referLogin}>Log in to view your code</Link>
                                     )}
                                 </div>
                             )}
 
                             {/* Loyalty Points Tab */}
                             {activeRewardTab === 'points' && (
-                                <div className={styles.referContent}>
-                                    <div className={styles.referTitle}>
-                                        <Gem className="text-blue-300 fill-blue-300" size={20} />
-                                        My Shop Points
-                                    </div>
-                                    <div className={styles.pointsBalanceBox}>
-                                        <div className={styles.pointsValue}>
-                                            {apiService.isAuthenticated() ? (
-                                                <>
-                                                    <span className={styles.pointsLarge}>{userLoyalty?.points || 0}</span>
-                                                    <span className={styles.pointsLabel}>Available Points</span>
-                                                </>
-                                            ) : (
-                                                <Link href="/login" className="text-white underline">Login to check balance</Link>
-                                            )}
+                                <div className={`${styles.referContent} ${styles.pointsContent}`}>
+                                    <div className={styles.referText}>
+                                        <div className={styles.referTitle}>
+                                            <Gem className="fill-sky-200 text-sky-200" size={18} />
+                                            My Shop Points
                                         </div>
                                         {retailer.is_reward_active && (
                                             <div className={styles.earningRule}>
-                                                🔥 {retailer.loyalty_earning_type === 'percentage' 
-                                                    ? `Earn ${retailer.loyalty_earning_value}% Gems on every order!` 
+                                                {retailer.loyalty_earning_type === 'percentage'
+                                                    ? `Earn ${retailer.loyalty_earning_value}% Gems on every order!`
                                                     : `Earn 1 Gem for every ₹${parseFloat(retailer.loyalty_earning_value).toFixed(0)} spent!`}
                                                 {parseFloat(retailer.loyalty_min_order_value) > 0 && ` (Min order ₹${parseFloat(retailer.loyalty_min_order_value).toFixed(0)})`}
                                             </div>
+                                        )}
+                                    </div>
+                                    <div className={styles.pointsValue}>
+                                        {apiService.isAuthenticated() ? (
+                                            <>
+                                                <span className={styles.pointsLarge}>{userLoyalty?.points || 0}</span>
+                                                <span className={styles.pointsLabel}>Available</span>
+                                            </>
+                                        ) : (
+                                            <Link href="/login" className={styles.referLogin}>Log in to check balance</Link>
                                         )}
                                     </div>
                                 </div>
@@ -573,45 +644,46 @@ function RetailerHome() {
                 )}
 
                 {/* Categories */}
-                <section className={styles.section}>
-                    <div className={styles.sectionHeader}>
-                        <h2>Explore by Category</h2>
-                        <Link href={`/retailer/categories?retailerId=${retailerId}`} className={styles.seeAll}>
-                            See All <ChevronRight size={14} />
-                        </Link>
-                    </div>
-
-                    <div className={styles.categoriesScroll}>
-                        {categories.slice(0, 12).map(cat => (
-                            <Link href={`/retailer/category?retailerId=${retailerId}&categoryId=${cat.id}`} key={cat.id} className={styles.categoryItem}>
-                                <div className={styles.catIcon}>
-                                    {cat.image ? (
-                                        <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" />
-                                    ) : cat.icon ? (
-                                        <img src={cat.icon} alt={cat.name} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <ShoppingBag size={24} />
-                                    )}
-                                </div>
-                                <span className={styles.catName}>{cat.name}</span>
-                                {cat.product_count !== undefined && (
-                                    <span className={styles.catCount}>{cat.product_count} items</span>
-                                )}
+                {categories.length > 0 && (
+                    <section className={styles.section}>
+                        <div className={styles.sectionHeader}>
+                            <h2>Shop by category</h2>
+                            <Link href={`/retailer/categories?retailerId=${retailerId}`} className={styles.seeAll}>
+                                See all <ChevronRight size={14} />
                             </Link>
-                        ))}
-                    </div>
-                </section>
+                        </div>
 
-                {/* Featured Products */}
+                        <div className={styles.categoriesGrid}>
+                            {categories.slice(0, 12).map(cat => (
+                                <Link href={`/retailer/category?retailerId=${retailerId}&categoryId=${cat.id}`} key={cat.id} className={styles.categoryItem}>
+                                    <div className={styles.catIcon}>
+                                        {cat.image ? (
+                                            <img src={cat.image} alt="" />
+                                        ) : cat.icon ? (
+                                            <img src={cat.icon} alt="" />
+                                        ) : (
+                                            <ShoppingBag size={24} strokeWidth={1.75} />
+                                        )}
+                                    </div>
+                                    <span className={styles.catName}>{cat.name}</span>
+                                    {cat.product_count !== undefined && (
+                                        <span className={styles.catCount}>{cat.product_count} items</span>
+                                    )}
+                                </Link>
+                            ))}
+                        </div>
+                    </section>
+                )}
+
                 {featuredProducts.length > 0 && (
                     <section className={styles.section}>
                         <div className={styles.sectionHeader}>
-                            <h2>Featured Products</h2>
+                            <h2>Featured products</h2>
                         </div>
                         <div className={styles.productsScroll}>
                             {featuredProducts.map(product => (
                                 <ProductCard
-                                    key={product.id}
+                                    key={`featured-${product.id}`}
                                     product={product}
                                     isWishlisted={isWishlisted(product.id)}
                                     onToggleWishlist={(e: React.MouseEvent) => {
@@ -628,11 +700,10 @@ function RetailerHome() {
                     </section>
                 )}
 
-                {/* Best Selling Products */}
                 {bestSellingProducts.length > 0 && (
                     <section className={styles.section}>
                         <div className={styles.sectionHeader}>
-                            <h2>Best Selling</h2>
+                            <h2>Best sellers</h2>
                         </div>
                         <div className={styles.productsScroll}>
                             {bestSellingProducts.map(product => (
@@ -640,7 +711,7 @@ function RetailerHome() {
                                     key={`best-${product.id}`}
                                     product={product}
                                     isWishlisted={isWishlisted(product.id)}
-                                    onToggleWishlist={(e) => {
+                                    onToggleWishlist={(e: React.MouseEvent) => {
                                         e.preventDefault();
                                         e.stopPropagation();
                                         toggleWishlist(product.id);
@@ -654,12 +725,11 @@ function RetailerHome() {
                     </section>
                 )}
 
-                {/* Buy Again (Only if user logged in) */}
                 {buyAgainProducts.length > 0 && (
                     <section className={styles.section}>
                         <div className={styles.sectionHeader}>
-                            <h2>Buy Again</h2>
-                            <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full">Based on your orders</span>
+                            <h2>Buy again</h2>
+                            <span className={styles.sectionTag}>Based on your orders</span>
                         </div>
                         <div className={styles.productsScroll}>
                             {buyAgainProducts.map(product => (
@@ -667,7 +737,7 @@ function RetailerHome() {
                                     key={`again-${product.id}`}
                                     product={product}
                                     isWishlisted={isWishlisted(product.id)}
-                                    onToggleWishlist={(e) => {
+                                    onToggleWishlist={(e: React.MouseEvent) => {
                                         e.preventDefault();
                                         e.stopPropagation();
                                         toggleWishlist(product.id);
@@ -681,11 +751,10 @@ function RetailerHome() {
                     </section>
                 )}
 
-                {/* Recommended Products */}
                 {recommendedProducts.length > 0 && (
                     <section className={styles.section}>
                         <div className={styles.sectionHeader}>
-                            <h2>Recommended for You</h2>
+                            <h2>Recommended for you</h2>
                         </div>
                         <div className={styles.productsScroll}>
                             {recommendedProducts.map(product => (
@@ -693,7 +762,7 @@ function RetailerHome() {
                                     key={`rec-${product.id}`}
                                     product={product}
                                     isWishlisted={isWishlisted(product.id)}
-                                    onToggleWishlist={(e) => {
+                                    onToggleWishlist={(e: React.MouseEvent) => {
                                         e.preventDefault();
                                         e.stopPropagation();
                                         toggleWishlist(product.id);
@@ -707,11 +776,9 @@ function RetailerHome() {
                     </section>
                 )}
 
-                {/* Offers and Referral have been moved to the top Rewards Panel */}
-
                 {/* Lazy Loaded Discovery Lanes */}
                 {retailerId && (
-                    <div className="mt-8 space-y-6">
+                    <>
                         <LazyProductLane
                             title="Deals of the Day"
                             fetchFn={() => apiService.getDealsOfTheDay(retailerId)}
@@ -747,20 +814,18 @@ function RetailerHome() {
                             offersDelivery={retailer.offers_delivery}
                             offersPickup={retailer.offers_pickup}
                         />
-                    </div>
+                    </>
                 )}
 
                 {/* Infinite Scrolling Product Grid */}
                 {retailerId && (
-                    <InfiniteProductGrid 
-                        retailerId={retailerId} 
+                    <InfiniteProductGrid
+                        retailerId={retailerId}
                         offersDelivery={retailer.offers_delivery}
                         offersPickup={retailer.offers_pickup}
                     />
                 )}
-
             </main>
-
         </div>
     );
 }

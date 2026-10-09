@@ -172,57 +172,50 @@ export default function PhoneVerification({ isOpen, onClose, onVerified, initial
     if (!isOpen) return null;
 
     return (
-        <div style={{
-            position: 'fixed',
-            top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 9999
-        }}>
-            <div style={{
-                backgroundColor: 'white',
-                padding: '24px',
-                borderRadius: '12px',
-                width: '90%',
-                maxWidth: '400px',
-                position: 'relative',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-            }}>
+        <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-[rgb(11_19_36/0.45)] backdrop-blur-sm sm:items-center sm:p-4">
+            <div
+                role="dialog"
+                aria-modal="true"
+                aria-label="Verify phone"
+                className="relative w-full max-w-[420px] rounded-t-[var(--r-xl)] bg-white p-6 pb-[calc(24px+env(safe-area-inset-bottom))] shadow-[var(--sh-lg)] animate-in fade-in slide-in-from-bottom-8 duration-300 sm:rounded-[var(--r-xl)] sm:pb-6"
+            >
                 <button
+                    type="button"
                     onClick={onClose}
-                    style={{ position: 'absolute', top: '12px', right: '12px', background: 'none', border: 'none', cursor: 'pointer' }}
+                    aria-label="Close"
+                    className="absolute top-4 right-4 flex size-9 items-center justify-center rounded-[10px] bg-[var(--surface-2)] text-[var(--ink-2)] hover:bg-[var(--surface-3)]"
                 >
-                    <X size={24} color="#666" />
+                    <X size={18} />
                 </button>
 
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <ShieldCheck size={24} className="text-green-600" /> Verify Phone
-                </h2>
+                <div className="mb-4 flex size-12 items-center justify-center rounded-2xl bg-[var(--fresh-50)] text-[var(--fresh-700)]">
+                    <ShieldCheck size={24} />
+                </div>
+                <h2 className="mb-1 text-xl font-extrabold tracking-tight text-[var(--ink)]">Verify phone</h2>
 
                 {error && (
-                    <div style={{ background: '#fee2e2', color: '#dc2626', padding: '8px', borderRadius: '4px', marginBottom: '12px', fontSize: '14px' }}>
+                    <div className="my-3 rounded-[var(--r-md)] border border-[var(--rose-100)] bg-[var(--rose-50)] px-3 py-2.5 text-[13px] font-semibold text-[#9f1239]">
                         {error}
                     </div>
                 )}
 
                 {step === 'request' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        <p style={{ color: '#666', fontSize: '14px' }}>
+                    <div className="flex flex-col gap-4">
+                        <p className="text-sm leading-relaxed text-[var(--ink-3)]">
                             We need to verify your phone number to proceed with the order.
                         </p>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <label style={{ fontSize: '14px', fontWeight: '500' }}>Phone Number</label>
-                            <div style={{ display: 'flex', padding: '8px', border: '1px solid #ddd', borderRadius: '6px' }}>
-                                <span style={{ color: '#666', marginRight: '8px' }}>+91</span>
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-[13px] font-semibold text-[var(--ink-2)]">Phone Number</label>
+                            <div className="flex h-12 items-center rounded-xl border border-[var(--line-strong)] px-3.5 focus-within:border-[var(--brand-500)] focus-within:ring-4 focus-within:ring-[var(--brand-100)]">
+                                <Phone size={16} className="mr-2 text-[var(--ink-4)]" />
+                                <span className="mr-2 font-semibold text-[var(--ink-3)]">+91</span>
                                 <input
                                     type="tel"
                                     value={phone.replace('+91', '')}
                                     onChange={(e) => setPhone(e.target.value)}
                                     placeholder="Enter mobile number"
-                                    style={{ border: 'none', outline: 'none', flex: 1 }}
+                                    className="min-w-0 flex-1 bg-transparent text-[15px] text-[var(--ink)] outline-none"
                                     disabled={loading} // Fixed phone for now if user logged in? Maybe allow edit if profile allows.
                                 />
                             </div>
@@ -230,40 +223,42 @@ export default function PhoneVerification({ isOpen, onClose, onVerified, initial
 
                         <div id="recaptcha-container" style={{ margin: '0 auto' }}></div>
 
-                        <Button onClick={handleSendOtp} disabled={loading || !cooldown.allowed} style={{ width: '100%' }}>
+                        <Button onClick={handleSendOtp} disabled={loading || !cooldown.allowed} size="lg" fullWidth>
                             {loading ? <Loader2 className="animate-spin" /> : cooldown.allowed ? 'Send OTP' : cooldown.reason === 'attempts' ? `Retry in ${Math.ceil(cooldown.remaining / 60)}m` : `Resend in ${cooldown.remaining}s`}
                         </Button>
                     </div>
                 )}
 
                 {step === 'verify' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        <p style={{ color: '#666', fontSize: '14px' }}>
-                            Enter the 6-digit code sent to <b>{phone}</b>
+                    <div className="flex flex-col gap-4">
+                        <p className="text-sm leading-relaxed text-[var(--ink-3)]">
+                            Enter the 6-digit code sent to <b className="text-[var(--ink)]">{phone}</b>
                         </p>
 
-                        <div style={{ display: 'flex', padding: '8px', border: '1px solid #ddd', borderRadius: '6px' }}>
-                            <input
-                                type="text"
-                                value={otp}
-                                onChange={(e) => setOtp(e.target.value)}
-                                placeholder="Enter OTP"
-                                maxLength={6}
-                                style={{ border: 'none', outline: 'none', flex: 1, textAlign: 'center', letterSpacing: '2px', fontSize: '18px' }}
-                            />
-                        </div>
+                        <input
+                            type="text"
+                            inputMode="numeric"
+                            autoComplete="one-time-code"
+                            value={otp}
+                            onChange={(e) => setOtp(e.target.value)}
+                            placeholder="••••••"
+                            maxLength={6}
+                            aria-label="OTP code"
+                            className="h-14 w-full rounded-xl border border-[var(--line-strong)] text-center font-mono text-2xl tracking-[0.5em] text-[var(--ink)] outline-none focus:border-[var(--brand-500)] focus:ring-4 focus:ring-[var(--brand-100)]"
+                        />
 
-                        <Button onClick={handleVerifyOtp} disabled={loading} style={{ width: '100%' }}>
+                        <Button onClick={handleVerifyOtp} disabled={loading} size="lg" fullWidth>
                             {loading ? <Loader2 className="animate-spin" /> : 'Verify Code'}
                         </Button>
 
                         <button
+                            type="button"
                             onClick={() => {
                                 // Clear reCAPTCHA before going back so it is recreated fresh
                                 clearRecaptcha();
                                 setStep('request');
                             }}
-                            style={{ background: 'none', border: 'none', color: '#666', fontSize: '14px', cursor: 'pointer', textDecoration: 'underline' }}
+                            className="text-sm font-semibold text-[var(--brand-600)] hover:underline"
                         >
                             Change Number / Resend
                         </button>

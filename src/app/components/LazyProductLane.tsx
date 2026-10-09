@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 
 import { Product } from '../retailer/page';
 import { processRetailerProductList } from '@/utils/productStock';
-import { EmptyState } from './EmptyState';
-import { Package } from 'lucide-react';
+import { useWishlist } from '@/hooks/useWishlist';
+import { apiService } from '@/services/api';
 
 interface LazyProductLaneProps {
     title: string;
@@ -28,10 +28,12 @@ export default function LazyProductLane({ title, fetchFn, retailerId, offersDeli
     const [isLoading, setIsLoading] = useState(true);
     const [hasFetched, setHasFetched] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const { loadWishlist, toggleWishlist, isWishlisted } = useWishlist();
 
     useEffect(() => {
         if (inView && !hasFetched) {
             setHasFetched(true);
+            if (apiService.isAuthenticated()) loadWishlist();
             const loadProducts = async () => {
                 try {
                     setIsLoading(true);
@@ -47,23 +49,11 @@ export default function LazyProductLane({ title, fetchFn, retailerId, offersDeli
 
             loadProducts();
         }
-    }, [inView, hasFetched, fetchFn, title]);
+    }, [inView, hasFetched, fetchFn, title, loadWishlist]);
 
     // Don't render the section at all if there's no data AND we've already fetched
-    if (hasFetched && !isLoading && products.length === 0) {
-        return (
-            <div className={styles.section}>
-                <div className={styles.sectionHeader}>
-                    <h2 className={styles.sectionTitle}>{title}</h2>
-                </div>
-                <EmptyState
-                    icon={Package}
-                    title="Nothing in this lane"
-                    description="Check back later or browse all products below."
-                    className="min-h-[160px] py-8"
-                />
-            </div>
-        );
+    if (hasFetched && !isLoading && products.length === 0 && !error) {
+        return null;
     }
 
     return (
@@ -74,23 +64,23 @@ export default function LazyProductLane({ title, fetchFn, retailerId, offersDeli
 
             {isLoading ? (
                 <div className={styles.productsScroll}>
-                    {Array(4).fill(0).map((_, i) => (
-                        <div key={i} className={styles.skeletonCard} />
+                    {Array(5).fill(0).map((_, i) => (
+                        <div key={i} className={`oe-skeleton ${styles.skeletonCard}`} />
                     ))}
                 </div>
             ) : error ? (
-                <div className="text-center text-sm text-red-500 py-4">{error}</div>
+                <div className="px-4 py-4 text-center text-sm font-medium text-[var(--ink-3)]">{error}</div>
             ) : (
                 <div className={styles.productsScroll}>
                     {products.map((product) => (
                         <ProductCard
                             key={product.id}
                             product={product}
-                            isWishlisted={false} // Would need useWishlist hook to be accurate, defaulting to false
+                            isWishlisted={isWishlisted(product.id)}
                             onToggleWishlist={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                // Ideally toggleWishlist from hook
+                                toggleWishlist(product.id);
                             }}
                             onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
                             offersDelivery={offersDelivery}

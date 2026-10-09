@@ -4,9 +4,10 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, MapPin, Phone, Package, Clock, CheckCircle, XCircle, AlertCircle, Star, MessageCircle, Loader2 } from 'lucide-react';
+import { MapPin, Phone, Package, Clock, CheckCircle, XCircle, AlertCircle, Star, MessageCircle, Loader2, Store, Bike, Wallet, StickyNote, Sparkles, Check, CreditCard } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
+import PageHeader from '@/app/components/PageHeader';
 import { ProductImage } from '@/app/components/ProductImage';
 import UpiPaymentPanel from '@/app/components/UpiPaymentPanel';
 import { getOrderTaxSummary } from '@/lib/orderTaxSummary';
@@ -205,80 +206,100 @@ function OrderDetails() {
     const getPaymentStatusInfo = (status: string) => {
         switch (status) {
             case 'pending_payment': 
-                return { label: 'Pending Payment', color: 'text-amber-600', icon: <Clock size={16} /> };
+                return { label: 'Pending Payment', color: 'text-[var(--amber-700)]', icon: <Clock size={16} /> };
             case 'pending_verification': 
-                return { label: 'Pending Verification', color: 'text-blue-600', icon: <Loader2 size={16} className="animate-spin" /> };
+                return { label: 'Pending Verification', color: 'text-[var(--brand-600)]', icon: <Loader2 size={16} className="animate-spin" /> };
             case 'verified': 
-                return { label: 'Verified', color: 'text-green-600', icon: <CheckCircle size={16} /> };
+                return { label: 'Verified', color: 'text-[var(--fresh-700)]', icon: <CheckCircle size={16} /> };
             case 'failed': 
-                return { label: 'Verification Failed', color: 'text-red-600', icon: <XCircle size={16} /> };
+                return { label: 'Verification Failed', color: 'text-[var(--rose-600)]', icon: <XCircle size={16} /> };
             default: 
-                return { label: status, color: 'text-gray-600', icon: <Clock size={16} /> };
+                return { label: status, color: 'text-[var(--ink-3)]', icon: <Clock size={16} /> };
         }
     };
 
     const getStatusInfo = (status: string) => {
         switch (status.toLowerCase()) {
-            case 'pending': return { color: 'bg-yellow-100 text-yellow-700', icon: <Clock size={24} /> };
-            case 'waiting_for_customer_approval': return { color: 'bg-orange-100 text-orange-700', icon: <AlertCircle size={24} /> };
-            case 'confirmed': return { color: 'bg-blue-100 text-blue-700', icon: <Package size={24} /> };
-            case 'delivered': return { color: 'bg-green-100 text-green-700', icon: <CheckCircle size={24} /> };
-            case 'cancelled': return { color: 'bg-red-100 text-red-700', icon: <XCircle size={24} /> };
-            default: return { color: 'bg-gray-100 text-gray-700', icon: <Package size={24} /> };
+            case 'pending': return { color: styles.toneWarn, icon: <Clock size={22} /> };
+            case 'waiting_for_customer_approval': return { color: styles.toneWarn, icon: <AlertCircle size={22} /> };
+            case 'confirmed': return { color: styles.toneInfo, icon: <Package size={22} /> };
+            case 'delivered': return { color: styles.toneSuccess, icon: <CheckCircle size={22} /> };
+            case 'cancelled': return { color: styles.toneDanger, icon: <XCircle size={22} /> };
+            default: return { color: styles.toneInfo, icon: <Package size={22} /> };
         }
     };
 
     if (isLoading) return <LoadingScreen message="Loading..." />;
-    if (!order) return <div className="p-20 text-center">Order not found.</div>;
+    if (!order) {
+        return (
+            <div className={styles.notFound}>
+                <Package size={36} strokeWidth={1.5} />
+                <h1>Order not found</h1>
+                <Button variant="outline" onClick={() => router.push('/orders')}>Back to orders</Button>
+            </div>
+        );
+    }
 
     const statusInfo = getStatusInfo(order.status);
     const taxSummary = getOrderTaxSummary(order);
 
+    const statusKey = order.status.toLowerCase();
+    const trackerSteps = [
+        { key: 'placed', label: 'Placed', match: ['pending', 'waiting_for_customer_approval'] },
+        { key: 'confirmed', label: 'Confirmed', match: ['confirmed', 'processing'] },
+        { key: 'packed', label: 'Packed', match: ['packed'] },
+        ...(order.delivery_mode === 'pickup' ? [] : [{ key: 'otw', label: 'On the way', match: ['out_for_delivery'] }]),
+        { key: 'delivered', label: order.delivery_mode === 'pickup' ? 'Picked up' : 'Delivered', match: ['delivered'] },
+    ];
+    const currentStep = trackerSteps.findIndex((step) => step.match.includes(statusKey));
+    const showTracker = currentStep >= 0;
+
     return (
         <div className={styles.container}>
-            <header className={styles.header}>
-                <Button variant="outline" onClick={() => router.push('/orders')}>
-                    <ArrowLeft size={20} />
-                </Button>
-                <h1>Order Details</h1>
-                <div className="flex gap-2 items-center">
+            <PageHeader
+                title={`Order #${order.order_number}`}
+                subtitle={new Date(order.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                onBack={() => router.push('/orders')}
+                right={
                     <button
+                        type="button"
+                        className={styles.chatBtn}
                         onClick={() => router.push(`/orders/chat?id=${order.id}`)}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            backgroundColor: '#16a34a',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '999px',
-                            padding: '7px 16px',
-                            fontSize: '13px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            boxShadow: '0 2px 8px rgba(22,163,74,0.35)',
-                            letterSpacing: '0.01em',
-                        }}
                     >
                         <MessageCircle size={16} />
                         Chat
                     </button>
-                </div>
-            </header>
+                }
+            />
 
             <main className={styles.main}>
                 <div className={`${styles.statusBanner} ${statusInfo.color}`}>
-                    {statusInfo.icon}
-                    <div className={styles.statusLabel}>Order {order.status.replace(/_/g, ' ')}</div>
-                    {order.status.toLowerCase() === 'cancelled' && order.cancelled_by && (
-                        <div className="text-sm font-bold opacity-90 mt-1 uppercase">
-                            By {order.cancelled_by}
+                    <div className={styles.statusTop}>
+                        <span className={styles.statusIcon}>{statusInfo.icon}</span>
+                        <div className="min-w-0">
+                            <div className={styles.statusLabel}>Order {order.status.replace(/_/g, ' ')}</div>
+                            {statusKey === 'cancelled' && order.cancelled_by && (
+                                <div className={styles.statusSub}>By {order.cancelled_by}</div>
+                            )}
+                            <div className={styles.statusValue}>#{order.order_number} · {order.retailer_name}</div>
                         </div>
-                    )}
-                    <div className={styles.statusValue}>#{order.order_number}</div>
-                    <div className={styles.orderInfo}>
-                        <span>{new Date(order.created_at).toLocaleString()}</span>
                     </div>
+                    {showTracker && (
+                        <ol className={styles.tracker} aria-label="Order progress">
+                            {trackerSteps.map((step, idx) => (
+                                <li
+                                    key={step.key}
+                                    className={`${styles.trackerStep} ${idx <= currentStep ? styles.trackerDone : ''} ${idx === currentStep ? styles.trackerCurrent : ''}`}
+                                    aria-current={idx === currentStep ? 'step' : undefined}
+                                >
+                                    <span className={styles.trackerDot}>
+                                        {idx < currentStep || statusKey === 'delivered' ? <Check size={12} strokeWidth={3} /> : null}
+                                    </span>
+                                    <span className={styles.trackerLabel}>{step.label}</span>
+                                </li>
+                            ))}
+                        </ol>
+                    )}
                 </div>
 
                 {/* UPI Payment Section */}
@@ -286,7 +307,7 @@ function OrderDetails() {
                     <div className={styles.upipaymentSection}>
                         <div className={styles.upipaymentHeader}>
                             <div className={styles.upipaymentIcon}>
-                                <AlertCircle size={24} />
+                                <CreditCard size={20} />
                             </div>
                             <h3 className={styles.upipaymentTitle}>UPI Payment Details</h3>
                         </div>
@@ -317,7 +338,7 @@ function OrderDetails() {
                                         onChange={(e) => setReferenceId(e.target.value)}
                                     />
                                     {order.payment_edit_count !== undefined && order.payment_edit_count > 0 && (
-                                        <p className="text-[10px] text-amber-600 font-bold mb-1">
+                                        <p className={styles.editCount}>
                                             Edit attempt {order.payment_edit_count} of 3
                                         </p>
                                     )}
@@ -341,18 +362,18 @@ function OrderDetails() {
                                             </Button>
                                         )}
                                     </div>
-                                    <p className="text-[10px] text-gray-500 mt-2 text-center">
+                                    <p className={styles.mutedCenter}>
                                         You can edit transaction ID until verification
                                     </p>
                                 </div>
                             </>
                         ) : (
                             <div className="space-y-4">
-                                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                <div className={styles.paymentBox}>
                                     <div className="flex justify-between items-start mb-3">
                                         <div>
                                             <span className={styles.upiIdLabel}>Submitted Trans. ID</span>
-                                            <div className="font-mono font-bold text-gray-800 break-all">{order.payment_reference_id}</div>
+                                            <div className={styles.paymentRef}>{order.payment_reference_id}</div>
                                         </div>
                                         
                                         {!order.is_payment_locked && (order.payment_edit_count || 0) < 3 && (
@@ -361,15 +382,15 @@ function OrderDetails() {
                                                     setReferenceId(order.payment_reference_id || '');
                                                     setIsEditingPayment(true);
                                                 }}
-                                                className="text-primary text-xs font-bold px-3 py-1 bg-primary/10 rounded-lg"
+                                                className={styles.editBtn}
                                             >
                                                 Edit
                                             </button>
                                         )}
                                     </div>
 
-                                    <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100">
-                                        <span className="text-xs text-gray-500 font-bold uppercase">Status:</span>
+                                    <div className={styles.paymentStatusRow}>
+                                        <span className={styles.paymentStatusLabel}>Status</span>
                                         <div className={`flex items-center gap-1.5 text-sm font-bold ${getPaymentStatusInfo(order.payment_status || '').color}`}>
                                             {getPaymentStatusInfo(order.payment_status || '').icon}
                                             {getPaymentStatusInfo(order.payment_status || '').label}
@@ -377,14 +398,14 @@ function OrderDetails() {
                                     </div>
                                     
                                     {order.payment_status === 'failed' && (
-                                        <p className="text-xs text-red-500 mt-2 italic">
+                                        <p className={styles.paymentFailed}>
                                             Verification failed. Please check your transaction ID and edit if incorrect.
                                         </p>
                                     )}
                                 </div>
                                 
                                 {order.is_payment_locked && (
-                                    <p className="text-[10px] text-green-600 font-bold text-center">
+                                    <p className={styles.paymentLocked}>
                                         Payment verified and locked. No further edits allowed.
                                     </p>
                                 )}
@@ -394,22 +415,22 @@ function OrderDetails() {
                 )}
 
                 {order.expected_processing_start && order.status.toLowerCase() === 'pending' && (
-                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mt-4 flex items-start gap-3 text-orange-800 mx-4 shadow-sm">
-                        <AlertCircle size={20} className="shrink-0 mt-0.5" />
-                        <div className="text-sm">
-                            <span className="font-semibold block mb-1">Received outside business hours</span>
+                    <div className={styles.noticeWarn}>
+                        <AlertCircle size={18} />
+                        <div>
+                            <strong>Received outside business hours</strong>
                             Processing will begin {new Date(order.expected_processing_start).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}.
                         </div>
                     </div>
                 )}
 
                 {order.estimated_ready_time && ['confirmed', 'processing', 'packed'].includes(order.status.toLowerCase()) && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4 text-center text-blue-800">
-                        <Clock size={16} className="inline mr-2 mb-1" />
-                        <span className="font-medium text-sm">
+                    <div className={styles.noticeInfo}>
+                        <Clock size={18} />
+                        <span className={styles.etaLabel}>
                             {order.delivery_mode === 'pickup' ? "Estimated Pickup Ready Time:" : "Estimated Ready Time:"}
                         </span>
-                        <span className="font-bold ml-2 text-lg block sm:inline mt-1 sm:mt-0">
+                        <span className={styles.etaValue}>
                             {new Date(order.estimated_ready_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                     </div>
@@ -431,7 +452,7 @@ function OrderDetails() {
                             </Button>
                             <Button
                                 variant="outline"
-                                className="flex-1 border-red-500 text-red-500"
+                                className={`flex-1 ${styles.dangerOutline}`}
                                 onClick={() => handleApproval('reject')}
                                 isLoading={isActionLoading}
                             >
@@ -443,18 +464,23 @@ function OrderDetails() {
 
                 <section className={styles.section}>
                     <div className={styles.retailerCard}>
-                        <h2 className={styles.retailerName}>{order.retailer_name}</h2>
-                        <a href={`tel:${order.retailer_phone}`} className={styles.retailerDetail + " text-blue-600 hover:underline"}>
-                            <Phone size={14} /> {order.retailer_phone}
-                        </a>
-                        <div className={styles.retailerDetail}>
-                            <MapPin size={14} /> {order.retailer_address}
+                        <span className={styles.retailerIcon}><Store size={20} /></span>
+                        <div className="min-w-0 flex-1">
+                            <h2 className={styles.retailerName}>{order.retailer_name}</h2>
+                            <div className={styles.retailerDetail}>
+                                <MapPin size={13} /> {order.retailer_address}
+                            </div>
                         </div>
+                        {order.retailer_phone && (
+                            <a href={`tel:${order.retailer_phone}`} className={styles.callBtn} aria-label={`Call ${order.retailer_name}`}>
+                                <Phone size={17} />
+                            </a>
+                        )}
                     </div>
                 </section>
 
                 <section className={styles.section}>
-                    <h3 className="font-bold mb-3 text-sm text-gray-500 uppercase">Items</h3>
+                    <h3 className={styles.sectionHeading}>Items <span>{order.items.length}</span></h3>
                     <div className={styles.itemsList}>
                         {order.items.map(item => (
                             <div key={item.id} className={styles.item}>
@@ -466,7 +492,7 @@ function OrderDetails() {
                                     <p className={styles.itemMeta}>
                                         ₹{item.product_price} × {item.quantity}
                                         {item.returned_quantity && item.returned_quantity > 0 ? (
-                                            <span className="text-red-500 font-bold ml-2 text-[10px] uppercase">
+                                            <span className={styles.returnedTag}>
                                                 ({item.returned_quantity} Returned)
                                             </span>
                                         ) : null}
@@ -474,9 +500,9 @@ function OrderDetails() {
                                 </div>
                                 <div className={styles.itemPrice}>
                                     {item.returned_quantity && item.returned_quantity > 0 ? (
-                                        <div className="flex flex-col items-end">
-                                            <span className="line-through text-gray-400 text-xs">₹{item.total_price}</span>
-                                            <span className="text-green-600 font-bold">₹{(parseFloat(item.product_price) * (item.net_quantity || 0)).toFixed(0)}</span>
+                                        <div className={styles.returnedPrice}>
+                                            <s>₹{item.total_price}</s>
+                                            <span>₹{(parseFloat(item.product_price) * (item.net_quantity || 0)).toFixed(0)}</span>
                                         </div>
                                     ) : (
                                         `₹${item.total_price}`
@@ -488,7 +514,7 @@ function OrderDetails() {
                 </section>
 
                 <section className={styles.section}>
-                    <h3 className="font-bold mb-3 text-sm text-gray-500 uppercase">Order Summary</h3>
+                    <h3 className={styles.sectionHeading}>Bill summary</h3>
                     <div className={styles.summary}>
                         <div className={styles.summaryRow}>
                             <span>Subtotal</span>
@@ -507,14 +533,14 @@ function OrderDetails() {
                         {order.coupon_code && (
                             <div className={styles.summaryRow}>
                                 <span>Coupon Applied</span>
-                                <span className="font-mono font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded text-xs border border-purple-200">
-                                    🎟️ {order.coupon_code}
+                                <span className={styles.couponCode}>
+                                    {order.coupon_code}
                                 </span>
                             </div>
                         )}
                         {order.points_earned && order.points_earned > 0 ? (
-                            <div className="bg-purple-50 text-purple-800 text-xs p-2 rounded mb-2 border border-purple-200">
-                                🎉 <strong>+{order.points_earned} Cashback Points</strong> {order.status === 'delivered' ? 'credited' : 'will be credited upon delivery'}!
+                            <div className={styles.cashbackNote}>
+                                <Sparkles size={14} /> <span><strong>+{order.points_earned} Cashback Points</strong> {order.status === 'delivered' ? 'credited' : 'will be credited upon delivery'}!</span>
                             </div>
                         ) : null}
                         {parseFloat(order.discount_from_points) > 0 && (
@@ -537,17 +563,17 @@ function OrderDetails() {
                         )}
                         <div className={styles.totalRow}>
                             <span>{parseFloat(order.refund_amount || '0') > 0 ? 'Original Total' : 'Total Amount'}</span>
-                            <span className={parseFloat(order.refund_amount || '0') > 0 ? 'line-through text-gray-400' : ''}>₹{order.total_amount}</span>
+                            <span className={parseFloat(order.refund_amount || '0') > 0 ? styles.struck : ''}>₹{order.total_amount}</span>
                         </div>
                         {parseFloat(order.refund_amount || '0') > 0 && (
                             <>
                                 <div className={styles.summaryRow}>
-                                    <span className="text-red-600 font-bold">Refund Amount</span>
-                                    <span className="text-red-600 font-bold">-₹{order.refund_amount}</span>
+                                    <span className={styles.refund}>Refund Amount</span>
+                                    <span className={styles.refund}>-₹{order.refund_amount}</span>
                                 </div>
-                                <div className={styles.totalRow + " border-t-2 border-gray-200 pt-2 mt-2"}>
-                                    <span className="text-green-700">Net Payable</span>
-                                    <span className="text-green-700 text-xl font-black">₹{order.net_amount}</span>
+                                <div className={`${styles.totalRow} ${styles.netRow}`}>
+                                    <span>Net Payable</span>
+                                    <span>₹{order.net_amount}</span>
                                 </div>
                             </>
                         )}
@@ -555,17 +581,29 @@ function OrderDetails() {
                 </section>
 
                 <section className={styles.section}>
-                    <h3 className="font-bold mb-3 text-sm text-gray-500 uppercase">Delivery Info</h3>
-                    <div className="flex flex-col gap-2">
-                        <div className="text-sm">
-                            <span className="text-gray-500">Method:</span> <span className="font-medium capitalize">{order.delivery_mode}</span>
+                    <h3 className={styles.sectionHeading}>Delivery info</h3>
+                    <div className={styles.infoList}>
+                        <div className={styles.infoRow}>
+                            <span className={styles.infoIcon}><Bike size={16} /></span>
+                            <div>
+                                <span className={styles.infoLabel}>Method</span>
+                                <span className={`${styles.infoValue} capitalize`}>{order.delivery_mode}</span>
+                            </div>
                         </div>
-                        <div className="text-sm">
-                            <span className="text-gray-500">Payment:</span> <span className="font-medium uppercase">{order.payment_mode.replace(/_/g, ' ')}</span>
+                        <div className={styles.infoRow}>
+                            <span className={styles.infoIcon}><Wallet size={16} /></span>
+                            <div>
+                                <span className={styles.infoLabel}>Payment</span>
+                                <span className={`${styles.infoValue} uppercase`}>{order.payment_mode.replace(/_/g, ' ')}</span>
+                            </div>
                         </div>
                         {order.delivery_mode === 'delivery' && (
-                            <div className="text-sm">
-                                <span className="text-gray-500">Address:</span> <p className="mt-1">{order.delivery_address_text}</p>
+                            <div className={styles.infoRow}>
+                                <span className={styles.infoIcon}><MapPin size={16} /></span>
+                                <div>
+                                    <span className={styles.infoLabel}>Address</span>
+                                    <span className={styles.infoValue}>{order.delivery_address_text}</span>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -573,24 +611,24 @@ function OrderDetails() {
 
                 {order.special_instructions && (
                     <section className={styles.section}>
-                        <h3 className="font-bold mb-2 text-sm text-gray-500 uppercase">Notes</h3>
+                        <h3 className={styles.sectionHeading}><StickyNote size={14} /> Notes</h3>
                         <div className={styles.instructionsBox}>{order.special_instructions}</div>
                     </section>
                 )}
 
                 {/* Cancel Button */}
                 {['pending', 'confirmed', 'processing'].includes(order.status.toLowerCase()) && (
-                    <div className="px-4 mt-6">
+                    <div className={styles.actionBlock}>
                         <Button
                             variant="outline"
                             fullWidth
-                            className="border-red-500 text-red-600 font-bold hover:bg-red-50"
+                            className={styles.dangerOutline}
                             onClick={handleCancelOrder}
                             isLoading={isActionLoading}
                         >
                             Cancel Order
                         </Button>
-                        <p className="text-[10px] text-center text-gray-400 mt-2 italic">
+                        <p className={styles.mutedCenter}>
                             Orders can only be cancelled before they are packed or out for delivery.
                         </p>
                     </div>
@@ -598,19 +636,19 @@ function OrderDetails() {
 
                 {/* Rating Button */}
                 {order.status.toLowerCase() === 'delivered' && (
-                    <div className="px-4 mt-6 mb-8">
+                    <div className={styles.actionBlock}>
                         {!order.has_customer_feedback ? (
                             <Button
                                 variant="primary"
                                 fullWidth
-                                className="bg-blue-600 hover:bg-blue-700"
+                                size="lg"
                                 onClick={() => setShowRatingModal(true)}
                             >
-                                <Star className="mr-2" size={18} fill="currentColor" />
+                                <Star size={18} fill="currentColor" />
                                 Rate Store
                             </Button>
                         ) : (
-                            <div className="flex flex-col p-4 bg-green-50 text-green-800 rounded-lg border border-green-200">
+                            <div className={styles.ratedCard}>
                                 <div className="flex items-center gap-2 mb-2 font-semibold">
                                     <CheckCircle size={18} />
                                     <span>You rated this order</span>
@@ -622,13 +660,13 @@ function OrderDetails() {
                                                 <Star
                                                     key={star}
                                                     size={16}
-                                                    className={order.feedback.overall_rating >= star ? 'text-yellow-400' : 'text-gray-300'}
-                                                    fill={order.feedback.overall_rating >= star ? '#facc15' : 'none'}
+                                                    className={order.feedback.overall_rating >= star ? 'text-amber-400' : 'text-[var(--line-strong)]'}
+                                                    fill={order.feedback.overall_rating >= star ? '#fbbf24' : 'none'}
                                                 />
                                             ))}
                                         </div>
                                         {order.feedback.comment && (
-                                            <p className="text-sm italic text-gray-700 bg-white/50 p-2 rounded">
+                                            <p className={styles.ratedComment}>
                                                 "{order.feedback.comment}"
                                             </p>
                                         )}
@@ -643,14 +681,14 @@ function OrderDetails() {
 
                 {/* Rating Modal */}
                 {showRatingModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                        <div className="bg-white rounded-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
-                            <div className="p-4 border-b">
-                                <h3 className="text-lg font-bold text-center">Rate Your Order</h3>
+                    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-[rgb(11_19_36/0.45)] p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={() => setShowRatingModal(false)}>
+                        <div className="w-full max-w-sm overflow-hidden rounded-t-[var(--r-xl)] bg-white pb-[env(safe-area-inset-bottom)] shadow-[var(--sh-lg)] animate-in fade-in slide-in-from-bottom-8 duration-300 sm:rounded-[var(--r-xl)] sm:pb-0" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Rate your order">
+                            <div className="px-5 pt-5">
+                                <h3 className="text-center text-lg font-extrabold tracking-tight">Rate your order</h3>
                             </div>
 
-                            <div className="p-6">
-                                <p className="text-center text-gray-600 mb-6">How was your experience with {order.retailer_name}?</p>
+                            <div className="px-5 pt-2 pb-5">
+                                <p className="mb-5 text-center text-sm text-[var(--ink-3)]">How was your experience with {order.retailer_name}?</p>
 
                                 <div className="flex justify-center gap-2 mb-6">
                                     {[1, 2, 3, 4, 5].map((star) => (
@@ -658,19 +696,20 @@ function OrderDetails() {
                                             key={star}
                                             type="button"
                                             onClick={() => setRating(star)}
-                                            className="focus:outline-none transition-transform active:scale-95"
+                                            aria-label={`${star} star${star > 1 ? 's' : ''}`}
+                                            className="rounded-lg p-1 transition-transform hover:scale-110 active:scale-95"
                                         >
                                             <Star
-                                                size={32}
-                                                className={rating >= star ? 'text-yellow-400' : 'text-gray-300'}
-                                                fill={rating >= star ? '#facc15' : 'none'}
+                                                size={34}
+                                                className={rating >= star ? 'text-amber-400' : 'text-[var(--line-strong)]'}
+                                                fill={rating >= star ? '#fbbf24' : 'none'}
                                             />
                                         </button>
                                     ))}
                                 </div>
 
                                 <textarea
-                                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none text-sm"
+                                    className="w-full resize-none rounded-xl border border-[var(--line-strong)] p-3 text-sm outline-none focus:border-[var(--brand-500)] focus:ring-4 focus:ring-[var(--brand-100)]"
                                     placeholder="Add a comment (optional)..."
                                     rows={3}
                                     value={comment}
@@ -678,7 +717,7 @@ function OrderDetails() {
                                 />
                             </div>
 
-                            <div className="p-4 border-t bg-gray-50 flex gap-3">
+                            <div className="flex gap-3 border-t border-[var(--line)] px-5 py-4">
                                 <Button
                                     variant="outline"
                                     className="flex-1"

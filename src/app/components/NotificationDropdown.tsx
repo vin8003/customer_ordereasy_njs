@@ -18,7 +18,10 @@ export default function NotificationDropdown({ isOpen, onClose }: NotificationDr
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+            const target = event.target as Element | null;
+            // The bell toggles the dropdown itself; closing here too would make it reopen on the same tap.
+            if (target?.closest?.('[data-notification-trigger]')) return;
+            if (dropdownRef.current && !dropdownRef.current.contains(target as Node)) {
                 onClose();
             }
         };
@@ -35,23 +38,23 @@ export default function NotificationDropdown({ isOpen, onClose }: NotificationDr
 
     const getIcon = (notification: any) => {
         if (notification.title.toLowerCase().includes('message')) {
-            return <MessageCircle size={18} className="text-blue-500" />;
+            return <MessageCircle size={17} className="text-[var(--fresh-700)]" />;
         }
 
         switch (notification.notification_type) {
-            case 'order_update': return <ShoppingBag size={18} className="text-blue-500" />;
-            case 'promotion': return <Tag size={18} className="text-green-500" />;
-            case 'reminder': return <AlertCircle size={18} className="text-orange-500" />;
-            default: return <Info size={18} className="text-gray-500" />;
+            case 'order_update': return <ShoppingBag size={17} className="text-[var(--brand-600)]" />;
+            case 'promotion': return <Tag size={17} className="text-[var(--fresh-700)]" />;
+            case 'reminder': return <AlertCircle size={17} className="text-[var(--amber-700)]" />;
+            default: return <Info size={17} className="text-[var(--ink-3)]" />;
         }
     };
 
     return (
-        <div className={styles.dropdown} ref={dropdownRef}>
+        <div className={styles.dropdown} ref={dropdownRef} role="dialog" aria-label="Notifications">
             <div className={styles.header}>
                 <h3 className={styles.title}>Notifications</h3>
                 {unreadCount > 0 && (
-                    <button onClick={markAllAsRead} className={styles.markAllBtn}>
+                    <button type="button" onClick={markAllAsRead} className={styles.markAllBtn}>
                         Mark all as read
                     </button>
                 )}
@@ -62,12 +65,12 @@ export default function NotificationDropdown({ isOpen, onClose }: NotificationDr
                     <div className={styles.emptyState}>Loading...</div>
                 ) : error ? (
                     <div className={styles.emptyState}>
-                        <AlertCircle size={32} className="text-red-500 mb-2" />
-                        <p className="text-red-500 text-sm text-center px-4">{error}</p>
+                        <AlertCircle size={28} className="mb-2 text-[var(--rose-600)]" />
+                        <p className="px-4 text-center text-sm text-[var(--rose-600)]">{error}</p>
                     </div>
                 ) : notifications.length === 0 ? (
                     <div className={styles.emptyState}>
-                        <Bell size={32} className="text-gray-300 mb-2" />
+                        <Bell size={28} className="mb-2 text-[var(--ink-4)]" />
                         <p>No notifications yet</p>
                     </div>
                 ) : (
