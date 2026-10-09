@@ -1,0 +1,8 @@
+{
+  "minVersionCode": 11,
+  "latestVersionName": "1.1.0",
+  "forceUpdate": true,
+  "title": "Update Available",
+  "message": "A new version of Order Easy is available with new features and important fixes. Please update to continue.",
+  "playStoreUrl": "market://details?id=win.ordereasy.customer"
+}

@@ -5,6 +5,7 @@ import BottomNav from "@/app/components/BottomNav";
 import { Toaster } from "@/components/ui/sonner";
 import NotificationWrapper from "@/app/components/NotificationWrapper";
 import NativeBackButton from "@/app/components/NativeBackButton";
+import UpdateModal from "@/app/components/UpdateModal";
 import { CartProvider } from "@/context/CartContext";
 import { NotificationProvider } from "@/context/NotificationContext";
 
@@ -49,6 +50,7 @@ export default function RootLayout({
         <CartProvider>
           <NotificationProvider>
             <Toaster />
+            <UpdateModal />
             <NotificationWrapper>
               <NativeBackButton />
               {children}
