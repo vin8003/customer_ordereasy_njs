@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppVersionCheck } from '@/hooks/useAppVersionCheck';
 import { Button } from '@/components/ui/button';
 
@@ -11,18 +11,26 @@ export default function UpdateModal() {
     const config = useAppVersionCheck();
     const [dismissed, setDismissed] = useState(false);
 
-    if (!config || dismissed) return null;
+    const force = !!config && config.forceUpdate === true && !dismissed;
 
-    const force = config.forceUpdate === true;
+    // Lets the native back-button handler know it must not navigate behind a forced modal.
+    useEffect(() => {
+        if (!force) return;
+        document.body.dataset.updateRequired = 'true';
+        return () => {
+            delete document.body.dataset.updateRequired;
+        };
+    }, [force]);
+
+    if (!config || dismissed) return null;
 
     const openStore = () => {
         const market = config.playStoreUrl || PLAY_STORE_MARKET_URL;
-        // market:// fails silently without the Play Store app; fall back to the web URL.
-        const timer = window.setTimeout(() => {
-            window.location.href = PLAY_STORE_WEB_URL;
+        // market:// fails silently without the Play Store app; if the page is still
+        // visible shortly after, fall back to the web URL.
+        window.setTimeout(() => {
+            if (!document.hidden) window.location.href = PLAY_STORE_WEB_URL;
         }, 800);
-        const cancel = () => window.clearTimeout(timer);
-        document.addEventListener('visibilitychange', cancel, { once: true });
         window.location.href = market;
     };
 
