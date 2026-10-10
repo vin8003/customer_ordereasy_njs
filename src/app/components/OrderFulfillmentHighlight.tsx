@@ -9,6 +9,7 @@ import {
     formatPickupReadyMessage,
     hasDeliveryCourierHighlight,
     hasPickupCodeHighlight,
+    telHref,
 } from '@/lib/orderFulfillmentDisplay';
 
 type Variant = 'prominent' | 'compact';
@@ -32,18 +33,14 @@ export default function OrderFulfillmentHighlight({
     if (showPickup) {
         const readyMessage = formatPickupReadyMessage(order.status, order.pickup_ready_at);
         if (variant === 'compact') {
+            // The code itself is shown on the order detail only, not in the list.
             return (
                 <div
-                    className={`flex items-center justify-between gap-2 mt-2 p-2.5 bg-emerald-50 border-2 border-emerald-200 rounded-lg ${className}`}
+                    className={`flex items-center gap-2 mt-2 p-2.5 bg-emerald-50 border-2 border-emerald-200 rounded-lg ${className}`}
                 >
-                    <div className="flex items-center gap-2 min-w-0">
-                        <Package size={16} className="text-emerald-700 shrink-0" />
-                        <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-700">
-                            Pickup code
-                        </span>
-                    </div>
-                    <span className="font-black text-lg tracking-[0.2em] text-emerald-900 tabular-nums">
-                        {order.pickup_code}
+                    <Package size={16} className="text-emerald-700 shrink-0" />
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                        Pickup code ready. Open the order to see it.
                     </span>
                 </div>
             );
@@ -107,9 +104,9 @@ export default function OrderFulfillmentHighlight({
             {info.delivery_person_name && (
                 <p className="font-semibold text-gray-900">{info.delivery_person_name}</p>
             )}
-            {info.delivery_person_phone && (
+            {info.delivery_person_phone && telHref(info.delivery_person_phone) && (
                 <a
-                    href={`tel:${info.delivery_person_phone}`}
+                    href={telHref(info.delivery_person_phone) as string}
                     className="inline-flex items-center gap-1.5 text-sky-700 font-medium mt-1 hover:underline"
                 >
                     <Phone size={14} />

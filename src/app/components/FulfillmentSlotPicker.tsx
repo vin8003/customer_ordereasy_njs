@@ -18,6 +18,8 @@ interface FulfillmentSlotPickerProps {
     days?: number;
     /** Bump to force refetch (e.g. after overbook error). */
     refreshKey?: number;
+  /** Tells the page whether any slot is open, so checkout is not blocked when none exist. */
+  onLoaded?: (state: { openSlots: number; failed: boolean }) => void;
 }
 
 export default function FulfillmentSlotPicker({
@@ -27,6 +29,7 @@ export default function FulfillmentSlotPicker({
     onSelect,
     days = 7,
     refreshKey = 0,
+    onLoaded,
 }: FulfillmentSlotPickerProps) {
     const [slots, setSlots] = useState<FulfillmentSlot[]>([]);
     const [slotCapacity, setSlotCapacity] = useState<number | null>(null);
@@ -48,6 +51,7 @@ export default function FulfillmentSlotPicker({
                 );
                 if (cancelled) return;
                 setSlots(data.slots ?? []);
+                onLoaded?.({ openSlots: (data.slots ?? []).filter((slot: FulfillmentSlot) => slot.is_available).length, failed: false });
                 setSlotCapacity(data.slot_capacity ?? null);
                 setTimezone(data.timezone ?? 'Asia/Kolkata');
             } catch (e) {
@@ -55,6 +59,7 @@ export default function FulfillmentSlotPicker({
                 console.error(e);
                 setError('Could not load available time slots. Please try again.');
                 setSlots([]);
+                onLoaded?.({ openSlots: 0, failed: true });
             } finally {
                 if (!cancelled) setIsLoading(false);
             }

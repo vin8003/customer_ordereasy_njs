@@ -3,6 +3,9 @@
 import type { OrderDeliveryInfo } from '@/lib/fulfillmentSlots';
 // Relative .ts specifier so the node test runner resolves this the same way Next does.
 import { DELIVERY_FAILED_LABEL, isDeliveryFailureStatus } from './deliveryFailure.ts';
+import { isOrderOpenForFulfillment, telHref } from './fulfillmentVisibility.ts';
+
+export { isOrderOpenForFulfillment, telHref };
 
 export interface OrderFulfillmentHighlightFields {
     delivery_mode?: string;
@@ -165,11 +168,17 @@ export function formatDeliveryEta(iso?: string | null): string | null {
 }
 
 export function hasPickupCodeHighlight(order: OrderFulfillmentHighlightFields): boolean {
-    return order.delivery_mode === 'pickup' && Boolean(order.pickup_code);
+    return (
+        order.delivery_mode === 'pickup' &&
+        Boolean(order.pickup_code) &&
+        isOrderOpenForFulfillment(order.status)
+    );
 }
+
 
 export function hasDeliveryCourierHighlight(order: OrderFulfillmentHighlightFields): boolean {
     if (order.delivery_mode !== 'delivery' || !order.delivery_info) return false;
+    if (!isOrderOpenForFulfillment(order.status)) return false;
     const info = order.delivery_info;
     return Boolean(info.delivery_person_name || info.delivery_person_phone || info.estimated_delivery_time);
 }
