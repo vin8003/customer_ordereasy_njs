@@ -331,6 +331,22 @@
     text-overflow: ellipsis;
 }
 
+.suggestionBrand {
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+.suggestionUnit {
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 500;
+    line-height: 1.3;
+    margin: 2px 0 0;
+}
+
 .suggestionMeta {
     font-size: 12px;
     color: #64748b;
@@ -342,6 +358,14 @@
 .suggestionPrice {
     font-weight: 700;
     color: var(--primary-color);
+}
+
+.suggestionMrp {
+    font-size: 12px;
+    font-weight: 500;
+    color: #94a3b8;
+    text-decoration: line-through;
+    white-space: nowrap;
 }
 
 .noSuggestions {

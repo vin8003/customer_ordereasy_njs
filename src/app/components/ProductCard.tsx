@@ -5,6 +5,7 @@ import { ProductImage } from '@/app/components/ProductImage';
 import { WishlistIcon } from '@/app/components/WishlistIcon';
 import styles from './ProductCard.module.css';
 import AddToCartButton from '@/app/components/AddToCartButton';
+import { visibleProductBrandName } from '@/lib/productBrandName';
 
 interface Product {
     id: number;
@@ -13,6 +14,7 @@ interface Product {
     mrp: number;
     image: string;
     unit?: string;
+    brand_name?: string | null;
     active_offer_text?: string;
     track_inventory?: boolean;
     minimum_order_quantity?: number;
@@ -38,6 +40,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
     const price = Number(product.price);
     const mrp = Number(product.mrp);
+    const brandName = visibleProductBrandName(product);
     const discount = mrp > price
         ? Math.round(((mrp - price) / mrp) * 100)
         : 0;
@@ -75,6 +78,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 <div>
                     <div className={styles.unit}>{product.unit || 'Unit'}</div>
                     <h3 className={styles.title} title={product.name}>{product.name}</h3>
+                    {brandName ? <p className={styles.brandName}>{brandName}</p> : null}
                 </div>
 
                 <div className={styles.footer}>

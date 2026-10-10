@@ -72,6 +72,43 @@
     margin-bottom: 0.5rem;
 }
 
+.barcode {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #64748b;
+    /* Slate-500 muted */
+    line-height: 1.4;
+    margin: -0.25rem 0 0.75rem;
+    letter-spacing: 0.02em;
+.categoryName {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #64748b;
+    /* Slate-500 — muted; omit when helper returns null */
+    line-height: 1.4;
+    margin: -0.15rem 0 0.75rem;
+.tagChips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    list-style: none;
+    margin: -0.125rem 0 0.75rem;
+    padding: 0;
+}
+
+.tagChip {
+    display: inline-block;
+    background: #f1f5f9;
+    /* Slate-100 */
+    color: #475569;
+    /* Slate-600 muted */
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    line-height: 1.3;
+}
+
 .groupTag {
     display: inline-block;
     background: #f1f5f9;
@@ -141,6 +178,15 @@
     color: #475569;
     /* Slate-600 */
     line-height: 1.7;
+}
+
+.hsnCode {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #64748b;
+    /* Slate-500 muted */
+    line-height: 1.4;
+    margin: 0.75rem 0 0;
 }
 
 .moqBox {

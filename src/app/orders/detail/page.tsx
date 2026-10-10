@@ -16,6 +16,10 @@ import { getOrderStatusDisplay } from '@/lib/orderFulfillmentDisplay';
 import { isDeliveryFailure } from '@/lib/deliveryFailure';
 import { OrderStatusLogEntry } from '@/lib/orderStatusTimeline';
 import { getOrderFeeDisplayLines, type OptionalMoneyAmount } from '@/lib/orderFeeLines';
+import { getVisibleOrderNotes } from '@/lib/orderNotes';
+import { getVisibleLoyaltyPoints, type OptionalLoyaltyPoints } from '@/lib/orderLoyaltyPoints';
+import { getVisiblePointsEarned, type OptionalPointsEarned } from '@/lib/orderPointsEarned';
+import { getVisiblePickupCode } from '@/lib/orderPickupCode';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -40,6 +44,8 @@ interface OrderDetail {
     delivery_fee?: OptionalMoneyAmount;
     discount_amount?: OptionalMoneyAmount;
     discount_from_points: string;
+    loyalty_points?: OptionalLoyaltyPoints;
+    points_earned?: OptionalPointsEarned;
     total_amount: string;
     refund_amount?: string;
     net_amount?: string;
@@ -55,6 +61,7 @@ interface OrderDetail {
     status_logs?: OrderStatusLogEntry[] | null;
     delivery_info?: OrderDeliveryInfo | null;
     payment_mode: string;
+    notes?: string | null;
     special_instructions: string;
     delivery_address_text: string;
     items: OrderItem[];
@@ -286,6 +293,10 @@ function OrderDetails() {
 
     const deliveryFailed = isDeliveryFailure(order);
     const statusDisplay = getOrderStatusDisplay(order.status, order.delivery_mode, deliveryFailed);
+    const visibleNotes = getVisibleOrderNotes(order);
+    const visibleLoyaltyPoints = getVisibleLoyaltyPoints(order);
+    const visiblePointsEarned = getVisiblePointsEarned(order);
+    const visiblePickupCode = getVisiblePickupCode(order);
 
     return (
         <div className={styles.container}>
@@ -616,6 +627,18 @@ function OrderDetails() {
                                 <span className={styles.discount}>-₹{order.discount_from_points}</span>
                             </div>
                         )}
+                        {visibleLoyaltyPoints && (
+                            <div className={styles.mutedFeeRow}>
+                                <span>Loyalty Points</span>
+                                <span>{visibleLoyaltyPoints}</span>
+                            </div>
+                        )}
+                        {visiblePointsEarned && (
+                            <div className={styles.mutedFeeRow}>
+                                <span>Points Earned</span>
+                                <span>{visiblePointsEarned}</span>
+                            </div>
+                        )}
                         <div className={styles.totalRow}>
                             <span>{parseFloat(order.refund_amount || '0') > 0 ? 'Original Total' : 'Total Amount'}</span>
                             <span className={parseFloat(order.refund_amount || '0') > 0 ? 'line-through text-gray-400' : ''}>₹{order.total_amount}</span>
@@ -641,6 +664,11 @@ function OrderDetails() {
                         <div className="text-sm">
                             <span className="text-gray-500">Method:</span> <span className="font-medium capitalize">{order.delivery_mode}</span>
                         </div>
+                        {visiblePickupCode && (
+                            <div className="text-sm">
+                                <span className="text-gray-500">Pickup code:</span> <span className="font-medium">{visiblePickupCode}</span>
+                            </div>
+                        )}
                         <div className="text-sm">
                             <span className="text-gray-500">Payment:</span> <span className="font-medium uppercase">{order.payment_mode.replace(/_/g, ' ')}</span>
                         </div>
@@ -706,10 +734,10 @@ function OrderDetails() {
                     </section>
                 )}
 
-                {order.special_instructions && (
+                {(visibleNotes || order.special_instructions) && (
                     <section className={styles.section}>
                         <h3 className="font-bold mb-2 text-sm text-gray-500 uppercase">Notes</h3>
-                        <div className={styles.instructionsBox}>{order.special_instructions}</div>
+                        <div className={styles.instructionsBox}>{visibleNotes ?? order.special_instructions}</div>
                     </section>
                 )}
 

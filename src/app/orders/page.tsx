@@ -9,12 +9,15 @@ import { EmptyState } from '@/app/components/EmptyState';
 import OrderFulfillmentHighlight from '@/app/components/OrderFulfillmentHighlight';
 import { formatFulfillmentWindow, OrderDeliveryInfo } from '@/lib/fulfillmentSlots';
 import { getOrderStatusDisplay, needsFulfillmentDetailEnrichment } from '@/lib/orderFulfillmentDisplay';
+import { getOrderListMoneyLines } from '@/lib/orderListMoneyLines';
 import styles from './Orders.module.css';
 
 interface Order {
     id: number;
     order_number: string;
     total_amount: string;
+    delivery_fee?: string | number | null;
+    discount_amount?: string | number | null;
     status: string;
     created_at: string;
     delivery_mode?: string;
@@ -181,6 +184,11 @@ export default function OrdersPage() {
                                         <span className="text-[10px] line-through text-gray-400">₹{order.total_amount}</span>
                                     )}
                                     <p className="font-bold text-primary">₹{order.is_returned ? order.net_amount : order.total_amount}</p>
+                                    {getOrderListMoneyLines(order).map((line) => (
+                                        <p key={line.key} className="text-[10px] text-gray-400 leading-tight">
+                                            {line.label} {line.amountDisplay}
+                                        </p>
+                                    ))}
                                 </div>
                             </div>
                         </div>
