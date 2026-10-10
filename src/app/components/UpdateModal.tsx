@@ -6,12 +6,45 @@ import { Button } from '@/components/ui/button';
 
 const PLAY_STORE_WEB_URL = 'https://play.google.com/store/apps/details?id=win.ordereasy.customer';
 const PLAY_STORE_MARKET_URL = 'market://details?id=win.ordereasy.customer';
+const DISMISS_KEY = 'update_prompt_dismissed_build';
+
+// version.json is remote config, so only follow store links that point at this app.
+export function safeStoreUrl(raw: unknown): string {
+    if (typeof raw !== 'string') return PLAY_STORE_MARKET_URL;
+    const value = raw.trim();
+    const ok =
+        value.startsWith('market://details?id=win.ordereasy.customer') ||
+        value.startsWith('https://play.google.com/store/apps/details?id=win.ordereasy.customer');
+    return ok ? value : PLAY_STORE_MARKET_URL;
+}
+
+function readDismissedBuild(): number {
+    try {
+        return Number(localStorage.getItem(DISMISS_KEY) || 0);
+    } catch {
+        return 0;
+    }
+}
+
+function writeDismissedBuild(build: number) {
+    try {
+        localStorage.setItem(DISMISS_KEY, String(build));
+    } catch {
+        // storage can be unavailable; the prompt then simply shows again next launch
+    }
+}
 
 export default function UpdateModal() {
     const config = useAppVersionCheck();
     const [dismissed, setDismissed] = useState(false);
+    const dismissPrompt = () => {
+        if (config) writeDismissedBuild(Number(config.minVersionCode));
+        setDismissed(true);
+    };
 
     const force = !!config && config.forceUpdate === true && !dismissed;
+    const alreadyDismissed =
+        !!config && config.forceUpdate !== true && readDismissedBuild() >= Number(config.minVersionCode);
 
     // Lets the native back-button handler know it must not navigate behind a forced modal.
     useEffect(() => {
@@ -22,10 +55,10 @@ export default function UpdateModal() {
         };
     }, [force]);
 
-    if (!config || dismissed) return null;
+    if (!config || dismissed || alreadyDismissed) return null;
 
     const openStore = () => {
-        const market = config.playStoreUrl || PLAY_STORE_MARKET_URL;
+        const market = safeStoreUrl(config.playStoreUrl);
         // market:// fails silently without the Play Store app; if the page is still
         // visible shortly after, fall back to the web URL.
         window.setTimeout(() => {
@@ -40,7 +73,7 @@ export default function UpdateModal() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="update-modal-title"
-            onClick={force ? undefined : () => setDismissed(true)}
+            onClick={force ? undefined : dismissPrompt}
         >
             <div
                 className="relative w-full max-w-sm rounded-2xl bg-background p-6 text-center shadow-xl"
@@ -51,7 +84,7 @@ export default function UpdateModal() {
                         type="button"
                         aria-label="Close"
                         className="absolute right-3 top-3 h-8 w-8 rounded-full text-xl leading-none text-muted-foreground"
-                        onClick={() => setDismissed(true)}
+                        onClick={dismissPrompt}
                     >
                         ×
                     </button>
