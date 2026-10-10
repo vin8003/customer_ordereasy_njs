@@ -5,6 +5,8 @@ export type OptionalMoneyAmount = string | number | null | undefined;
 export type OrderFeeLineKey = 'delivery_fee' | 'discount_amount';
 
 export interface VisibleOrderFeeLine {
+    /** True when the fee is zero on a delivery order and should read "Free". */
+    isFree?: boolean;
     key: OrderFeeLineKey;
     label: string;
     /** Trimmed API amount; no currency prefix and no invented sign. */
@@ -68,6 +70,37 @@ export function getVisibleOrderFeeLines(
             label: spec.label,
             amount,
             isDiscount: spec.isDiscount,
+        });
+    }
+    return lines;
+}
+
+function formatRupees(raw: string): string {
+    const n = Number(raw);
+    return Number.isFinite(n) ? n.toFixed(2) : raw;
+}
+
+/**
+ * Display rows for the order detail: amounts to 2 decimals, and a delivery order with a
+ * zero delivery fee shows "Free" instead of hiding the row.
+ */
+export function getOrderFeeDisplayLines(
+    fees: OrderDetailOptionalFees,
+    options: { deliveryMode?: string | null } = {}
+): VisibleOrderFeeLine[] {
+    const lines = getVisibleOrderFeeLines(fees).map((line) => ({
+        ...line,
+        amount: formatRupees(line.amount),
+    }));
+    const delivery = parseOptionalMoneyAmount(fees.delivery_fee);
+    const isDeliveryOrder = String(options.deliveryMode ?? '').toLowerCase() === 'delivery';
+    if (isDeliveryOrder && delivery === 0) {
+        lines.unshift({
+            key: 'delivery_fee',
+            label: 'Delivery Fee',
+            amount: 'Free',
+            isDiscount: false,
+            isFree: true,
         });
     }
     return lines;
