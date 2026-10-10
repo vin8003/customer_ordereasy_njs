@@ -74,6 +74,8 @@ export default function CheckoutPage() {
 
     // Fulfillment slot (OE-240)
     const [selectedSlot, setSelectedSlot] = useState<FulfillmentSlot | null>(null);
+    // null = unknown yet. A slot is only required when the shop actually has open slots.
+    const [openSlotCount, setOpenSlotCount] = useState<number | null>(null);
     const [slotRefreshKey, setSlotRefreshKey] = useState(0);
     const [retailerId, setRetailerId] = useState<string | null>(null);
 
@@ -137,7 +139,8 @@ export default function CheckoutPage() {
 
     useEffect(() => {
         setSelectedSlot(null);
-    }, [deliveryMode]);
+        setOpenSlotCount(null);
+    }, [deliveryMode, retailerId]);
 
     const loadData = async () => {
         await Promise.all([
@@ -316,7 +319,7 @@ export default function CheckoutPage() {
             return;
         }
 
-        if (!selectedSlot) {
+        if (!selectedSlot && openSlotCount !== null && openSlotCount > 0) {
             toast.error("Please select a pickup/delivery time slot.");
             return;
         }
@@ -336,7 +339,7 @@ export default function CheckoutPage() {
                 payment_mode: paymentMethod === 'cod' ? 'cash' : paymentMethod,
                 special_instructions: specialInstructions,
                 use_reward_points: useRewardPoints,
-                fulfillment_slot_start: selectedSlot.slot_start,
+                ...(selectedSlot ? { fulfillment_slot_start: selectedSlot.slot_start } : {}),
             });
 
             // Navigate to Order Details
@@ -434,6 +437,7 @@ export default function CheckoutPage() {
                             onSelect={setSelectedSlot}
                             days={7}
                             refreshKey={slotRefreshKey}
+                            onLoaded={({ openSlots }) => setOpenSlotCount(openSlots)}
                         />
                         {selectedSlot && (
                             <p className="text-sm text-primary font-medium mt-3">

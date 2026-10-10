@@ -85,3 +85,20 @@ describe('localDummyCheckoutLines', () => {
         assert.equal(visibleCheckoutLineBrandName(lines[2]), null);
     });
 });
+
+describe('isLocalDummyCheckoutPreview in production', () => {
+    it('is never active when NODE_ENV is production', async () => {
+        const { isLocalDummyCheckoutPreview } = await import('./checkoutLineBrandName.ts');
+        const previous = process.env.NODE_ENV;
+        try {
+            (process.env as Record<string, string>).NODE_ENV = 'production';
+            assert.equal(isLocalDummyCheckoutPreview('localhost', '?dummyBrand=1'), false);
+            assert.equal(isLocalDummyCheckoutPreview('127.0.0.1', '?dummyBrand=1'), false);
+            (process.env as Record<string, string>).NODE_ENV = 'development';
+            assert.equal(isLocalDummyCheckoutPreview('localhost', '?dummyBrand=1'), true);
+            assert.equal(isLocalDummyCheckoutPreview('app.example.com', '?dummyBrand=1'), false);
+        } finally {
+            (process.env as Record<string, string>).NODE_ENV = previous ?? 'test';
+        }
+    });
+});

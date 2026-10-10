@@ -24,6 +24,9 @@ export function visibleCheckoutLineBrandName(
 
 /** Local dummy QA only. Never true for `*.ordereasy.win`. */
 export function isLocalDummyCheckoutPreview(hostname: string, search: string): boolean {
+    // Never active in a production build: the preview skips phone verification and uses
+    // fake cart lines, and native shells can serve the app from a localhost origin.
+    if (process.env.NODE_ENV === 'production') return false;
     if (hostname !== '127.0.0.1' && hostname !== 'localhost') return false;
     const query = search.startsWith('?') ? search.slice(1) : search;
     return new URLSearchParams(query).get('dummyBrand') === '1';
