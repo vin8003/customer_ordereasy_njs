@@ -1,12 +1,25 @@
 /** Customer order-detail status timeline (OE-280). Uses fields already on the detail payload. */
 
-export type OrderTimelineStepKey = 'placed' | 'packed' | 'out_for_delivery' | 'delivered';
+// Relative .ts specifier so the node test runner resolves this the same way Next does.
+import {
+    DELIVERY_FAILED_LABEL,
+    isDeliveryFailure,
+    isDeliveryFailureStatus,
+} from './deliveryFailure.ts';
+
+export type OrderTimelineStepKey =
+    | 'placed'
+    | 'packed'
+    | 'out_for_delivery'
+    | 'delivered'
+    | 'delivery_failed';
 
 export interface OrderTimelineStep {
     key: OrderTimelineStepKey;
     label: string;
     reached: boolean;
     current: boolean;
+    failed: boolean;
     at: string | null;
 }
 
@@ -27,7 +40,13 @@ export interface OrderStatusTimelineInput {
     packed_at?: string | null;
     out_for_delivery_at?: string | null;
     delivered_at?: string | null;
-    delivery_info?: { actual_delivery_time?: string | null } | null;
+    cancelled_at?: string | null;
+    cancelled_by?: string | null;
+    cancellation_reason?: string | null;
+    delivery_info?: {
+        actual_delivery_time?: string | null;
+        delivery_status?: string | null;
+    } | null;
     status_logs?: OrderStatusLogEntry[] | null;
 }
 
@@ -42,6 +61,14 @@ const PICKUP_STEPS: { key: OrderTimelineStepKey; label: string }[] = [
     { key: 'placed', label: 'Placed' },
     { key: 'packed', label: 'Ready for pickup' },
     { key: 'delivered', label: 'Collected' },
+];
+
+/** Same delivery path, with the terminal step swapped for the failed close-out (OE-281). */
+const FAILED_DELIVERY_STEPS: { key: OrderTimelineStepKey; label: string }[] = [
+    { key: 'placed', label: 'Placed' },
+    { key: 'packed', label: 'Packed' },
+    { key: 'out_for_delivery', label: 'Out for delivery' },
+    { key: 'delivery_failed', label: DELIVERY_FAILED_LABEL },
 ];
 
 function isPickup(deliveryMode?: string | null): boolean {
@@ -83,9 +110,15 @@ function timestampsFromLogs(logs: OrderStatusLogEntry[] | null | undefined, pick
     const out: Partial<Record<OrderTimelineStepKey, string>> = {};
     if (!logs) return out;
     for (const entry of logs) {
-        const key = statusToStepKey(logStatus(entry), pickup);
+        const status = logStatus(entry);
         const at = logTimestamp(entry);
-        if (key && at && !out[key]) out[key] = at;
+        if (!at) continue;
+        // 'cancelled' maps to no lifecycle step, but it is when the close-out happened.
+        if ((status === 'cancelled' || isDeliveryFailureStatus(status)) && !out.delivery_failed) {
+            out.delivery_failed = at;
+        }
+        const key = statusToStepKey(status, pickup);
+        if (key && !out[key]) out[key] = at;
     }
     return out;
 }
@@ -125,14 +158,20 @@ function timestampForStep(
     if (key === 'placed') return order.created_at || fromLogs.placed || null;
     if (key === 'packed') return order.pickup_ready_at || order.packed_at || fromLogs.packed || null;
     if (key === 'out_for_delivery') return order.out_for_delivery_at || fromLogs.out_for_delivery || null;
+    if (key === 'delivery_failed') return order.cancelled_at || fromLogs.delivery_failed || null;
     return order.delivered_at || order.delivery_info?.actual_delivery_time || fromLogs.delivered || null;
 }
 
 export function buildOrderStatusTimeline(order: OrderStatusTimelineInput): OrderTimelineStep[] {
     const pickup = isPickup(order.delivery_mode);
-    const defs = pickup ? PICKUP_STEPS : DELIVERY_STEPS;
+    const failed = isDeliveryFailure(order);
+    const defs = pickup ? PICKUP_STEPS : failed ? FAILED_DELIVERY_STEPS : DELIVERY_STEPS;
     const fromLogs = timestampsFromLogs(order.status_logs, pickup);
-    const reachedIndex = furthestReachedIndex(order.status, defs, pickup, order.status_logs);
+    // A delivery can only fail once the order has been placed, packed and sent
+    // out, so the earlier steps stay complete and only the terminal step fails.
+    const reachedIndex = failed
+        ? defs.length - 1
+        : furthestReachedIndex(order.status, defs, pickup, order.status_logs);
     const cancelled = normalizeStatus(order.status) === 'cancelled';
 
     return defs.map((def, index) => {
@@ -141,7 +180,8 @@ export function buildOrderStatusTimeline(order: OrderStatusTimelineInput): Order
             key: def.key,
             label: def.label,
             reached,
-            current: !cancelled && index === reachedIndex,
+            current: !cancelled && !failed && index === reachedIndex,
+            failed: def.key === 'delivery_failed',
             at: reached ? timestampForStep(def.key, order, fromLogs) : null,
         };
     });

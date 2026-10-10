@@ -13,6 +13,7 @@ import OrderFulfillmentHighlight from '@/app/components/OrderFulfillmentHighligh
 import OrderStatusTimeline from '@/app/components/OrderStatusTimeline';
 import { FulfillmentSlot, OrderDeliveryInfo, RESCHEDULABLE_ORDER_STATUSES, formatFulfillmentWindow } from '@/lib/fulfillmentSlots';
 import { getOrderStatusDisplay } from '@/lib/orderFulfillmentDisplay';
+import { isDeliveryFailure } from '@/lib/deliveryFailure';
 import { OrderStatusLogEntry } from '@/lib/orderStatusTimeline';
 import styles from './OrderDetails.module.css';
 
@@ -63,6 +64,8 @@ interface OrderDetail {
     estimated_ready_time?: string;
     expected_processing_start?: string;
     cancelled_by?: string;
+    cancelled_at?: string | null;
+    cancellation_reason?: string | null;
     retailer_upi_id?: string;
     retailer_upi_qr_code?: string;
     payment_reference_id?: string;
@@ -255,7 +258,8 @@ function OrderDetails() {
         }
     };
 
-    const getStatusIcon = (status: string, deliveryMode?: string) => {
+    const getStatusIcon = (status: string, deliveryMode?: string, deliveryFailed = false) => {
+        if (deliveryFailed) return <XCircle size={24} />;
         switch (status.toLowerCase()) {
             case 'pending':
             case 'waiting_for_customer_approval':
@@ -279,7 +283,8 @@ function OrderDetails() {
     if (isLoading) return <LoadingScreen message="Loading..." />;
     if (!order) return <div className="p-20 text-center">Order not found.</div>;
 
-    const statusDisplay = getOrderStatusDisplay(order.status, order.delivery_mode);
+    const deliveryFailed = isDeliveryFailure(order);
+    const statusDisplay = getOrderStatusDisplay(order.status, order.delivery_mode, deliveryFailed);
 
     return (
         <div className={styles.container}>
@@ -315,12 +320,20 @@ function OrderDetails() {
 
             <main className={styles.main}>
                 <div className={`${styles.statusBanner} ${statusDisplay.bannerClass}`}>
-                    {getStatusIcon(order.status, order.delivery_mode)}
+                    {getStatusIcon(order.status, order.delivery_mode, deliveryFailed)}
                     <div className={styles.statusLabel}>{statusDisplay.label}</div>
-                    {order.status.toLowerCase() === 'cancelled' && order.cancelled_by && (
-                        <div className="text-sm font-bold opacity-90 mt-1 uppercase">
-                            By {order.cancelled_by}
-                        </div>
+                    {deliveryFailed ? (
+                        order.cancellation_reason && (
+                            <div className="text-sm font-semibold opacity-90 mt-1">
+                                {order.cancellation_reason}
+                            </div>
+                        )
+                    ) : (
+                        order.status.toLowerCase() === 'cancelled' && order.cancelled_by && (
+                            <div className="text-sm font-bold opacity-90 mt-1 uppercase">
+                                By {order.cancelled_by}
+                            </div>
+                        )
                     )}
                     <div className={styles.statusValue}>#{order.order_number}</div>
                     <div className={styles.orderInfo}>
@@ -336,6 +349,9 @@ function OrderDetails() {
                     packed_at={order.packed_at}
                     out_for_delivery_at={order.out_for_delivery_at}
                     delivered_at={order.delivered_at}
+                    cancelled_at={order.cancelled_at}
+                    cancelled_by={order.cancelled_by}
+                    cancellation_reason={order.cancellation_reason}
                     delivery_info={order.delivery_info}
                     status_logs={order.status_logs}
                 />
