@@ -141,12 +141,30 @@ export function formatDeliveryEta(iso?: string | null): string | null {
     return new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
 }
 
+const CLOSED_ORDER_STATUSES = new Set(['delivered', 'cancelled', 'returned']);
+
+/** A pickup code or courier contact is only useful while the order is still open. */
+export function isOrderOpenForFulfillment(status: string | undefined): boolean {
+    return !CLOSED_ORDER_STATUSES.has(String(status ?? '').toLowerCase());
+}
+
 export function hasPickupCodeHighlight(order: OrderFulfillmentHighlightFields): boolean {
-    return order.delivery_mode === 'pickup' && Boolean(order.pickup_code);
+    return (
+        order.delivery_mode === 'pickup' &&
+        Boolean(order.pickup_code) &&
+        isOrderOpenForFulfillment(order.status)
+    );
+}
+
+/** Keep digits and a leading + only, so the tel: link cannot carry extra parameters. */
+export function telHref(phone: string | null | undefined): string | null {
+    const cleaned = String(phone ?? '').replace(/[^\d+]/g, '').replace(/(?!^)\+/g, '');
+    return cleaned.replace(/\D/g, '').length >= 7 ? `tel:${cleaned}` : null;
 }
 
 export function hasDeliveryCourierHighlight(order: OrderFulfillmentHighlightFields): boolean {
     if (order.delivery_mode !== 'delivery' || !order.delivery_info) return false;
+    if (!isOrderOpenForFulfillment(order.status)) return false;
     const info = order.delivery_info;
     return Boolean(info.delivery_person_name || info.delivery_person_phone || info.estimated_delivery_time);
 }
