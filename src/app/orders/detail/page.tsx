@@ -10,8 +10,10 @@ import { Button } from '@/app/components/ui/Button';
 import { ProductImage } from '@/app/components/ProductImage';
 import FulfillmentSlotPicker from '@/app/components/FulfillmentSlotPicker';
 import OrderFulfillmentHighlight from '@/app/components/OrderFulfillmentHighlight';
+import OrderStatusTimeline from '@/app/components/OrderStatusTimeline';
 import { FulfillmentSlot, OrderDeliveryInfo, RESCHEDULABLE_ORDER_STATUSES, formatFulfillmentWindow } from '@/lib/fulfillmentSlots';
 import { getOrderStatusDisplay } from '@/lib/orderFulfillmentDisplay';
+import { OrderStatusLogEntry } from '@/lib/orderStatusTimeline';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -45,6 +47,10 @@ interface OrderDetail {
     fulfillment_slot_end?: string | null;
     pickup_code?: string | null;
     pickup_ready_at?: string | null;
+    packed_at?: string | null;
+    out_for_delivery_at?: string | null;
+    delivered_at?: string | null;
+    status_logs?: OrderStatusLogEntry[] | null;
     delivery_info?: OrderDeliveryInfo | null;
     payment_mode: string;
     special_instructions: string;
@@ -321,6 +327,18 @@ function OrderDetails() {
                         <span>{new Date(order.created_at).toLocaleString()}</span>
                     </div>
                 </div>
+
+                <OrderStatusTimeline
+                    status={order.status}
+                    delivery_mode={order.delivery_mode}
+                    created_at={order.created_at}
+                    pickup_ready_at={order.pickup_ready_at}
+                    packed_at={order.packed_at}
+                    out_for_delivery_at={order.out_for_delivery_at}
+                    delivered_at={order.delivered_at}
+                    delivery_info={order.delivery_info}
+                    status_logs={order.status_logs}
+                />
 
                 {/* UPI Payment Section */}
                 {order.payment_mode === 'upi' && order.status !== 'cancelled' && (

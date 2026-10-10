@@ -2,11 +2,15 @@
   "name": "customer_njs",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.6.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "node --test --experimental-strip-types \"src/**/*.test.ts\"",
     "postinstall": "python -c \"import os; p='node_modules/@codetrix-studio/capacitor-google-auth/android/build.gradle'; (lambda c: open(p, 'w').write(c.replace('jcenter()', 'mavenCentral()').replace('proguard-android.txt', 'proguard-android-optimize.txt')))(open(p).read()) if os.path.exists(p) else None\""
   },
   "dependencies": {
