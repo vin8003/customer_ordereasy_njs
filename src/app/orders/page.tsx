@@ -6,7 +6,9 @@ import { ArrowLeft, Package, ChevronRight, Clock, Star } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { EmptyState } from '@/app/components/EmptyState';
-import { formatFulfillmentWindow } from '@/lib/fulfillmentSlots';
+import OrderFulfillmentHighlight from '@/app/components/OrderFulfillmentHighlight';
+import { formatFulfillmentWindow, OrderDeliveryInfo } from '@/lib/fulfillmentSlots';
+import { getOrderStatusDisplay, needsFulfillmentDetailEnrichment } from '@/lib/orderFulfillmentDisplay';
 import styles from './Orders.module.css';
 
 interface Order {
@@ -19,6 +21,9 @@ interface Order {
     retailer_name?: string;
     fulfillment_slot_start?: string | null;
     fulfillment_slot_end?: string | null;
+    pickup_code?: string | null;
+    pickup_ready_at?: string | null;
+    delivery_info?: OrderDeliveryInfo | null;
     feedback?: {
         overall_rating: number;
         comment: string;
@@ -30,6 +35,33 @@ interface Order {
 }
 
 import { useAppNavigation } from '@/hooks/useAppNavigation';
+
+async function enrichOrdersWithFulfillmentDetail(orders: Order[]): Promise<Order[]> {
+    const targets = orders.filter(needsFulfillmentDetailEnrichment);
+    if (targets.length === 0) return orders;
+
+    const details = await Promise.all(
+        targets.map(async (order) => {
+            try {
+                const detail = await apiService.getOrderDetail(order.id);
+                return {
+                    id: order.id,
+                    pickup_code: detail.pickup_code as string | null | undefined,
+                    pickup_ready_at: detail.pickup_ready_at as string | null | undefined,
+                    delivery_info: detail.delivery_info as OrderDeliveryInfo | null | undefined,
+                };
+            } catch {
+                return { id: order.id };
+            }
+        })
+    );
+
+    const byId = new Map(details.map((d) => [d.id, d]));
+    return orders.map((order) => {
+        const extra = byId.get(order.id);
+        return extra ? { ...order, ...extra } : order;
+    });
+}
 
 export default function OrdersPage() {
     const router = useRouter();
@@ -53,7 +85,9 @@ export default function OrdersPage() {
         setIsLoading(force ? false : true); // Show loading only for initial load, not for foreground refreshes
         try {
             const data = await apiService.getOrders(force);
-            setOrders(Array.isArray(data) ? data : data.results || []);
+            const list = Array.isArray(data) ? data : data.results || [];
+            const enriched = await enrichOrdersWithFulfillmentDetail(list);
+            setOrders(enriched);
         } catch (error) {
             console.error(error);
         } finally {
@@ -61,13 +95,8 @@ export default function OrdersPage() {
         }
     };
 
-    const getStatusColor = (status: string) => {
-        switch (status.toLowerCase()) {
-            case 'delivered': return 'text-green-600 bg-green-50';
-            case 'cancelled': return 'text-red-600 bg-red-50';
-            case 'pending': return 'text-yellow-600 bg-yellow-50';
-            default: return 'text-blue-600 bg-blue-50';
-        }
+    const getStatusBadgeClass = (status: string, deliveryMode?: string) => {
+        return getOrderStatusDisplay(status, deliveryMode).badgeClass;
     };
 
     return (
@@ -117,8 +146,10 @@ export default function OrdersPage() {
                                 )}
                             </div>
                             <div className="flex flex-col items-end gap-1">
-                                <span className={`px-2 py-1 rounded-full text-xs font-bold ${getStatusColor(order.status)} uppercase`}>
-                                    {order.status}
+                                <span
+                                    className={`px-2 py-1 rounded-full text-xs font-bold border uppercase ${getStatusBadgeClass(order.status, order.delivery_mode)}`}
+                                >
+                                    {getOrderStatusDisplay(order.status, order.delivery_mode).label}
                                 </span>
                                 {order.feedback && (
                                     <div className="flex items-center gap-1 bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded-full text-xs font-bold border border-yellow-200">
@@ -128,6 +159,15 @@ export default function OrdersPage() {
                                 )}
                             </div>
                         </div>
+
+                        <OrderFulfillmentHighlight
+                            delivery_mode={order.delivery_mode}
+                            status={order.status}
+                            pickup_code={order.pickup_code}
+                            pickup_ready_at={order.pickup_ready_at}
+                            delivery_info={order.delivery_info}
+                            variant="compact"
+                        />
 
                         <div className="mt-3 flex justify-between items-end">
                             <div>

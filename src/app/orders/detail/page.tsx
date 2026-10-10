@@ -4,12 +4,14 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, MapPin, Phone, Package, Clock, CheckCircle, XCircle, AlertCircle, Star, MessageCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, Package, Clock, CheckCircle, XCircle, AlertCircle, Star, MessageCircle, Loader2, Truck } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { ProductImage } from '@/app/components/ProductImage';
 import FulfillmentSlotPicker from '@/app/components/FulfillmentSlotPicker';
+import OrderFulfillmentHighlight from '@/app/components/OrderFulfillmentHighlight';
 import { FulfillmentSlot, OrderDeliveryInfo, RESCHEDULABLE_ORDER_STATUSES, formatFulfillmentWindow } from '@/lib/fulfillmentSlots';
+import { getOrderStatusDisplay } from '@/lib/orderFulfillmentDisplay';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -247,21 +249,31 @@ function OrderDetails() {
         }
     };
 
-    const getStatusInfo = (status: string) => {
+    const getStatusIcon = (status: string, deliveryMode?: string) => {
         switch (status.toLowerCase()) {
-            case 'pending': return { color: 'bg-yellow-100 text-yellow-700', icon: <Clock size={24} /> };
-            case 'waiting_for_customer_approval': return { color: 'bg-orange-100 text-orange-700', icon: <AlertCircle size={24} /> };
-            case 'confirmed': return { color: 'bg-blue-100 text-blue-700', icon: <Package size={24} /> };
-            case 'delivered': return { color: 'bg-green-100 text-green-700', icon: <CheckCircle size={24} /> };
-            case 'cancelled': return { color: 'bg-red-100 text-red-700', icon: <XCircle size={24} /> };
-            default: return { color: 'bg-gray-100 text-gray-700', icon: <Package size={24} /> };
+            case 'pending':
+            case 'waiting_for_customer_approval':
+                return <Clock size={24} />;
+            case 'packed':
+                return deliveryMode === 'pickup' ? <Package size={24} /> : <Package size={24} />;
+            case 'out_for_delivery':
+                return <Truck size={24} />;
+            case 'delivered':
+                return <CheckCircle size={24} />;
+            case 'cancelled':
+                return <XCircle size={24} />;
+            case 'confirmed':
+            case 'processing':
+                return <Package size={24} />;
+            default:
+                return <AlertCircle size={24} />;
         }
     };
 
     if (isLoading) return <LoadingScreen message="Loading..." />;
     if (!order) return <div className="p-20 text-center">Order not found.</div>;
 
-    const statusInfo = getStatusInfo(order.status);
+    const statusDisplay = getOrderStatusDisplay(order.status, order.delivery_mode);
 
     return (
         <div className={styles.container}>
@@ -296,9 +308,9 @@ function OrderDetails() {
             </header>
 
             <main className={styles.main}>
-                <div className={`${styles.statusBanner} ${statusInfo.color}`}>
-                    {statusInfo.icon}
-                    <div className={styles.statusLabel}>Order {order.status.replace(/_/g, ' ')}</div>
+                <div className={`${styles.statusBanner} ${statusDisplay.bannerClass}`}>
+                    {getStatusIcon(order.status, order.delivery_mode)}
+                    <div className={styles.statusLabel}>{statusDisplay.label}</div>
                     {order.status.toLowerCase() === 'cancelled' && order.cancelled_by && (
                         <div className="text-sm font-bold opacity-90 mt-1 uppercase">
                             By {order.cancelled_by}
@@ -454,12 +466,22 @@ function OrderDetails() {
                     </div>
                 )}
 
-                {order.estimated_ready_time && ['confirmed', 'processing', 'packed'].includes(order.status.toLowerCase()) && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4 text-center text-blue-800">
+                <OrderFulfillmentHighlight
+                    delivery_mode={order.delivery_mode}
+                    status={order.status}
+                    pickup_code={order.pickup_code}
+                    pickup_ready_at={order.pickup_ready_at}
+                    delivery_info={order.delivery_info}
+                    variant="prominent"
+                />
+
+                {order.estimated_ready_time &&
+                    ['confirmed', 'processing'].includes(order.status.toLowerCase()) &&
+                    order.delivery_mode === 'pickup' &&
+                    !order.pickup_ready_at && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center text-blue-800">
                         <Clock size={16} className="inline mr-2 mb-1" />
-                        <span className="font-medium text-sm">
-                            {order.delivery_mode === 'pickup' ? "Estimated Pickup Ready Time:" : "Estimated Ready Time:"}
-                        </span>
+                        <span className="font-medium text-sm">Estimated pickup ready:</span>
                         <span className="font-bold ml-2 text-lg block sm:inline mt-1 sm:mt-0">
                             {new Date(order.estimated_ready_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
@@ -600,35 +622,6 @@ function OrderDetails() {
                                     {order.delivery_mode === 'pickup' ? 'Pickup window:' : 'Delivery window:'}
                                 </span>
                                 <span className="font-semibold text-indigo-900">{fulfillmentWindow}</span>
-                            </div>
-                        )}
-                        {order.delivery_mode === 'pickup' && order.pickup_code && (
-                            <div className="text-sm mt-2 p-3 bg-green-50 border border-green-100 rounded-lg">
-                                <span className="text-gray-500 block mb-1">Pickup code</span>
-                                <span className="font-bold text-lg tracking-widest text-green-900">{order.pickup_code}</span>
-                                {order.pickup_ready_at && (
-                                    <p className="text-xs text-green-700 mt-1">
-                                        Ready from {new Date(order.pickup_ready_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
-                                    </p>
-                                )}
-                            </div>
-                        )}
-                        {order.delivery_mode === 'delivery' && order.delivery_info && (
-                            <div className="text-sm mt-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                                <span className="text-gray-500 block mb-1">Courier</span>
-                                {order.delivery_info.delivery_person_name && (
-                                    <p className="font-medium">{order.delivery_info.delivery_person_name}</p>
-                                )}
-                                {order.delivery_info.delivery_person_phone && (
-                                    <a href={`tel:${order.delivery_info.delivery_person_phone}`} className="text-blue-600 hover:underline">
-                                        {order.delivery_info.delivery_person_phone}
-                                    </a>
-                                )}
-                                {order.delivery_info.delivery_status && (
-                                    <p className="text-xs text-gray-600 mt-1 capitalize">
-                                        Status: {order.delivery_info.delivery_status.replace(/_/g, ' ')}
-                                    </p>
-                                )}
                             </div>
                         )}
                     </div>
