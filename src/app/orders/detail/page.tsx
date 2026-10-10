@@ -15,7 +15,7 @@ import { FulfillmentSlot, OrderDeliveryInfo, RESCHEDULABLE_ORDER_STATUSES, forma
 import { getOrderStatusDisplay } from '@/lib/orderFulfillmentDisplay';
 import { isDeliveryFailure } from '@/lib/deliveryFailure';
 import { OrderStatusLogEntry } from '@/lib/orderStatusTimeline';
-import { getVisibleOrderFeeLines, type OptionalMoneyAmount } from '@/lib/orderFeeLines';
+import { getOrderFeeDisplayLines, type OptionalMoneyAmount } from '@/lib/orderFeeLines';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -602,11 +602,11 @@ function OrderDetails() {
                             <span>Subtotal</span>
                             <span>₹{order.subtotal}</span>
                         </div>
-                        {getVisibleOrderFeeLines(order).map((line) => (
+                        {getOrderFeeDisplayLines(order, { deliveryMode: order.delivery_mode }).map((line) => (
                             <div key={line.key} className={styles.mutedFeeRow}>
                                 <span>{line.label}</span>
                                 <span className={line.isDiscount ? styles.discount : undefined}>
-                                    {line.isDiscount ? `-₹${line.amount}` : `₹${line.amount}`}
+                                    {line.isFree ? 'Free' : line.isDiscount ? `-₹${line.amount}` : `₹${line.amount}`}
                                 </span>
                             </div>
                         ))}

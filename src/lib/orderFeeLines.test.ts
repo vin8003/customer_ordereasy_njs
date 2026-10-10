@@ -105,3 +105,31 @@ describe('getVisibleOrderFeeLines', () => {
         );
     });
 });
+
+import { getOrderFeeDisplayLines } from './orderFeeLines.ts';
+
+describe('getOrderFeeDisplayLines (review fix)', () => {
+    it('shows Free for a zero delivery fee on a delivery order', () => {
+        const lines = getOrderFeeDisplayLines({ delivery_fee: '0.00' }, { deliveryMode: 'delivery' });
+        assert.equal(lines.length, 1);
+        assert.equal(lines[0].isFree, true);
+        assert.equal(lines[0].amount, 'Free');
+    });
+
+    it('hides a zero delivery fee on pickup orders', () => {
+        assert.deepEqual(getOrderFeeDisplayLines({ delivery_fee: '0' }, { deliveryMode: 'pickup' }), []);
+    });
+
+    it('formats amounts to two decimals and keeps the discount flag', () => {
+        const lines = getOrderFeeDisplayLines(
+            { delivery_fee: '50', discount_amount: 10.5 },
+            { deliveryMode: 'delivery' }
+        );
+        assert.deepEqual(lines.map((l) => l.amount), ['50.00', '10.50']);
+        assert.equal(lines[1].isDiscount, true);
+    });
+
+    it('stays empty when the API sends no fee fields', () => {
+        assert.deepEqual(getOrderFeeDisplayLines({}, { deliveryMode: 'delivery' }), []);
+    });
+});
