@@ -25,7 +25,8 @@ export default function OrderStatusTimeline(order: OrderStatusTimelineInput) {
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">
                 Status timeline
             </h3>
-            <ol className="flex items-start w-full">
+            <div className="overflow-x-auto -mx-1 px-1">
+            <ol className="flex items-start w-full min-w-[460px]">
                 {steps.map((step, index) => {
                     const prevReached = index === 0 || steps[index - 1].reached;
                     const nextReached = index < steps.length - 1 && step.reached && steps[index + 1].reached;
@@ -87,6 +88,7 @@ export default function OrderStatusTimeline(order: OrderStatusTimelineInput) {
                     );
                 })}
             </ol>
+            </div>
         </section>
     );
 }
