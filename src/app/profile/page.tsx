@@ -4,7 +4,7 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { User, Settings, LogOut, Package, MapPin, ChevronRight, Gift, HelpCircle, Wallet, Pencil, Mail, Phone, Heart, Sparkles } from 'lucide-react';
+import { User, Settings, LogOut, Package, MapPin, ChevronRight, Gift, HelpCircle, Wallet, Pencil, Mail, Phone, Heart, Sparkles, ShieldCheck } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import HelpModal from '@/app/components/HelpModal';
@@ -89,6 +89,11 @@ export default function ProfilePage() {
                             <span className={styles.menuLabel}>Help & Support</span>
                             <ChevronRight size={18} className={styles.menuChevron} />
                         </button>
+                        <Link href="/privacy-policy" className={styles.menuItem}>
+                            <span className={styles.menuIcon}><ShieldCheck size={18} /></span>
+                            <span className={styles.menuLabel}>Privacy Policy</span>
+                            <ChevronRight size={18} className={styles.menuChevron} />
+                        </Link>
                     </div>
                 </main>
                 <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
@@ -190,6 +195,12 @@ export default function ProfilePage() {
                         <span className={styles.menuLabel}>Help & Support</span>
                         <ChevronRight size={18} className={styles.menuChevron} />
                     </button>
+
+                    <Link href="/privacy-policy" className={styles.menuItem}>
+                        <span className={styles.menuIcon}><ShieldCheck size={18} /></span>
+                        <span className={styles.menuLabel}>Privacy Policy</span>
+                        <ChevronRight size={18} className={styles.menuChevron} />
+                    </Link>
                 </div>
 
                 <div className={styles.section}>
