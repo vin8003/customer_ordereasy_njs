@@ -339,6 +339,8 @@
     overflow: hidden;
     text-overflow: ellipsis;
     margin-top: 1px;
+}
+
 .suggestionUnit {
     font-size: 11px;
     color: #94a3b8;
