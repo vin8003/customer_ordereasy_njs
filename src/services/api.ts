@@ -767,6 +767,16 @@ export const getErrorMessage = (error: any): string => {
     if (error.response && error.response.data) {
         const data = error.response.data;
 
+        // HTML response from server (e.g. Django debug 404/500 page)
+        if (typeof data === 'string') {
+            if (data.trim().startsWith('<') || data.includes('<!DOCTYPE') || data.includes('<html')) {
+                return error.response.status === 404
+                    ? "Requested resource not found (404)"
+                    : `Server error (${error.response.status})`;
+            }
+            return data;
+        }
+
         // 1. { "error": "message" }
         if (data.error && typeof data.error === 'string') return data.error;
 
@@ -776,16 +786,18 @@ export const getErrorMessage = (error: any): string => {
         // 3. { "field": ["error"] } or { "non_field_errors": ["error"] }
         // We join all error messages
         const messages: string[] = [];
-        Object.keys(data).forEach(key => {
-            const value = data[key];
-            if (Array.isArray(value)) {
-                // If key is non_field_errors, just show validation msg. Else show "Field: msg"
-                const prefix = (key === 'non_field_errors' || key === 'error') ? '' : `${key}: `;
-                messages.push(`${prefix}${value.join(', ')}`);
-            } else if (typeof value === 'string') {
-                messages.push(value);
-            }
-        });
+        if (typeof data === 'object') {
+            Object.keys(data).forEach(key => {
+                const value = data[key];
+                if (Array.isArray(value)) {
+                    // If key is non_field_errors, just show validation msg. Else show "Field: msg"
+                    const prefix = (key === 'non_field_errors' || key === 'error') ? '' : `${key}: `;
+                    messages.push(`${prefix}${value.join(', ')}`);
+                } else if (typeof value === 'string') {
+                    messages.push(value);
+                }
+            });
+        }
 
         if (messages.length > 0) return messages.join('\n');
     }
