@@ -13,6 +13,8 @@ import PhoneVerification from '@/app/components/auth/PhoneVerification';
 import { hasValidAddressCoordinates, parseCoordinate } from '@/utils/addressLocation';
 import { buildPlaceOrderPayload } from '@/utils/placeOrder';
 import CouponSection, { AppliedCoupon } from '@/app/components/CouponSection';
+import FulfillmentSlotPicker from '@/app/components/FulfillmentSlotPicker';
+import { FulfillmentSlot, formatSlotWindow } from '@/lib/fulfillmentSlots';
 
 interface Address {
     id: number;
@@ -57,6 +59,9 @@ export default function CheckoutPage() {
     const [deliveryMode, setDeliveryMode] = useState<'delivery' | 'pickup'>('delivery');
     const [specialInstructions, setSpecialInstructions] = useState('');
     const [deliveryFee, setDeliveryFee] = useState(0); // Initialize with 0, will be set dynamically
+    const [selectedSlot, setSelectedSlot] = useState<FulfillmentSlot | null>(null);
+    const [slotRefreshKey, setSlotRefreshKey] = useState(0);
+    const [openSlotCount, setOpenSlotCount] = useState<number | null>(null);
 
     // Retailer Settings
     const [retailerSettings, setRetailerSettings] = useState<{
@@ -353,6 +358,7 @@ export default function CheckoutPage() {
                 specialInstructions,
                 useRewardPoints,
                 couponCode: appliedCoupon?.code || null,
+                fulfillmentSlotStart: selectedSlot?.slot_start ?? null,
             });
         } catch (payloadError) {
             toast.error(payloadError instanceof Error ? payloadError.message : 'Could not prepare order.');
@@ -367,6 +373,7 @@ export default function CheckoutPage() {
             const isUPI = paymentMethod === 'upi';
             router.push(`/orders/detail?id=${response.id}${isUPI ? '&payment=true' : ''}`);
         } catch (error: unknown) {
+            setSlotRefreshKey(k => k + 1);
             const responseData =
                 error &&
                 typeof error === 'object' &&
@@ -460,6 +467,30 @@ export default function CheckoutPage() {
                             : 'Collect from the shop. No delivery fee. Pay cash at pickup if you chose Cash on Pickup.'}
                     </p>
                 </section>
+
+                {/* Fulfillment Slot Picker */}
+                {retailerId && retailerSettings && (retailerSettings.offersDelivery || retailerSettings.offersPickup) && (
+                    <section className={styles.section}>
+                        <h2 className={styles.sectionTitle}>
+                            <span className={styles.sectionIcon}><Clock size={16} /></span>
+                            {deliveryMode === 'pickup' ? 'Pickup time slot' : 'Delivery time slot'}
+                        </h2>
+                        <FulfillmentSlotPicker
+                            retailerId={retailerId}
+                            deliveryMode={deliveryMode}
+                            selectedSlotStart={selectedSlot?.slot_start ?? null}
+                            onSelect={setSelectedSlot}
+                            days={7}
+                            refreshKey={slotRefreshKey}
+                            onLoaded={({ openSlots }) => setOpenSlotCount(openSlots)}
+                        />
+                        {selectedSlot && (
+                            <p className="text-xs text-primary font-medium mt-2">
+                                Selected: {formatSlotWindow(selectedSlot)}
+                            </p>
+                        )}
+                    </section>
+                )}
 
                 {/* Address Selection */}
                 {deliveryMode === 'delivery' && (

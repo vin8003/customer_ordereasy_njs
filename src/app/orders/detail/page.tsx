@@ -11,6 +11,8 @@ import PageHeader from '@/app/components/PageHeader';
 import { ProductImage } from '@/app/components/ProductImage';
 import UpiPaymentPanel from '@/app/components/UpiPaymentPanel';
 import { getOrderTaxSummary } from '@/lib/orderTaxSummary';
+import OrderFulfillmentHighlight from '@/app/components/OrderFulfillmentHighlight';
+import { formatFulfillmentWindow, OrderDeliveryInfo } from '@/lib/fulfillmentSlots';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -60,6 +62,11 @@ interface OrderDetail {
     is_payment_locked?: boolean;
     coupon_code?: string | null;
     points_earned?: number;
+    fulfillment_slot_start?: string | null;
+    fulfillment_slot_end?: string | null;
+    pickup_code?: string;
+    pickup_ready_at?: string | null;
+    delivery_info?: OrderDeliveryInfo | null;
 }
 
 function OrderDetails() {
@@ -300,6 +307,17 @@ function OrderDetails() {
                             ))}
                         </ol>
                     )}
+                </div>
+
+                {/* Fulfillment highlight (pickup code & courier dispatch) */}
+                <div className="mb-4">
+                    <OrderFulfillmentHighlight
+                        status={order.status}
+                        delivery_mode={order.delivery_mode}
+                        pickup_code={order.pickup_code}
+                        pickup_ready_at={order.pickup_ready_at}
+                        delivery_info={order.delivery_info}
+                    />
                 </div>
 
                 {/* UPI Payment Section */}
@@ -590,6 +608,17 @@ function OrderDetails() {
                                 <span className={`${styles.infoValue} capitalize`}>{order.delivery_mode}</span>
                             </div>
                         </div>
+                        {order.fulfillment_slot_start && (
+                            <div className={styles.infoRow}>
+                                <span className={styles.infoIcon}><Clock size={16} /></span>
+                                <div>
+                                    <span className={styles.infoLabel}>Scheduled Slot</span>
+                                    <span className={styles.infoValue}>
+                                        {formatFulfillmentWindow(order.fulfillment_slot_start, order.fulfillment_slot_end)}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
                         <div className={styles.infoRow}>
                             <span className={styles.infoIcon}><Wallet size={16} /></span>
                             <div>

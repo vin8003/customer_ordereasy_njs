@@ -23,8 +23,11 @@ interface Order {
     net_amount?: string;
     refund_amount?: string;
     is_returned?: boolean;
+    fulfillment_slot_start?: string | null;
+    fulfillment_slot_end?: string | null;
 }
 
+import { formatFulfillmentWindow } from '@/lib/fulfillmentSlots';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 
 export default function OrdersPage() {
@@ -108,8 +111,14 @@ export default function OrdersPage() {
                             </span>
                         </div>
 
-                        {(order.expected_processing_start && order.status.toLowerCase() === 'pending') || order.is_returned || order.feedback ? (
+                        {(order.expected_processing_start && order.status.toLowerCase() === 'pending') || order.is_returned || order.feedback || order.fulfillment_slot_start ? (
                             <div className={styles.tags}>
+                                {order.fulfillment_slot_start && (
+                                    <span className={styles.tagWarn}>
+                                        <Clock size={12} />
+                                        {formatFulfillmentWindow(order.fulfillment_slot_start, order.fulfillment_slot_end)}
+                                    </span>
+                                )}
                                 {order.expected_processing_start && order.status.toLowerCase() === 'pending' && (
                                     <span className={styles.tagWarn}>
                                         <Clock size={12} />

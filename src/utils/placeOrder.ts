@@ -6,6 +6,7 @@ export interface PlaceOrderInput {
     specialInstructions: string;
     useRewardPoints: boolean;
     couponCode?: string | null;
+    fulfillmentSlotStart?: string | null;
 }
 
 /** Matches the historical `orders/place/` request body used before Phases 1–3. */
@@ -17,6 +18,7 @@ export interface PlaceOrderPayload {
     use_reward_points: boolean;
     address_id: number | null;
     coupon_code?: string | null;
+    fulfillment_slot_start?: string | null;
 }
 
 export function resolvePlaceOrderPaymentMode(paymentMethod: string): string {
@@ -33,7 +35,7 @@ export function buildPlaceOrderPayload(input: PlaceOrderInput): PlaceOrderPayloa
         throw new Error('Please select a delivery address.');
     }
 
-    return {
+    const payload: PlaceOrderPayload = {
         retailer_id: retailerId,
         address_id: input.deliveryMode === 'delivery' ? input.selectedAddressId : null,
         delivery_mode: input.deliveryMode,
@@ -42,4 +44,10 @@ export function buildPlaceOrderPayload(input: PlaceOrderInput): PlaceOrderPayloa
         use_reward_points: input.useRewardPoints,
         coupon_code: input.couponCode ? input.couponCode.trim().toUpperCase() : null,
     };
+
+    if (input.fulfillmentSlotStart) {
+        payload.fulfillment_slot_start = input.fulfillmentSlotStart;
+    }
+
+    return payload;
 }
