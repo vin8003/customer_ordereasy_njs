@@ -12,6 +12,9 @@ export const useAppNavigation = () => {
     const pathname = usePathname();
 
     const handleBack = useCallback(() => {
+        // A forced update modal must not be bypassed via the hardware back button.
+        if (document.body.dataset.updateRequired === 'true') return;
+
         // Define paths where the back button should exit the app or do nothing
         const rootPaths = ['/', '/home', '/login'];
         

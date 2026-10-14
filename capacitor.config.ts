@@ -4,9 +4,11 @@ const config: CapacitorConfig = {
   appId: 'win.ordereasy.customer',
   appName: 'Order Easy',
   webDir: 'out',
+  // Load the production web app remotely so frontend fixes ship OTA
+  // without a Play Store release.
   server: {
     url: 'https://customer.ordereasy.win',
-    cleartext: false
+    cleartext: false,
   },
   plugins: {
     GoogleAuth: {

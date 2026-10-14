@@ -25,10 +25,10 @@ export const Input: React.FC<InputProps> = ({
 
     return (
         <div className="flex w-full flex-col gap-1.5">
-            <Label className="text-muted-foreground">{label}</Label>
+            <Label className="text-[13px] font-semibold text-[var(--ink-2)]">{label}</Label>
             <div className="relative">
                 {icon && (
-                    <span className="pointer-events-none absolute top-1/2 left-3 z-10 -translate-y-1/2 text-muted-foreground">
+                    <span className="pointer-events-none absolute top-1/2 left-3.5 z-10 -translate-y-1/2 text-muted-foreground">
                         {icon}
                     </span>
                 )}
@@ -36,9 +36,9 @@ export const Input: React.FC<InputProps> = ({
                     type={isPassword ? (showPassword ? 'text' : 'password') : type}
                     aria-invalid={Boolean(error)}
                     className={cn(
-                        'h-11 rounded-xl bg-muted/40',
-                        icon && 'pl-10',
-                        isPassword && 'pr-10',
+                        'h-12 rounded-xl border-[var(--line-strong)] bg-white px-3.5 text-[15px] shadow-none placeholder:text-[var(--ink-4)] hover:border-[var(--ink-4)] focus-visible:border-[var(--brand-500)] focus-visible:ring-[var(--brand-100)] focus-visible:ring-4',
+                        icon && 'pl-11',
+                        isPassword && 'pr-12',
                         className
                     )}
                     {...props}
@@ -47,7 +47,7 @@ export const Input: React.FC<InputProps> = ({
                     <button
                         type="button"
                         onClick={() => setShowPassword((v) => !v)}
-                        className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        className="absolute top-1/2 right-2 flex size-9 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground hover:bg-[var(--surface-2)] hover:text-foreground"
                         aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}

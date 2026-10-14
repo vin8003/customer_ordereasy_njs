@@ -34,7 +34,7 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({
             <div className={styles.codeContainer}>
                 <div className={styles.codeLabel}>Your Referral Code</div>
                 <div className={styles.codeValue}>{referralCode || '---'}</div>
-                <button className={styles.copyButton} onClick={onCopy}>
+                <button type="button" className={styles.copyButton} onClick={onCopy}>
                     <Copy size={14} />
                     Copy Code
                 </button>

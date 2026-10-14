@@ -4,12 +4,12 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
-import { Trash2, ArrowLeft, Heart } from 'lucide-react';
+import { Trash2, Heart, Store } from 'lucide-react';
 import { apiService } from '@/services/api';
-import { Button } from '@/app/components/ui/Button';
 import { EmptyState } from '@/app/components/EmptyState';
 import { ProductImage } from '@/app/components/ProductImage';
 import AddToCartButton from '@/app/components/AddToCartButton';
+import PageHeader from '@/app/components/PageHeader';
 import styles from './Wishlist.module.css';
 
 interface WishlistItem {
@@ -99,13 +99,7 @@ export default function WishlistPage() {
 
     return (
         <div className={styles.container}>
-            <header className={styles.header}>
-                <Button variant="outline" onClick={handleBack}>
-                    <ArrowLeft size={20} />
-                </Button>
-                <h1>My Wishlist</h1>
-                <div className="h-5" />
-            </header>
+            <PageHeader title="My Wishlist" subtitle={`${wishlistItems.length} saved ${wishlistItems.length === 1 ? 'item' : 'items'}`} onBack={handleBack} />
 
             <div className={styles.list}>
                 {wishlistItems.map(item => (
@@ -119,7 +113,7 @@ export default function WishlistPage() {
                         </div>
                         <div className={styles.info}>
                             <h3>{item.product_name}</h3>
-                            <p className={styles.retailer}>{item.retailer_name}</p>
+                            <p className={styles.retailer}><Store size={11} /> {item.retailer_name}</p>
                             <p className={styles.price}>₹{item.product_price}</p>
                         </div>
                         <div className={styles.actions}>
@@ -132,8 +126,8 @@ export default function WishlistPage() {
                                     retailerName={item.retailer_name}
                                 />
                             </div>
-                            <button className={styles.actionBtn} onClick={() => removeItem(item.product)} title="Remove">
-                                <Trash2 size={18} className="text-red-500" />
+                            <button type="button" className={styles.actionBtn} onClick={() => removeItem(item.product)} aria-label={`Remove ${item.product_name} from wishlist`}>
+                                <Trash2 size={16} />
                             </button>
                         </div>
                     </div>

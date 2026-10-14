@@ -19,8 +19,8 @@ export const ProductImage: React.FC<ProductImageProps> = ({
 
     if (!src || error) {
         return (
-            <div className={`flex items-center justify-center bg-gray-50 ${className}`}>
-                <ShoppingBag size={24} className="text-gray-200" />
+            <div className={`flex h-full w-full items-center justify-center ${className}`}>
+                <ShoppingBag size={24} strokeWidth={1.5} className="text-[var(--ink-4)] opacity-60" />
             </div>
         );
     }

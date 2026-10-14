@@ -1,102 +1,151 @@
 .container {
-    min-height: 100vh;
-    background-color: #f8f9fa;
+    min-height: calc(var(--vh) * 100);
     display: flex;
-    flex-direction: column;
-    padding: 24px 24px 100px 24px;
+    align-items: flex-start;
+    justify-content: center;
+    padding: calc(40px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom));
+    background:
+        radial-gradient(70% 35% at 50% 0%, var(--brand-50) 0%, transparent 100%),
+        var(--canvas);
+}
+
+@media (min-width: 768px) {
+    .container {
+        align-items: center;
+    }
 }
 
 .content {
-    flex: 1;
-    max-width: 480px;
-    margin: 0 auto;
     width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    max-width: 440px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-xl);
+    box-shadow: var(--sh-md);
+    padding: 28px 22px 22px;
+    animation: fadeIn 400ms var(--ease-out) both;
 }
 
 .header {
-    text-align: center;
-    margin-bottom: 32px;
+    margin-bottom: 24px;
 }
 
 .iconWrapper {
-    width: 80px;
-    height: 80px;
-    background-color: rgba(var(--primary-rgb), 0.1);
-    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 24px;
+    background: linear-gradient(135deg, var(--brand-500), var(--brand-700));
+    box-shadow: var(--sh-brand);
+    margin-bottom: 18px;
 }
 
 .icon {
-    color: var(--primary);
+    color: #fff;
 }
 
 .header h1 {
-    font-size: 24px;
-    font-weight: 700;
-    color: #1a1a1a;
-    margin-bottom: 8px;
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    line-height: 1.2;
 }
 
 .header p {
-    color: #666;
-    font-size: 16px;
+    margin-top: 6px;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--ink-3);
 }
 
 .formFields {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    margin-bottom: 16px;
 }
 
 .field {
+    position: relative;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 }
 
 .field label {
-    font-size: 14px;
-    font-weight: 600;
-    color: #334155;
+    font-size: 0.8125rem;
+    font-weight: 650;
+    color: var(--ink-2);
 }
 
 .select {
     width: 100%;
-    padding: 12px 14px;
-    font-size: 16px;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    background: white;
-    color: #1a1a1a;
-    appearance: auto;
+    height: 50px;
+    padding: 0 42px 0 14px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 0.9375rem;
+    font-weight: 550;
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    transition: border-color 150ms var(--ease-out), box-shadow 150ms var(--ease-out);
+    cursor: pointer;
 }
 
-.select:disabled {
-    background: #f1f5f9;
-    color: #94a3b8;
-    cursor: not-allowed;
+.select:hover:not(:disabled) {
+    border-color: var(--ink-4);
 }
 
 .select:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15);
+    border-color: var(--brand-500);
+    box-shadow: 0 0 0 4px var(--brand-100);
+}
+
+.select:disabled {
+    background: var(--surface-2);
+    color: var(--ink-4);
+    cursor: not-allowed;
+}
+
+.selectChevron {
+    position: absolute;
+    right: 14px;
+    bottom: 16px;
+    color: var(--ink-3);
+    pointer-events: none;
 }
 
 .detectHint {
-    font-size: 13px;
-    color: #64748b;
-    text-align: center;
-    margin: 0 0 24px;
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: var(--r-sm);
+    background: var(--brand-50);
+    color: var(--brand-800);
+    font-size: 0.8125rem;
+    font-weight: 550;
+    line-height: 1.4;
+}
+
+.detectHint svg {
+    flex-shrink: 0;
+}
+
+.detectPulse {
+    animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    50% { opacity: 0.35; }
 }
 
 .footer {
-    margin-top: auto;
+    margin-top: 24px;
 }

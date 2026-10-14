@@ -8,8 +8,9 @@ import { useWishlist } from '@/hooks/useWishlist';
 import { useCartContext } from '@/context/CartContext';
 import { apiService } from '@/services/api';
 import { cn } from '@/lib/utils';
+import styles from './BottomNav.module.css';
 
-const HIDDEN_ROUTES = ['/login', '/signup', '/', '/city-selection', '/checkout', '/checkout/success', '/retailer/product'];
+const HIDDEN_ROUTES = ['/login', '/signup', '/', '/city-selection', '/checkout', '/checkout/success', '/retailer/product', '/orders/chat'];
 
 function readHomeLink() {
     if (typeof window === 'undefined') return '/retailers';
@@ -51,35 +52,33 @@ export default function BottomNav() {
     ];
 
     return (
-        <nav className="fixed right-0 bottom-0 left-0 z-50 flex items-center justify-around border-t border-border bg-white/80 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_rgba(0,0,0,0.03)] backdrop-blur-lg">
-            {items.map((item) => {
-                const Icon = item.icon;
-                return (
-                    <Link
-                        key={item.label}
-                        href={item.href}
-                        className={cn(
-                            'relative flex w-1/4 flex-col items-center justify-center space-y-1 py-3 transition-all duration-300',
-                            item.active ? 'text-primary' : 'text-muted-foreground hover:text-primary'
-                        )}
-                    >
-                        {item.active && (
-                            <div className="absolute top-0 h-1 w-8 rounded-b-full bg-primary shadow-lg shadow-primary/40" />
-                        )}
-                        <div className="relative">
-                            <Icon className={cn('h-5 w-5 transition-transform duration-300', item.active && 'scale-110')} />
-                            {item.badge > 0 && (
-                                <span className="absolute -top-1.5 -right-2.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-destructive px-1 text-[10px] font-bold text-white">
-                                    {item.badge}
-                                </span>
-                            )}
-                        </div>
-                        <span className={cn('text-[10px] font-semibold tracking-wide', item.active ? 'opacity-100' : 'opacity-70')}>
-                            {item.label}
-                        </span>
-                    </Link>
-                );
-            })}
+        <nav className={styles.bottomNav} aria-label="Primary">
+            <div className={styles.inner}>
+                {items.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                        <Link
+                            key={item.label}
+                            href={item.href}
+                            aria-current={item.active ? 'page' : undefined}
+                            className={cn(styles.navItem, item.active && styles.active)}
+                        >
+                            <span className={styles.iconWrapper}>
+                                <Icon
+                                    size={21}
+                                    strokeWidth={item.active ? 2.4 : 2}
+                                    className={styles.icon}
+                                    fill={item.active && item.label === 'Wishlist' ? 'currentColor' : 'none'}
+                                />
+                                {item.badge > 0 && (
+                                    <span className={styles.badge}>{item.badge > 99 ? '99+' : item.badge}</span>
+                                )}
+                            </span>
+                            <span className={styles.label}>{item.label}</span>
+                        </Link>
+                    );
+                })}
+            </div>
         </nav>
     );
 }

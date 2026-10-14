@@ -6,6 +6,7 @@ import { WishlistIcon } from '@/app/components/WishlistIcon';
 import styles from './ProductCard.module.css';
 import AddToCartButton from '@/app/components/AddToCartButton';
 import { visibleProductBrandName } from '@/lib/productBrandName';
+import { isOutOfStock } from '@/utils/productStock';
 
 interface Product {
     id: number;
@@ -17,6 +18,7 @@ interface Product {
     brand_name?: string | null;
     active_offer_text?: string;
     track_inventory?: boolean;
+    stock_quantity?: number;
     minimum_order_quantity?: number;
     maximum_order_quantity?: number | null;
 }
@@ -44,27 +46,26 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     const discount = mrp > price
         ? Math.round(((mrp - price) / mrp) * 100)
         : 0;
+    const outOfStock = isOutOfStock(product.track_inventory, product.stock_quantity);
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick();
+        }
+    };
 
     return (
-        <div className={styles.card} onClick={onClick}>
+        <div
+            className={`${styles.card} ${outOfStock ? styles.isOut : ''}`}
+            onClick={onClick}
+            onKeyDown={handleKeyDown}
+            role="link"
+            tabIndex={0}
+            aria-label={product.name}
+        >
             <div className={styles.imageWrapper}>
-                <div className={styles.badges}>
-                    <div className={styles.badgeGroup}>
-                        {product.active_offer_text && (
-                            <div className={styles.offerBadge}>
-                                {product.active_offer_text}
-                            </div>
-                        )}
-                        {discount > 0 && (
-                            <div className={styles.discountBadge}>{discount}% OFF</div>
-                        )}
-                    </div>
-
-                    <button className={styles.wishlistBtn} onClick={onToggleWishlist}>
-                        <WishlistIcon isWishlisted={isWishlisted} />
-                    </button>
-                </div>
-
                 <div className={styles.image}>
                     <ProductImage
                         src={product.image || ''}
@@ -72,23 +73,42 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                         className={styles.productImage}
                     />
                 </div>
+
+                {!outOfStock && discount > 0 && (
+                    <div className={styles.discountBadge}>
+                        <span>{discount}%</span>
+                        <span>OFF</span>
+                    </div>
+                )}
+
+                <button
+                    type="button"
+                    className={styles.wishlistBtn}
+                    onClick={onToggleWishlist}
+                    aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+                    aria-pressed={isWishlisted}
+                >
+                    <WishlistIcon isWishlisted={isWishlisted} size={16} />
+                </button>
+
+                {outOfStock && <div className={styles.outBadge}>Out of stock</div>}
             </div>
 
             <div className={styles.content}>
-                <div>
-                    <div className={styles.unit}>{product.unit || 'Unit'}</div>
-                    <h3 className={styles.title} title={product.name}>{product.name}</h3>
-                    {brandName ? <p className={styles.brandName}>{brandName}</p> : null}
-                </div>
+                {product.active_offer_text && (
+                    <div className={styles.offerBadge} title={product.active_offer_text}>
+                        {product.active_offer_text}
+                    </div>
+                )}
+                <div className={styles.unit}>{product.unit || 'Unit'}</div>
+                <h3 className={styles.title} title={product.name}>{product.name}</h3>
+                {brandName ? <p className={styles.brandName}>{brandName}</p> : null}
 
                 <div className={styles.footer}>
                     <div className={styles.priceContainer}>
                         <span className={styles.price}>₹{product.price}</span>
                         {discount > 0 && (
-                            <>
-                                <span className={styles.separator}>|</span>
-                                <span className={styles.mrp}>₹{product.mrp} M.R.P.</span>
-                            </>
+                            <span className={styles.mrp}>₹{product.mrp}</span>
                         )}
                     </div>
                     <div onClick={(e) => e.stopPropagation()}>
@@ -96,6 +116,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                             productId={product.id}
                             minimumOrderQuantity={product.minimum_order_quantity}
                             maximumOrderQuantity={product.maximum_order_quantity}
+                            trackInventory={product.track_inventory}
+                            stockQuantity={product.stock_quantity}
                             offersDelivery={offersDelivery}
                             offersPickup={offersPickup}
                         />

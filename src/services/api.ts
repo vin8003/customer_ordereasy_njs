@@ -407,9 +407,13 @@ export const apiService = {
     },
 
     getRetailerProducts: async (retailerId: string | number, params?: any) => {
-        const key = `products_${retailerId}_${JSON.stringify(params || {})}`;
+        const requestParams = {
+            ...params,
+            in_stock: params?.in_stock ?? 'true',
+        };
+        const key = `products_${retailerId}_${JSON.stringify(requestParams || {})}`;
         return fetchWithDedupe(key, async () => {
-            const response = await api.get(`products/retailer/${retailerId}/`, { params });
+            const response = await api.get(`products/retailer/${retailerId}/`, { params: requestParams });
             return response.data;
         });
     },
@@ -417,7 +421,9 @@ export const apiService = {
     searchProducts: async (retailerId: string | number, query: string) => {
         const key = `search_${retailerId}_${query}`;
         return fetchWithDedupe(key, async () => {
-            const response = await api.get(`products/retailer/${retailerId}/search/`, { params: { search: query } });
+            const response = await api.get(`products/retailer/${retailerId}/search/`, {
+                params: { search: query, in_stock: 'true' },
+            });
             return response.data;
         });
     },
@@ -476,6 +482,31 @@ export const apiService = {
         const response = await api.delete(`cart/items/${itemId}/remove/`);
         Object.keys(CACHE).forEach(k => { if (k.startsWith('cart_')) delete CACHE[k]; });
         window.dispatchEvent(new CustomEvent('cart-updated'));
+        return response.data;
+    },
+
+    // Coupons
+    applyCoupon: async (retailerId: string | number, couponCode: string) => {
+        const response = await api.post('cart/apply-coupon/', {
+            retailer_id: retailerId,
+            coupon_code: couponCode.trim().toUpperCase()
+        });
+        Object.keys(CACHE).forEach(k => { if (k.startsWith('cart_')) delete CACHE[k]; });
+        window.dispatchEvent(new CustomEvent('cart-updated'));
+        return response.data;
+    },
+
+    removeCoupon: async (retailerId: string | number) => {
+        const response = await api.post('cart/remove-coupon/', {
+            retailer_id: retailerId
+        });
+        Object.keys(CACHE).forEach(k => { if (k.startsWith('cart_')) delete CACHE[k]; });
+        window.dispatchEvent(new CustomEvent('cart-updated'));
+        return response.data;
+    },
+
+    getAvailableCoupons: async (retailerId: string | number) => {
+        const response = await api.get(`offers/public/retailer/${retailerId}/available-coupons/`);
         return response.data;
     },
 

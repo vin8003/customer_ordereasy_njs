@@ -3,12 +3,14 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, ShoppingBag, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShoppingBag, SlidersHorizontal, X, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
+import PageHeader from '@/app/components/PageHeader';
+import { EmptyState } from '@/app/components/EmptyState';
 import { ProductCard } from '@/app/components/ProductCard';
 import { useWishlist } from '@/hooks/useWishlist';
-import { visibleSearchProductBrandName } from '@/lib/searchProductBrandName';
+import { processRetailerProductList } from '@/utils/productStock';
 import styles from './Products.module.css';
 
 interface Product {
@@ -21,7 +23,6 @@ interface Product {
     category_name?: string;
     stock_quantity: number;
     unit?: string;
-    brand_name?: string | null;
     minimum_order_quantity: number;
     maximum_order_quantity: number | null;
 }
@@ -48,10 +49,29 @@ function AllProducts() {
     // Filter states
     const [minPrice, setMinPrice] = useState('');
     const [maxPrice, setMaxPrice] = useState('');
-    const [inStock, setInStock] = useState(false);
     const [selectedCategoryId, setSelectedCategoryId] = useState(categoryId || '');
 
     const { wishlistIds, loadWishlist, toggleWishlist, isWishlisted } = useWishlist();
+    const [searchInput, setSearchInput] = useState(search || '');
+
+    useEffect(() => {
+        setSearchInput(search || '');
+    }, [search]);
+
+    useEffect(() => {
+        if (apiService.isAuthenticated()) loadWishlist();
+    }, [loadWishlist]);
+
+    const activeFilterCount = [minPrice, maxPrice, selectedCategoryId].filter(Boolean).length;
+
+    const submitSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        const q = searchInput.trim();
+        const params = new URLSearchParams(searchParams.toString());
+        if (q) params.set('search', q);
+        else params.delete('search');
+        router.replace(`/retailer/products?${params.toString()}`);
+    };
 
     useEffect(() => {
         if (retailerId) {
@@ -65,12 +85,12 @@ function AllProducts() {
         if (retailerId) {
             loadData(currentPage);
         }
-    }, [retailerId, search, minPrice, maxPrice, inStock, selectedCategoryId, currentPage, loadWishlist]);
+    }, [retailerId, search, minPrice, maxPrice, selectedCategoryId, currentPage, loadWishlist]);
 
     // Reset page to 1 if search/filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [search, minPrice, maxPrice, inStock, selectedCategoryId]);
+    }, [search, minPrice, maxPrice, selectedCategoryId]);
 
     // Helper to flatten nested categories
     const flattenCategories = (categories: any[], parentName = ''): any[] => {
@@ -102,7 +122,6 @@ function AllProducts() {
                 category: selectedCategoryId || undefined,
                 min_price: minPrice || undefined,
                 max_price: maxPrice || undefined,
-                in_stock: inStock ? 'true' : undefined,
                 offer_id: offerId || undefined,
                 page: page
             };
@@ -123,18 +142,7 @@ function AllProducts() {
                 setTotalPages(1);
             }
 
-            const processedProducts = rawProducts.map((p: any) => ({
-                ...p,
-                price: p.discounted_price || p.price,
-                mrp: p.original_price || p.price,
-                image: p.image || p.image_url || '',
-                stock_quantity: p.quantity || 0,
-                unit: p.unit || undefined,
-                minimum_order_quantity: p.minimum_order_quantity || 1,
-                maximum_order_quantity: p.maximum_order_quantity
-            }));
-
-            setProducts(processedProducts);
+            setProducts(processRetailerProductList(rawProducts));
         } catch (error) {
             console.error("Failed to load products", error);
         } finally {
@@ -154,148 +162,166 @@ function AllProducts() {
 
     return (
         <div className={styles.container}>
-            <header className={styles.header}>
-                <Button variant="ghost" onClick={() => router.back()} className="p-0">
-                    <ArrowLeft size={24} />
-                </Button>
-                <h1>{offerTitle || (search ? `Search: ${search}` : 'Products')}</h1>
-                <Button
-                    variant="ghost"
-                    onClick={() => setShowFilters(!showFilters)}
-                    className={showFilters ? styles.filterActive : ''}
-                >
-                    <Filter size={20} />
-                </Button>
-            </header>
+            <PageHeader
+                title={offerTitle || (search ? `Results for “${search}”` : 'All products')}
+                subtitle={totalCount > 0 ? `${totalCount} ${totalCount === 1 ? 'item' : 'items'}` : undefined}
+                onBack={() => router.back()}
+                right={
+                    <button
+                        type="button"
+                        onClick={() => setShowFilters(!showFilters)}
+                        className={`${styles.filterBtn} ${showFilters || activeFilterCount > 0 ? styles.filterActive : ''}`}
+                        aria-label="Filters"
+                        aria-expanded={showFilters}
+                    >
+                        <SlidersHorizontal size={18} />
+                        {activeFilterCount > 0 && <span className={styles.filterCount}>{activeFilterCount}</span>}
+                    </button>
+                }
+            />
+
+            {!offerId && (
+                <form className={styles.searchRow} onSubmit={submitSearch} role="search">
+                    <Search size={18} className={styles.searchIcon} />
+                    <input
+                        type="search"
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        placeholder="Search products…"
+                        aria-label="Search products"
+                        className={styles.searchInput}
+                    />
+                </form>
+            )}
 
             {showFilters && (
-                <div className={styles.filterSidebar}>
-                    <div className={styles.filterHeader}>
-                        <h3>Filters</h3>
-                        <Button variant="ghost" onClick={() => setShowFilters(false)}>
-                            <X size={20} />
-                        </Button>
-                    </div>
+                <div className={styles.filterOverlay} onClick={() => setShowFilters(false)}>
+                    <div className={styles.filterSidebar} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Filters">
+                        <div className={styles.filterHeader}>
+                            <h3>Filters</h3>
+                            <button type="button" className={styles.closeBtn} onClick={() => setShowFilters(false)} aria-label="Close filters">
+                                <X size={20} />
+                            </button>
+                        </div>
 
-                    <div className={styles.filterContent}>
-                        <div className={styles.filterSection}>
-                            <h4>Price Range</h4>
-                            <div className={styles.priceInputs}>
-                                <input
-                                    type="number"
-                                    placeholder="Min"
-                                    value={minPrice}
-                                    onChange={(e) => setMinPrice(e.target.value)}
-                                />
-                                <span>-</span>
-                                <input
-                                    type="number"
-                                    placeholder="Max"
-                                    value={maxPrice}
-                                    onChange={(e) => setMaxPrice(e.target.value)}
-                                />
+                        <div className={styles.filterContent}>
+                            <div className={styles.filterSection}>
+                                <h4>Price range</h4>
+                                <div className={styles.priceInputs}>
+                                    <label>
+                                        <span>₹</span>
+                                        <input
+                                            type="number"
+                                            inputMode="numeric"
+                                            placeholder="Min"
+                                            value={minPrice}
+                                            onChange={(e) => setMinPrice(e.target.value)}
+                                        />
+                                    </label>
+                                    <span className={styles.priceDash}>–</span>
+                                    <label>
+                                        <span>₹</span>
+                                        <input
+                                            type="number"
+                                            inputMode="numeric"
+                                            placeholder="Max"
+                                            value={maxPrice}
+                                            onChange={(e) => setMaxPrice(e.target.value)}
+                                        />
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className={styles.filterSection}>
+                                <h4>Category</h4>
+                                <select
+                                    value={selectedCategoryId}
+                                    onChange={(e) => setSelectedCategoryId(e.target.value)}
+                                    className={styles.filterSelect}
+                                >
+                                    <option value="">All Categories</option>
+                                    {categories.map(cat => (
+                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
 
-                        <div className={styles.filterSection}>
-                            <h4>Category</h4>
-                            <select
-                                value={selectedCategoryId}
-                                onChange={(e) => setSelectedCategoryId(e.target.value)}
-                                className={styles.filterSelect}
+                        <div className={styles.filterFooter}>
+                            <Button
+                                variant="outline"
+                                className={styles.resetBtn}
+                                onClick={() => {
+                                    setMinPrice('');
+                                    setMaxPrice('');
+                                    setSelectedCategoryId('');
+                                }}
                             >
-                                <option value="">All Categories</option>
-                                {categories.map(cat => (
-                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                ))}
-                            </select>
+                                Reset
+                            </Button>
+                            <Button className={styles.applyBtn} onClick={() => setShowFilters(false)}>
+                                Show results
+                            </Button>
                         </div>
-
-                        <div className={styles.filterSection}>
-                            <label className={styles.checkboxLabel}>
-                                <input
-                                    type="checkbox"
-                                    checked={inStock}
-                                    onChange={(e) => setInStock(e.target.checked)}
-                                />
-                                <span>In Stock Only</span>
-                            </label>
-                        </div>
-
-                        <Button
-                            className={styles.resetBtn}
-                            onClick={() => {
-                                setMinPrice('');
-                                setMaxPrice('');
-                                setInStock(false);
-                                setSelectedCategoryId('');
-                            }}
-                        >
-                            Reset Filters
-                        </Button>
                     </div>
                 </div>
             )}
 
             <div className={styles.grid}>
                 {products.length === 0 && !isLoading ? (
-                    <div className="col-span-full py-12 text-center text-gray-400">
-                        <ShoppingBag size={48} className="mx-auto mb-4 opacity-20" />
-                        <p>No products found {search && `for "${search}"`}</p>
+                    <div className="col-span-full">
+                        <EmptyState
+                            icon={ShoppingBag}
+                            title="No products found"
+                            description={search ? `We couldn't find anything for “${search}”. Try a different search or clear filters.` : 'Try adjusting your filters.'}
+                        />
                     </div>
                 ) : (
                     <>
-                        {products.map(product => {
-                            const searchBrand = search
-                                ? visibleSearchProductBrandName(product)
-                                : null;
-                            return (
-                                <div key={product.id} className={styles.searchResult}>
-                                    <ProductCard
-                                        product={{
-                                            ...product,
-                                            price: Number(product.price),
-                                            mrp: Number(product.mrp)
-                                        }}
-                                        isWishlisted={isWishlisted(product.id)}
-                                        onToggleWishlist={(e: React.MouseEvent) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            toggleWishlist(product.id);
-                                        }}
-                                        onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
-                                    />
-                                    {searchBrand ? (
-                                        <p className={styles.searchBrandName}>{searchBrand}</p>
-                                    ) : null}
-                                </div>
-                            );
-                        })}
+                        {products.map(product => (
+                            <ProductCard
+                                key={product.id}
+                                product={{
+                                    ...product,
+                                    price: Number(product.price),
+                                    mrp: Number(product.mrp)
+                                }}
+                                isWishlisted={isWishlisted(product.id)}
+                                onToggleWishlist={(e: React.MouseEvent) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    toggleWishlist(product.id);
+                                }}
+                                onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
+                            />
+                        ))}
                     </>
                 )}
             </div>
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-                <div className="flex justify-center items-center gap-4 py-8 pb-20">
+                <div className={styles.pagination}>
                     <Button
-                        variant="ghost"
+                        variant="outline"
+                        size="icon"
                         onClick={() => handlePageChange(currentPage - 1)}
                         disabled={currentPage <= 1 || isLoading}
-                        className="p-2"
+                        aria-label="Previous page"
                     >
-                        <ChevronLeft size={24} />
+                        <ChevronLeft size={20} />
                     </Button>
-                    <span className="text-gray-600 font-medium">
-                        Page {currentPage} of {totalPages}
+                    <span className={styles.pageLabel}>
+                        Page <strong>{currentPage}</strong> of {totalPages}
                     </span>
                     <Button
-                        variant="ghost"
+                        variant="outline"
+                        size="icon"
                         onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage >= totalPages || isLoading}
-                        className="p-2"
+                        aria-label="Next page"
                     >
-                        <ChevronRight size={24} />
+                        <ChevronRight size={20} />
                     </Button>
                 </div>
             )}

@@ -3,7 +3,8 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Send } from 'lucide-react';
+import { Send, MessageCircle } from 'lucide-react';
+import PageHeader from '@/app/components/PageHeader';
 import { apiService } from '@/services/api';
 import styles from './Chat.module.css';
 
@@ -138,20 +139,16 @@ function ChatContent() {
 
     return (
         <div className={styles.container}>
-            <header className={styles.header}>
-                <button onClick={() => router.back()} className="mr-2 p-2 hover:bg-gray-100 rounded-full">
-                    <ArrowLeft size={20} color="#333" />
-                </button>
-                <h1>Chat on Order #{safeOrderId}</h1>
-            </header>
+            <PageHeader title="Chat with store" subtitle={`Order #${safeOrderId}`} onBack={() => router.back()} />
 
             <div className={styles.chatWindow}>
                 {isLoading && messages.length === 0 ? (
                     <LoadingScreen message="Loading messages..." />
                 ) : messages.length === 0 ? (
                     <div className={styles.emptyState}>
-                        <p>No messages yet.</p>
-                        <p>Have a question about your order?</p>
+                        <span className={styles.emptyIcon}><MessageCircle size={26} /></span>
+                        <p className={styles.emptyTitle}>No messages yet</p>
+                        <p>Have a question about your order? Send the store a message.</p>
                     </div>
                 ) : (
                     messages.map((msg) => (
@@ -163,7 +160,7 @@ function ChatContent() {
                             <div>{msg.message}</div>
                             <span className={styles.timestamp}>
                                 {formatTime(msg.created_at)}
-                                {msg.is_me && msg.is_read && <span className="ml-1">✓✓</span>}
+                                {msg.is_me && msg.is_read && <span className={styles.readTick} aria-label="Read">✓✓</span>}
                             </span>
                         </div>
                     ))
@@ -171,9 +168,11 @@ function ChatContent() {
                 <div ref={bottomRef} />
             </div>
 
-            <div className={styles.quickReplies}>
+            <div className={styles.composer}>
+            <div className={`${styles.quickReplies} no-scrollbar`}>
                 {["Where is my order?", "Item missing", "Packing issue", "Delivery time?"].map(reply => (
                     <button
+                        type="button"
                         key={reply}
                         className={styles.chip}
                         onClick={() => {
@@ -197,13 +196,16 @@ function ChatContent() {
                     disabled={isSending}
                 />
                 <button
+                    type="button"
                     className={styles.sendButton}
                     onClick={handleSend}
                     disabled={!newMessage.trim() || isSending}
+                    aria-label="Send message"
                 >
                     <Send size={18} />
                 </button>
             </footer>
+            </div>
         </div>
     );
 }

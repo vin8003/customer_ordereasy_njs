@@ -14,8 +14,8 @@ android {
         applicationId "win.ordereasy.customer"   // keep your actual package
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 8
-        versionName "1.0.7"
+        versionCode 13
+        versionName "1.0.12"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -60,6 +60,9 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
+
+    // Meta (Facebook) Android SDK for App Events & Install Attribution
+    implementation 'com.facebook.android:facebook-android-sdk:17.0.0'
 }
 
 apply from: 'capacitor.build.gradle'
