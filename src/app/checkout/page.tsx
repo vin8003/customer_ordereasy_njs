@@ -479,16 +479,12 @@ export default function CheckoutPage() {
                             retailerId={retailerId}
                             deliveryMode={deliveryMode}
                             selectedSlotStart={selectedSlot?.slot_start ?? null}
+                            selectedSlot={selectedSlot}
                             onSelect={setSelectedSlot}
                             days={7}
                             refreshKey={slotRefreshKey}
                             onLoaded={({ openSlots }) => setOpenSlotCount(openSlots)}
                         />
-                        {selectedSlot && (
-                            <p className="text-xs text-primary font-medium mt-2">
-                                Selected: {formatSlotWindow(selectedSlot)}
-                            </p>
-                        )}
                     </section>
                 )}
 
