@@ -32,7 +32,6 @@ import UpiPaymentPanel from '@/app/components/UpiPaymentPanel';
 import { getOrderTaxSummary } from '@/lib/orderTaxSummary';
 import FulfillmentSlotPicker from '@/app/components/FulfillmentSlotPicker';
 import OrderFulfillmentHighlight from '@/app/components/OrderFulfillmentHighlight';
-import OrderStatusTimeline from '@/app/components/OrderStatusTimeline';
 import {
     FulfillmentSlot,
     OrderDeliveryInfo,
@@ -396,21 +395,6 @@ function OrderDetails() {
                         delivery_info={order.delivery_info}
                     />
                 </div>
-
-                <OrderStatusTimeline
-                    status={order.status}
-                    delivery_mode={order.delivery_mode}
-                    created_at={order.created_at}
-                    pickup_ready_at={order.pickup_ready_at}
-                    packed_at={order.packed_at}
-                    out_for_delivery_at={order.out_for_delivery_at}
-                    delivered_at={order.delivered_at}
-                    cancelled_at={order.cancelled_at}
-                    cancelled_by={order.cancelled_by}
-                    cancellation_reason={order.cancellation_reason}
-                    delivery_info={order.delivery_info}
-                    status_logs={order.status_logs}
-                />
 
                 {/* UPI Payment Section */}
                 {order.payment_mode === 'upi' && order.status !== 'cancelled' && (
