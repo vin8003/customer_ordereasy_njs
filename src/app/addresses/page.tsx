@@ -4,10 +4,11 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
-import { ArrowLeft, Plus, MapPin, Trash2, Edit } from 'lucide-react';
+import { Plus, MapPin, Trash2, Edit } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { EmptyState } from '@/app/components/EmptyState';
+import PageHeader from '@/app/components/PageHeader';
 import styles from './Addresses.module.css';
 
 export default function AddressesPage() {
@@ -44,15 +45,11 @@ export default function AddressesPage() {
 
     return (
         <div className={styles.container}>
-            <header className={styles.header}>
-                <Button variant="outline" onClick={handleBack}>
-                    <ArrowLeft size={20} />
+            <PageHeader title="My Addresses" onBack={handleBack} right={
+                <Button size="sm" onClick={() => router.push('/addresses/create')}>
+                    <Plus size={16} /> Add new
                 </Button>
-                <h1>My Addresses</h1>
-                <Button variant="ghost" onClick={() => router.push('/addresses/create')}>
-                    <Plus size={24} className="text-primary" />
-                </Button>
-            </header>
+            } />
 
             <div className={styles.list}>
                 {isLoading ? (
@@ -68,23 +65,36 @@ export default function AddressesPage() {
                 ) : (
                     addresses.map(addr => (
                         <div key={addr.id} className={styles.card}>
-                            <div className={styles.cardHeader}>
-                                <span className={styles.tag}>{addr.address_type}</span>
-                                <div className={styles.actions}>
-                                    <button onClick={() => router.push(`/addresses/edit?id=${addr.id}`)} className="text-primary p-2">
-                                        <Edit size={16} />
-                                    </button>
-                                    <button onClick={() => handleDelete(addr.id)} className="text-red-500 p-2">
-                                        <Trash2 size={16} />
-                                    </button>
+                            <span className={styles.pinIcon}><MapPin size={18} /></span>
+                            <div className={styles.body}>
+                                <div className={styles.cardHeader}>
+                                    <h3 className={styles.title}>{addr.title || 'Address'}</h3>
+                                    <span className={styles.tag}>{addr.address_type}</span>
                                 </div>
+                                <p className={styles.text}>{addr.address_line1}</p>
+                                {addr.address_line2 && <p className={styles.text}>{addr.address_line2}</p>}
+                                <p className={styles.text}>
+                                    {addr.city}, {addr.state} - {addr.pincode}
+                                </p>
                             </div>
-                            <h3 className={styles.title}>{addr.title || 'Address'}</h3>
-                            <p className={styles.text}>{addr.address_line1}</p>
-                            {addr.address_line2 && <p className={styles.text}>{addr.address_line2}</p>}
-                            <p className={styles.text}>
-                                {addr.city}, {addr.state} - {addr.pincode}
-                            </p>
+                            <div className={styles.actions}>
+                                <button
+                                    type="button"
+                                    onClick={() => router.push(`/addresses/edit?id=${addr.id}`)}
+                                    className={styles.actionBtn}
+                                    aria-label="Edit address"
+                                >
+                                    <Edit size={16} />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleDelete(addr.id)}
+                                    className={`${styles.actionBtn} ${styles.actionDanger}`}
+                                    aria-label="Delete address"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
                         </div>
                     ))
                 )}

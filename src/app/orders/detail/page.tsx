@@ -4,18 +4,47 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, MapPin, Phone, Package, Clock, CheckCircle, XCircle, AlertCircle, Star, MessageCircle, Loader2, Truck } from 'lucide-react';
+import {
+    MapPin,
+    Phone,
+    Package,
+    Clock,
+    CheckCircle,
+    XCircle,
+    AlertCircle,
+    Star,
+    MessageCircle,
+    Loader2,
+    Store,
+    Bike,
+    Wallet,
+    StickyNote,
+    Sparkles,
+    Check,
+    CreditCard,
+    KeyRound
+} from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
+import PageHeader from '@/app/components/PageHeader';
 import { ProductImage } from '@/app/components/ProductImage';
+import UpiPaymentPanel from '@/app/components/UpiPaymentPanel';
+import { getOrderTaxSummary } from '@/lib/orderTaxSummary';
 import FulfillmentSlotPicker from '@/app/components/FulfillmentSlotPicker';
 import OrderFulfillmentHighlight from '@/app/components/OrderFulfillmentHighlight';
-import OrderStatusTimeline from '@/app/components/OrderStatusTimeline';
-import { FulfillmentSlot, OrderDeliveryInfo, RESCHEDULABLE_ORDER_STATUSES, formatFulfillmentWindow } from '@/lib/fulfillmentSlots';
+import {
+    FulfillmentSlot,
+    OrderDeliveryInfo,
+    RESCHEDULABLE_ORDER_STATUSES,
+    formatFulfillmentWindow
+} from '@/lib/fulfillmentSlots';
 import { getOrderStatusDisplay } from '@/lib/orderFulfillmentDisplay';
 import { isDeliveryFailure } from '@/lib/deliveryFailure';
 import { OrderStatusLogEntry } from '@/lib/orderStatusTimeline';
 import { getOrderFeeDisplayLines, type OptionalMoneyAmount } from '@/lib/orderFeeLines';
+import { getVisibleOrderNotes } from '@/lib/orderNotes';
+import { getVisiblePointsEarned, type OptionalPointsEarned } from '@/lib/orderPointsEarned';
+import { getVisiblePickupCode } from '@/lib/orderPickupCode';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -40,6 +69,9 @@ interface OrderDetail {
     delivery_fee?: OptionalMoneyAmount;
     discount_amount?: OptionalMoneyAmount;
     discount_from_points: string;
+    points_earned?: OptionalPointsEarned;
+    taxable_amount?: string;
+    tax_amount?: string;
     total_amount: string;
     refund_amount?: string;
     net_amount?: string;
@@ -55,6 +87,7 @@ interface OrderDetail {
     status_logs?: OrderStatusLogEntry[] | null;
     delivery_info?: OrderDeliveryInfo | null;
     payment_mode: string;
+    notes?: string | null;
     special_instructions: string;
     delivery_address_text: string;
     items: OrderItem[];
@@ -73,12 +106,14 @@ interface OrderDetail {
     payment_status?: string;
     payment_edit_count?: number;
     is_payment_locked?: boolean;
+    coupon_code?: string | null;
 }
 
 function OrderDetails() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const orderId = searchParams.get('id');
+    const autoOpenUpi = searchParams.get('payment') === 'true';
 
     const [order, setOrder] = useState<OrderDetail | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -98,7 +133,6 @@ function OrderDetails() {
     const [rescheduleSlot, setRescheduleSlot] = useState<FulfillmentSlot | null>(null);
     const [slotRefreshKey, setSlotRefreshKey] = useState(0);
     const [isRescheduling, setIsRescheduling] = useState(false);
-
 
     useEffect(() => {
         if (orderId) {
@@ -121,8 +155,6 @@ function OrderDetails() {
     }, [orderId]);
 
     const loadOrderDetails = async (force: boolean = false) => {
-        setIsLoading(force && !order ? true : !order); // Only show overlay loading if we don't have order data or explicitly loading first time
-        // Actually, let's keep it simple:
         if (!order) setIsLoading(true);
 
         try {
@@ -173,8 +205,6 @@ function OrderDetails() {
         }
     };
 
-    const fulfillmentWindow = order ? formatFulfillmentWindow(order.fulfillment_slot_start, order.fulfillment_slot_end) : null;
-
     const handleApproval = async (action: 'accept' | 'reject') => {
         if (!order) return;
         setIsActionLoading(true);
@@ -182,8 +212,6 @@ function OrderDetails() {
             await apiService.confirmOrderModification(order.id, action);
             loadOrderDetails(true);
         } catch (error) {
-            console.error(error);
-            // global error interceptor handles this
             console.error(error);
         } finally {
             setIsActionLoading(false);
@@ -203,11 +231,9 @@ function OrderDetails() {
                 comment: comment
             });
             setShowRatingModal(false);
-            // Refresh order details to show "You rated this order" state
             loadOrderDetails(true);
         } catch (error) {
             console.error('Rating failed:', error);
-            // global error interceptor handles this
         } finally {
             setIsRatingSubmitting(false);
         }
@@ -215,14 +241,13 @@ function OrderDetails() {
 
     const handleSubmitPayment = async () => {
         if (!order) return;
-        
+
         const cleanRefId = referenceId.trim();
         if (!cleanRefId) {
             toast.error("Please enter a transaction ID");
             return;
         }
 
-        // 12-digit numeric validation
         if (!/^\d{12}$/.test(cleanRefId)) {
             toast.error("Invalid ID format. Please enter exactly 12 digits from your UPI app.");
             return;
@@ -246,168 +271,157 @@ function OrderDetails() {
 
     const getPaymentStatusInfo = (status: string) => {
         switch (status) {
-            case 'pending_payment': 
-                return { label: 'Pending Payment', color: 'text-amber-600', icon: <Clock size={16} /> };
-            case 'pending_verification': 
-                return { label: 'Pending Verification', color: 'text-blue-600', icon: <Loader2 size={16} className="animate-spin" /> };
-            case 'verified': 
-                return { label: 'Verified', color: 'text-green-600', icon: <CheckCircle size={16} /> };
-            case 'failed': 
-                return { label: 'Verification Failed', color: 'text-red-600', icon: <XCircle size={16} /> };
-            default: 
-                return { label: status, color: 'text-gray-600', icon: <Clock size={16} /> };
+            case 'pending_payment':
+                return { label: 'Pending Payment', color: 'text-[var(--amber-700)]', icon: <Clock size={16} /> };
+            case 'pending_verification':
+                return { label: 'Pending Verification', color: 'text-[var(--brand-600)]', icon: <Loader2 size={16} className="animate-spin" /> };
+            case 'verified':
+                return { label: 'Verified', color: 'text-[var(--fresh-700)]', icon: <CheckCircle size={16} /> };
+            case 'failed':
+                return { label: 'Verification Failed', color: 'text-[var(--rose-600)]', icon: <XCircle size={16} /> };
+            default:
+                return { label: status, color: 'text-[var(--ink-3)]', icon: <Clock size={16} /> };
         }
     };
 
-    const getStatusIcon = (status: string, deliveryMode?: string, deliveryFailed = false) => {
-        if (deliveryFailed) return <XCircle size={24} />;
+    const getStatusInfo = (status: string) => {
         switch (status.toLowerCase()) {
-            case 'pending':
-            case 'waiting_for_customer_approval':
-                return <Clock size={24} />;
-            case 'packed':
-                return deliveryMode === 'pickup' ? <Package size={24} /> : <Package size={24} />;
-            case 'out_for_delivery':
-                return <Truck size={24} />;
-            case 'delivered':
-                return <CheckCircle size={24} />;
-            case 'cancelled':
-                return <XCircle size={24} />;
-            case 'confirmed':
-            case 'processing':
-                return <Package size={24} />;
-            default:
-                return <AlertCircle size={24} />;
+            case 'pending': return { color: styles.toneWarn, icon: <Clock size={22} /> };
+            case 'waiting_for_customer_approval': return { color: styles.toneWarn, icon: <AlertCircle size={22} /> };
+            case 'confirmed': return { color: styles.toneInfo, icon: <Package size={22} /> };
+            case 'delivered': return { color: styles.toneSuccess, icon: <CheckCircle size={22} /> };
+            case 'cancelled': return { color: styles.toneDanger, icon: <XCircle size={22} /> };
+            default: return { color: styles.toneInfo, icon: <Package size={22} /> };
         }
     };
 
     if (isLoading) return <LoadingScreen message="Loading..." />;
-    if (!order) return <div className="p-20 text-center">Order not found.</div>;
+    if (!order) {
+        return (
+            <div className={styles.notFound}>
+                <Package size={36} strokeWidth={1.5} />
+                <h1>Order not found</h1>
+                <Button variant="outline" onClick={() => router.push('/orders')}>Back to orders</Button>
+            </div>
+        );
+    }
 
     const deliveryFailed = isDeliveryFailure(order);
     const statusDisplay = getOrderStatusDisplay(order.status, order.delivery_mode, deliveryFailed);
+    const visibleNotes = getVisibleOrderNotes(order);
+    const visiblePointsEarned = getVisiblePointsEarned(order);
+    const visiblePickupCode = getVisiblePickupCode(order);
+    const statusInfo = getStatusInfo(order.status);
+    const taxSummary = getOrderTaxSummary(order);
+    const fulfillmentWindow = formatFulfillmentWindow(order.fulfillment_slot_start, order.fulfillment_slot_end);
+
+    const statusKey = order.status.toLowerCase();
+    const trackerSteps = [
+        { key: 'placed', label: 'Placed', match: ['pending', 'waiting_for_customer_approval'] },
+        { key: 'confirmed', label: 'Confirmed', match: ['confirmed', 'processing'] },
+        { key: 'packed', label: 'Packed', match: ['packed'] },
+        ...(order.delivery_mode === 'pickup' ? [] : [{ key: 'otw', label: 'On the way', match: ['out_for_delivery'] }]),
+        { key: 'delivered', label: order.delivery_mode === 'pickup' ? 'Picked up' : 'Delivered', match: ['delivered'] },
+    ];
+    const currentStep = trackerSteps.findIndex((step) => step.match.includes(statusKey));
+    const showTracker = currentStep >= 0;
 
     return (
         <div className={styles.container}>
-            <header className={styles.header}>
-                <Button variant="outline" onClick={() => router.push('/orders')}>
-                    <ArrowLeft size={20} />
-                </Button>
-                <h1>Order Details</h1>
-                <div className="flex gap-2 items-center">
+            <PageHeader
+                title={`Order #${order.order_number}`}
+                subtitle={new Date(order.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                onBack={() => router.push('/orders')}
+                right={
                     <button
+                        type="button"
+                        className={styles.chatBtn}
                         onClick={() => router.push(`/orders/chat?id=${order.id}`)}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            backgroundColor: '#16a34a',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '999px',
-                            padding: '7px 16px',
-                            fontSize: '13px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            boxShadow: '0 2px 8px rgba(22,163,74,0.35)',
-                            letterSpacing: '0.01em',
-                        }}
                     >
                         <MessageCircle size={16} />
                         Chat
                     </button>
-                </div>
-            </header>
+                }
+            />
 
             <main className={styles.main}>
-                <div className={`${styles.statusBanner} ${statusDisplay.bannerClass}`}>
-                    {getStatusIcon(order.status, order.delivery_mode, deliveryFailed)}
-                    <div className={styles.statusLabel}>{statusDisplay.label}</div>
-                    {deliveryFailed ? (
-                        order.cancellation_reason && (
-                            <div className="text-sm font-semibold opacity-90 mt-1">
-                                {order.cancellation_reason}
-                            </div>
-                        )
-                    ) : (
-                        order.status.toLowerCase() === 'cancelled' && order.cancelled_by && (
-                            <div className="text-sm font-bold opacity-90 mt-1 uppercase">
-                                By {order.cancelled_by}
-                            </div>
-                        )
-                    )}
-                    <div className={styles.statusValue}>#{order.order_number}</div>
-                    <div className={styles.orderInfo}>
-                        <span>{new Date(order.created_at).toLocaleString()}</span>
+                <div className={`${styles.statusBanner} ${statusInfo.color}`}>
+                    <div className={styles.statusTop}>
+                        <span className={styles.statusIcon}>{statusInfo.icon}</span>
+                        <div className="min-w-0">
+                            <div className={styles.statusLabel}>{statusDisplay.label}</div>
+                            {deliveryFailed ? (
+                                order.cancellation_reason && (
+                                    <div className={styles.statusSub}>
+                                        {order.cancellation_reason}
+                                    </div>
+                                )
+                            ) : (
+                                statusKey === 'cancelled' && order.cancelled_by && (
+                                    <div className={styles.statusSub}>By {order.cancelled_by}</div>
+                                )
+                            )}
+                            <div className={styles.statusValue}>#{order.order_number} · {order.retailer_name}</div>
+                        </div>
                     </div>
+                    {showTracker && (
+                        <ol className={styles.tracker} aria-label="Order progress">
+                            {trackerSteps.map((step, idx) => (
+                                <li
+                                    key={step.key}
+                                    className={`${styles.trackerStep} ${idx <= currentStep ? styles.trackerDone : ''} ${idx === currentStep ? styles.trackerCurrent : ''}`}
+                                    aria-current={idx === currentStep ? 'step' : undefined}
+                                >
+                                    <span className={styles.trackerDot}>
+                                        {idx < currentStep || statusKey === 'delivered' ? <Check size={12} strokeWidth={3} /> : null}
+                                    </span>
+                                    <span className={styles.trackerLabel}>{step.label}</span>
+                                </li>
+                            ))}
+                        </ol>
+                    )}
                 </div>
 
-                <OrderStatusTimeline
-                    status={order.status}
-                    delivery_mode={order.delivery_mode}
-                    created_at={order.created_at}
-                    pickup_ready_at={order.pickup_ready_at}
-                    packed_at={order.packed_at}
-                    out_for_delivery_at={order.out_for_delivery_at}
-                    delivered_at={order.delivered_at}
-                    cancelled_at={order.cancelled_at}
-                    cancelled_by={order.cancelled_by}
-                    cancellation_reason={order.cancellation_reason}
-                    delivery_info={order.delivery_info}
-                    status_logs={order.status_logs}
-                />
+                {/* Fulfillment highlight (pickup code & courier dispatch) */}
+                <div className="mb-4">
+                    <OrderFulfillmentHighlight
+                        status={order.status}
+                        delivery_mode={order.delivery_mode}
+                        pickup_code={visiblePickupCode || order.pickup_code}
+                        pickup_ready_at={order.pickup_ready_at}
+                        delivery_info={order.delivery_info}
+                    />
+                </div>
 
                 {/* UPI Payment Section */}
                 {order.payment_mode === 'upi' && order.status !== 'cancelled' && (
                     <div className={styles.upipaymentSection}>
                         <div className={styles.upipaymentHeader}>
                             <div className={styles.upipaymentIcon}>
-                                <AlertCircle size={24} />
+                                <CreditCard size={20} />
                             </div>
                             <h3 className={styles.upipaymentTitle}>UPI Payment Details</h3>
                         </div>
-                        
+
                         {(!order.payment_reference_id || isEditingPayment) ? (
                             <>
                                 <p className={styles.upipaymentDescription}>
                                     Please complete the payment and provide the transaction ID below.
                                 </p>
 
-                                <div className={styles.qrContainer}>
-                                    {order.retailer_upi_qr_code ? (
-                                        <div className={styles.qrWrapper}>
-                                            <img 
-                                                src={order.retailer_upi_qr_code} 
-                                                alt="UPI QR Code" 
-                                                className={styles.qrImage}
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div className="text-sm text-gray-500 italic">No QR Code available</div>
-                                    )}
-                                    
-                                    <div className={styles.upiIdContainer}>
-                                        <span className={styles.upiIdLabel}>UPI ID</span>
-                                        <div className={styles.upiIdValue}>
-                                            {order.retailer_upi_id || "Not Provided"}
-                                        </div>
-                                        <button 
-                                            onClick={() => {
-                                                if (order.retailer_upi_id) {
-                                                    navigator.clipboard.writeText(order.retailer_upi_id);
-                                                    toast.success("UPI ID copied!");
-                                                }
-                                            }}
-                                            className={styles.copyButton}
-                                        >
-                                            Copy UPI ID
-                                        </button>
-                                    </div>
-                                </div>
+                                <UpiPaymentPanel
+                                    retailerUpiId={order.retailer_upi_id}
+                                    retailerName={order.retailer_name}
+                                    orderNumber={order.order_number}
+                                    netAmount={order.net_amount}
+                                    totalAmount={order.total_amount}
+                                    retailerUpiQrCode={order.retailer_upi_qr_code}
+                                    autoOpen={autoOpenUpi}
+                                />
 
                                 <div className={styles.formGroup}>
                                     <label>Transaction ID / Reference Number</label>
-                                    <input 
+                                    <input
                                         type="text"
                                         className={styles.inputField}
                                         placeholder="Enter 12-digit UPI Ref No."
@@ -415,14 +429,14 @@ function OrderDetails() {
                                         onChange={(e) => setReferenceId(e.target.value)}
                                     />
                                     {order.payment_edit_count !== undefined && order.payment_edit_count > 0 && (
-                                        <p className="text-[10px] text-amber-600 font-bold mb-1">
+                                        <p className={styles.editCount}>
                                             Edit attempt {order.payment_edit_count} of 3
                                         </p>
                                     )}
                                     <div className="flex gap-2">
-                                        <Button 
-                                            variant="primary" 
-                                            fullWidth 
+                                        <Button
+                                            variant="primary"
+                                            fullWidth
                                             onClick={handleSubmitPayment}
                                             isLoading={isSubmittingPayment}
                                             disabled={isSubmittingPayment || !referenceId.trim()}
@@ -430,8 +444,8 @@ function OrderDetails() {
                                             {order.payment_reference_id ? 'Update Details' : 'Submit Details'}
                                         </Button>
                                         {isEditingPayment && (
-                                            <Button 
-                                                variant="outline" 
+                                            <Button
+                                                variant="outline"
                                                 onClick={() => setIsEditingPayment(false)}
                                                 disabled={isSubmittingPayment}
                                             >
@@ -439,50 +453,50 @@ function OrderDetails() {
                                             </Button>
                                         )}
                                     </div>
-                                    <p className="text-[10px] text-gray-500 mt-2 text-center">
+                                    <p className={styles.mutedCenter}>
                                         You can edit transaction ID until verification
                                     </p>
                                 </div>
                             </>
                         ) : (
                             <div className="space-y-4">
-                                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                <div className={styles.paymentBox}>
                                     <div className="flex justify-between items-start mb-3">
                                         <div>
                                             <span className={styles.upiIdLabel}>Submitted Trans. ID</span>
-                                            <div className="font-mono font-bold text-gray-800 break-all">{order.payment_reference_id}</div>
+                                            <div className={styles.paymentRef}>{order.payment_reference_id}</div>
                                         </div>
-                                        
+
                                         {!order.is_payment_locked && (order.payment_edit_count || 0) < 3 && (
-                                            <button 
+                                            <button
                                                 onClick={() => {
                                                     setReferenceId(order.payment_reference_id || '');
                                                     setIsEditingPayment(true);
                                                 }}
-                                                className="text-primary text-xs font-bold px-3 py-1 bg-primary/10 rounded-lg"
+                                                className={styles.editBtn}
                                             >
                                                 Edit
                                             </button>
                                         )}
                                     </div>
 
-                                    <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100">
-                                        <span className="text-xs text-gray-500 font-bold uppercase">Status:</span>
+                                    <div className={styles.paymentStatusRow}>
+                                        <span className={styles.paymentStatusLabel}>Status</span>
                                         <div className={`flex items-center gap-1.5 text-sm font-bold ${getPaymentStatusInfo(order.payment_status || '').color}`}>
                                             {getPaymentStatusInfo(order.payment_status || '').icon}
                                             {getPaymentStatusInfo(order.payment_status || '').label}
                                         </div>
                                     </div>
-                                    
+
                                     {order.payment_status === 'failed' && (
-                                        <p className="text-xs text-red-500 mt-2 italic">
+                                        <p className={styles.paymentFailed}>
                                             Verification failed. Please check your transaction ID and edit if incorrect.
                                         </p>
                                     )}
                                 </div>
-                                
+
                                 {order.is_payment_locked && (
-                                    <p className="text-[10px] text-green-600 font-bold text-center">
+                                    <p className={styles.paymentLocked}>
                                         Payment verified and locked. No further edits allowed.
                                     </p>
                                 )}
@@ -492,32 +506,22 @@ function OrderDetails() {
                 )}
 
                 {order.expected_processing_start && order.status.toLowerCase() === 'pending' && (
-                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mt-4 flex items-start gap-3 text-orange-800 mx-4 shadow-sm">
-                        <AlertCircle size={20} className="shrink-0 mt-0.5" />
-                        <div className="text-sm">
-                            <span className="font-semibold block mb-1">Received outside business hours</span>
+                    <div className={styles.noticeWarn}>
+                        <AlertCircle size={18} />
+                        <div>
+                            <strong>Received outside business hours</strong>
                             Processing will begin {new Date(order.expected_processing_start).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}.
                         </div>
                     </div>
                 )}
 
-                <OrderFulfillmentHighlight
-                    delivery_mode={order.delivery_mode}
-                    status={order.status}
-                    pickup_code={order.pickup_code}
-                    pickup_ready_at={order.pickup_ready_at}
-                    delivery_info={order.delivery_info}
-                    variant="prominent"
-                />
-
-                {order.estimated_ready_time &&
-                    ['confirmed', 'processing'].includes(order.status.toLowerCase()) &&
-                    order.delivery_mode === 'pickup' &&
-                    !order.pickup_ready_at && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center text-blue-800">
-                        <Clock size={16} className="inline mr-2 mb-1" />
-                        <span className="font-medium text-sm">Estimated pickup ready:</span>
-                        <span className="font-bold ml-2 text-lg block sm:inline mt-1 sm:mt-0">
+                {order.estimated_ready_time && ['confirmed', 'processing', 'packed'].includes(order.status.toLowerCase()) && (
+                    <div className={styles.noticeInfo}>
+                        <Clock size={18} />
+                        <span className={styles.etaLabel}>
+                            {order.delivery_mode === 'pickup' ? "Estimated Pickup Ready Time:" : "Estimated Ready Time:"}
+                        </span>
+                        <span className={styles.etaValue}>
                             {new Date(order.estimated_ready_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                     </div>
@@ -539,7 +543,7 @@ function OrderDetails() {
                             </Button>
                             <Button
                                 variant="outline"
-                                className="flex-1 border-red-500 text-red-500"
+                                className={`flex-1 ${styles.dangerOutline}`}
                                 onClick={() => handleApproval('reject')}
                                 isLoading={isActionLoading}
                             >
@@ -551,18 +555,23 @@ function OrderDetails() {
 
                 <section className={styles.section}>
                     <div className={styles.retailerCard}>
-                        <h2 className={styles.retailerName}>{order.retailer_name}</h2>
-                        <a href={`tel:${order.retailer_phone}`} className={styles.retailerDetail + " text-blue-600 hover:underline"}>
-                            <Phone size={14} /> {order.retailer_phone}
-                        </a>
-                        <div className={styles.retailerDetail}>
-                            <MapPin size={14} /> {order.retailer_address}
+                        <span className={styles.retailerIcon}><Store size={20} /></span>
+                        <div className="min-w-0 flex-1">
+                            <h2 className={styles.retailerName}>{order.retailer_name}</h2>
+                            <div className={styles.retailerDetail}>
+                                <MapPin size={13} /> {order.retailer_address}
+                            </div>
                         </div>
+                        {order.retailer_phone && (
+                            <a href={`tel:${order.retailer_phone}`} className={styles.callBtn} aria-label={`Call ${order.retailer_name}`}>
+                                <Phone size={17} />
+                            </a>
+                        )}
                     </div>
                 </section>
 
                 <section className={styles.section}>
-                    <h3 className="font-bold mb-3 text-sm text-gray-500 uppercase">Items</h3>
+                    <h3 className={styles.sectionHeading}>Items <span>{order.items.length}</span></h3>
                     <div className={styles.itemsList}>
                         {order.items.map(item => (
                             <div key={item.id} className={styles.item}>
@@ -574,7 +583,7 @@ function OrderDetails() {
                                     <p className={styles.itemMeta}>
                                         ₹{item.product_price} × {item.quantity}
                                         {item.returned_quantity && item.returned_quantity > 0 ? (
-                                            <span className="text-red-500 font-bold ml-2 text-[10px] uppercase">
+                                            <span className={styles.returnedTag}>
                                                 ({item.returned_quantity} Returned)
                                             </span>
                                         ) : null}
@@ -582,9 +591,9 @@ function OrderDetails() {
                                 </div>
                                 <div className={styles.itemPrice}>
                                     {item.returned_quantity && item.returned_quantity > 0 ? (
-                                        <div className="flex flex-col items-end">
-                                            <span className="line-through text-gray-400 text-xs">₹{item.total_price}</span>
-                                            <span className="text-green-600 font-bold">₹{(parseFloat(item.product_price) * (item.net_quantity || 0)).toFixed(0)}</span>
+                                        <div className={styles.returnedPrice}>
+                                            <s>₹{item.total_price}</s>
+                                            <span>₹{(parseFloat(item.product_price) * (item.net_quantity || 0)).toFixed(0)}</span>
                                         </div>
                                     ) : (
                                         `₹${item.total_price}`
@@ -596,7 +605,7 @@ function OrderDetails() {
                 </section>
 
                 <section className={styles.section}>
-                    <h3 className="font-bold mb-3 text-sm text-gray-500 uppercase">Order Summary</h3>
+                    <h3 className={styles.sectionHeading}>Bill summary</h3>
                     <div className={styles.summary}>
                         <div className={styles.summaryRow}>
                             <span>Subtotal</span>
@@ -610,25 +619,50 @@ function OrderDetails() {
                                 </span>
                             </div>
                         ))}
+                        {order.coupon_code && (
+                            <div className={styles.summaryRow}>
+                                <span>Coupon Applied</span>
+                                <span className={styles.couponCode}>
+                                    {order.coupon_code}
+                                </span>
+                            </div>
+                        )}
+                        {visiblePointsEarned ? (
+                            <div className={styles.cashbackNote}>
+                                <Sparkles size={14} /> <span><strong>+{visiblePointsEarned} Cashback Points</strong> {order.status === 'delivered' ? 'credited' : 'will be credited upon delivery'}!</span>
+                            </div>
+                        ) : null}
                         {parseFloat(order.discount_from_points) > 0 && (
                             <div className={styles.summaryRow}>
                                 <span>Points Redeemed</span>
                                 <span className={styles.discount}>-₹{order.discount_from_points}</span>
                             </div>
                         )}
+                        {taxSummary && (
+                            <>
+                                <div className={styles.summaryRow}>
+                                    <span>Taxable Amount</span>
+                                    <span>₹{taxSummary.taxableAmount}</span>
+                                </div>
+                                <div className={styles.summaryRow}>
+                                    <span>GST (included)</span>
+                                    <span>₹{taxSummary.taxAmount}</span>
+                                </div>
+                            </>
+                        )}
                         <div className={styles.totalRow}>
                             <span>{parseFloat(order.refund_amount || '0') > 0 ? 'Original Total' : 'Total Amount'}</span>
-                            <span className={parseFloat(order.refund_amount || '0') > 0 ? 'line-through text-gray-400' : ''}>₹{order.total_amount}</span>
+                            <span className={parseFloat(order.refund_amount || '0') > 0 ? styles.struck : ''}>₹{order.total_amount}</span>
                         </div>
                         {parseFloat(order.refund_amount || '0') > 0 && (
                             <>
                                 <div className={styles.summaryRow}>
-                                    <span className="text-red-600 font-bold">Refund Amount</span>
-                                    <span className="text-red-600 font-bold">-₹{order.refund_amount}</span>
+                                    <span className={styles.refund}>Refund Amount</span>
+                                    <span className={styles.refund}>-₹{order.refund_amount}</span>
                                 </div>
-                                <div className={styles.totalRow + " border-t-2 border-gray-200 pt-2 mt-2"}>
-                                    <span className="text-green-700">Net Payable</span>
-                                    <span className="text-green-700 text-xl font-black">₹{order.net_amount}</span>
+                                <div className={`${styles.totalRow} ${styles.netRow}`}>
+                                    <span>Net Payable</span>
+                                    <span>₹{order.net_amount}</span>
                                 </div>
                             </>
                         )}
@@ -636,25 +670,49 @@ function OrderDetails() {
                 </section>
 
                 <section className={styles.section}>
-                    <h3 className="font-bold mb-3 text-sm text-gray-500 uppercase">Delivery Info</h3>
-                    <div className="flex flex-col gap-2">
-                        <div className="text-sm">
-                            <span className="text-gray-500">Method:</span> <span className="font-medium capitalize">{order.delivery_mode}</span>
+                    <h3 className={styles.sectionHeading}>Delivery info</h3>
+                    <div className={styles.infoList}>
+                        <div className={styles.infoRow}>
+                            <span className={styles.infoIcon}><Bike size={16} /></span>
+                            <div>
+                                <span className={styles.infoLabel}>Method</span>
+                                <span className={`${styles.infoValue} capitalize`}>{order.delivery_mode}</span>
+                            </div>
                         </div>
-                        <div className="text-sm">
-                            <span className="text-gray-500">Payment:</span> <span className="font-medium uppercase">{order.payment_mode.replace(/_/g, ' ')}</span>
-                        </div>
-                        {order.delivery_mode === 'delivery' && (
-                            <div className="text-sm">
-                                <span className="text-gray-500">Address:</span> <p className="mt-1">{order.delivery_address_text}</p>
+                        {visiblePickupCode && (
+                            <div className={styles.infoRow}>
+                                <span className={styles.infoIcon}><KeyRound size={16} /></span>
+                                <div>
+                                    <span className={styles.infoLabel}>Pickup code</span>
+                                    <span className="font-mono font-bold text-base tracking-wider text-[var(--brand-700)]">{visiblePickupCode}</span>
+                                </div>
                             </div>
                         )}
                         {fulfillmentWindow && (
-                            <div className="text-sm mt-2 p-3 bg-indigo-50 border border-indigo-100 rounded-lg">
-                                <span className="text-gray-500 block mb-1">
-                                    {order.delivery_mode === 'pickup' ? 'Pickup window:' : 'Delivery window:'}
-                                </span>
-                                <span className="font-semibold text-indigo-900">{fulfillmentWindow}</span>
+                            <div className={styles.infoRow}>
+                                <span className={styles.infoIcon}><Clock size={16} /></span>
+                                <div>
+                                    <span className={styles.infoLabel}>
+                                        {order.delivery_mode === 'pickup' ? 'Scheduled Pickup Slot' : 'Scheduled Delivery Slot'}
+                                    </span>
+                                    <span className={styles.infoValue}>{fulfillmentWindow}</span>
+                                </div>
+                            </div>
+                        )}
+                        <div className={styles.infoRow}>
+                            <span className={styles.infoIcon}><Wallet size={16} /></span>
+                            <div>
+                                <span className={styles.infoLabel}>Payment</span>
+                                <span className={`${styles.infoValue} uppercase`}>{order.payment_mode.replace(/_/g, ' ')}</span>
+                            </div>
+                        </div>
+                        {order.delivery_mode === 'delivery' && (
+                            <div className={styles.infoRow}>
+                                <span className={styles.infoIcon}><MapPin size={16} /></span>
+                                <div>
+                                    <span className={styles.infoLabel}>Address</span>
+                                    <span className={styles.infoValue}>{order.delivery_address_text}</span>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -663,7 +721,7 @@ function OrderDetails() {
                 {order.retailer && order.fulfillment_slot_start && RESCHEDULABLE_ORDER_STATUSES.has(order.status.toLowerCase()) && (
                     <section className={styles.section}>
                         <div className="flex items-center justify-between mb-3">
-                            <h3 className="font-bold text-sm text-gray-500 uppercase">Change Time Slot</h3>
+                            <h3 className={styles.sectionHeading} style={{ margin: 0 }}>Change Time Slot</h3>
                             {!showReschedule && (
                                 <Button variant="outline" className="text-xs h-8" onClick={() => setShowReschedule(true)}>
                                     Reschedule
@@ -671,7 +729,7 @@ function OrderDetails() {
                             )}
                         </div>
                         {showReschedule && (
-                            <div>
+                            <div className="mt-3">
                                 <FulfillmentSlotPicker
                                     retailerId={String(order.retailer)}
                                     deliveryMode={order.delivery_mode as 'pickup' | 'delivery'}
@@ -706,26 +764,26 @@ function OrderDetails() {
                     </section>
                 )}
 
-                {order.special_instructions && (
+                {(visibleNotes || order.special_instructions) && (
                     <section className={styles.section}>
-                        <h3 className="font-bold mb-2 text-sm text-gray-500 uppercase">Notes</h3>
-                        <div className={styles.instructionsBox}>{order.special_instructions}</div>
+                        <h3 className={styles.sectionHeading}><StickyNote size={14} /> Notes</h3>
+                        <div className={styles.instructionsBox}>{visibleNotes ?? order.special_instructions}</div>
                     </section>
                 )}
 
                 {/* Cancel Button */}
                 {['pending', 'confirmed', 'processing'].includes(order.status.toLowerCase()) && (
-                    <div className="px-4 mt-6">
+                    <div className={styles.actionBlock}>
                         <Button
                             variant="outline"
                             fullWidth
-                            className="border-red-500 text-red-600 font-bold hover:bg-red-50"
+                            className={styles.dangerOutline}
                             onClick={handleCancelOrder}
                             isLoading={isActionLoading}
                         >
                             Cancel Order
                         </Button>
-                        <p className="text-[10px] text-center text-gray-400 mt-2 italic">
+                        <p className={styles.mutedCenter}>
                             Orders can only be cancelled before they are packed or out for delivery.
                         </p>
                     </div>
@@ -733,19 +791,19 @@ function OrderDetails() {
 
                 {/* Rating Button */}
                 {order.status.toLowerCase() === 'delivered' && (
-                    <div className="px-4 mt-6 mb-8">
+                    <div className={styles.actionBlock}>
                         {!order.has_customer_feedback ? (
                             <Button
                                 variant="primary"
                                 fullWidth
-                                className="bg-blue-600 hover:bg-blue-700"
+                                size="lg"
                                 onClick={() => setShowRatingModal(true)}
                             >
-                                <Star className="mr-2" size={18} fill="currentColor" />
+                                <Star size={18} fill="currentColor" />
                                 Rate Store
                             </Button>
                         ) : (
-                            <div className="flex flex-col p-4 bg-green-50 text-green-800 rounded-lg border border-green-200">
+                            <div className={styles.ratedCard}>
                                 <div className="flex items-center gap-2 mb-2 font-semibold">
                                     <CheckCircle size={18} />
                                     <span>You rated this order</span>
@@ -757,13 +815,13 @@ function OrderDetails() {
                                                 <Star
                                                     key={star}
                                                     size={16}
-                                                    className={order.feedback.overall_rating >= star ? 'text-yellow-400' : 'text-gray-300'}
-                                                    fill={order.feedback.overall_rating >= star ? '#facc15' : 'none'}
+                                                    className={order.feedback.overall_rating >= star ? 'text-amber-400' : 'text-[var(--line-strong)]'}
+                                                    fill={order.feedback.overall_rating >= star ? '#fbbf24' : 'none'}
                                                 />
                                             ))}
                                         </div>
                                         {order.feedback.comment && (
-                                            <p className="text-sm italic text-gray-700 bg-white/50 p-2 rounded">
+                                            <p className={styles.ratedComment}>
                                                 "{order.feedback.comment}"
                                             </p>
                                         )}
@@ -778,14 +836,14 @@ function OrderDetails() {
 
                 {/* Rating Modal */}
                 {showRatingModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                        <div className="bg-white rounded-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
-                            <div className="p-4 border-b">
-                                <h3 className="text-lg font-bold text-center">Rate Your Order</h3>
+                    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-[rgb(11_19_36/0.45)] p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={() => setShowRatingModal(false)}>
+                        <div className="w-full max-w-sm overflow-hidden rounded-t-[var(--r-xl)] bg-white pb-[env(safe-area-inset-bottom)] shadow-[var(--sh-lg)] animate-in fade-in slide-in-from-bottom-8 duration-300 sm:rounded-[var(--r-xl)] sm:pb-0" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Rate your order">
+                            <div className="px-5 pt-5">
+                                <h3 className="text-center text-lg font-extrabold tracking-tight">Rate your order</h3>
                             </div>
 
-                            <div className="p-6">
-                                <p className="text-center text-gray-600 mb-6">How was your experience with {order.retailer_name}?</p>
+                            <div className="px-5 pt-2 pb-5">
+                                <p className="mb-5 text-center text-sm text-[var(--ink-3)]">How was your experience with {order.retailer_name}?</p>
 
                                 <div className="flex justify-center gap-2 mb-6">
                                     {[1, 2, 3, 4, 5].map((star) => (
@@ -793,19 +851,20 @@ function OrderDetails() {
                                             key={star}
                                             type="button"
                                             onClick={() => setRating(star)}
-                                            className="focus:outline-none transition-transform active:scale-95"
+                                            aria-label={`${star} star${star > 1 ? 's' : ''}`}
+                                            className="rounded-lg p-1 transition-transform hover:scale-110 active:scale-95"
                                         >
                                             <Star
-                                                size={32}
-                                                className={rating >= star ? 'text-yellow-400' : 'text-gray-300'}
-                                                fill={rating >= star ? '#facc15' : 'none'}
+                                                size={34}
+                                                className={rating >= star ? 'text-amber-400' : 'text-[var(--line-strong)]'}
+                                                fill={rating >= star ? '#fbbf24' : 'none'}
                                             />
                                         </button>
                                     ))}
                                 </div>
 
                                 <textarea
-                                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none text-sm"
+                                    className="w-full resize-none rounded-xl border border-[var(--line-strong)] p-3 text-sm outline-none focus:border-[var(--brand-500)] focus:ring-4 focus:ring-[var(--brand-100)]"
                                     placeholder="Add a comment (optional)..."
                                     rows={3}
                                     value={comment}
@@ -813,7 +872,7 @@ function OrderDetails() {
                                 />
                             </div>
 
-                            <div className="p-4 border-t bg-gray-50 flex gap-3">
+                            <div className="flex gap-3 border-t border-[var(--line)] px-5 py-4">
                                 <Button
                                     variant="outline"
                                     className="flex-1"

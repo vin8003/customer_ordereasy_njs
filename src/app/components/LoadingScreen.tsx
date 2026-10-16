@@ -15,7 +15,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
             <div className={styles.content}>
                 <div className={styles.logoWrapper}>
                     <img
-                        src="/assets/images/logo.png"
+                        src="/assets/images/logo-mark.png"
                         alt="Order Easy"
                         className={styles.logo}
                     />

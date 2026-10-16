@@ -4,10 +4,11 @@ import toast from '@/lib/toast';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
-import { ArrowLeft, Save } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import { Input } from '@/app/components/ui/Input';
+import PageHeader from '@/app/components/PageHeader';
 import styles from './ProfileEdit.module.css';
 
 export default function EditProfilePage() {
@@ -54,13 +55,7 @@ export default function EditProfilePage() {
 
     return (
         <div className={styles.container}>
-            <header className={styles.header}>
-                <Button variant="outline" onClick={handleBack}>
-                    <ArrowLeft size={20} />
-                </Button>
-                <h1>Edit Profile</h1>
-                <div className="h-5" />
-            </header>
+            <PageHeader title="Edit Profile" onBack={handleBack} />
 
             <form className={styles.form} onSubmit={handleSubmit}>
                 <div className={styles.field}>
@@ -90,7 +85,7 @@ export default function EditProfilePage() {
                 </div>
                 {/* Phone is usually read-only or requires OTP */}
 
-                <Button type="submit" isLoading={isLoading} fullWidth>
+                <Button type="submit" size="lg" isLoading={isLoading} fullWidth>
                     Save Changes
                 </Button>
             </form>

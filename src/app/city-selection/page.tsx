@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { MapPin } from 'lucide-react';
+import { MapPin, ChevronDown, LocateFixed } from 'lucide-react';
 import { Button } from '@/app/components/ui/Button';
 import { City } from '@/config/cities';
 import {
@@ -158,10 +158,10 @@ export default function CitySelectionPage() {
             <div className={styles.content}>
                 <div className={styles.header}>
                     <div className={styles.iconWrapper}>
-                        <MapPin size={48} className={styles.icon} />
+                        <MapPin size={28} strokeWidth={2.25} className={styles.icon} />
                     </div>
-                    <h1>Select Your City</h1>
-                    <p>Tell us where you are to find the best offers near you.</p>
+                    <h1>Where should we deliver?</h1>
+                    <p>Pick your city to see shops and offers available near you.</p>
                 </div>
 
                 <div className={styles.formFields}>
@@ -180,6 +180,7 @@ export default function CitySelectionPage() {
                                 </option>
                             ))}
                         </select>
+                        <ChevronDown size={18} className={styles.selectChevron} aria-hidden="true" />
                     </div>
 
                     <div className={styles.field}>
@@ -200,19 +201,25 @@ export default function CitySelectionPage() {
                                 </option>
                             ))}
                         </select>
+                        <ChevronDown size={18} className={styles.selectChevron} aria-hidden="true" />
                     </div>
                 </div>
 
                 {isDetecting && (
-                    <p className={styles.detectHint}>Detecting your city…</p>
+                    <p className={styles.detectHint}>
+                        <LocateFixed size={14} className={styles.detectPulse} /> Detecting your city…
+                    </p>
                 )}
                 {!isDetecting && detectHint && (
-                    <p className={styles.detectHint}>{detectHint}</p>
+                    <p className={styles.detectHint}>
+                        <LocateFixed size={14} /> {detectHint}
+                    </p>
                 )}
 
                 <div className={styles.footer}>
                     <Button
                         fullWidth
+                        size="lg"
                         onClick={handleConfirm}
                         disabled={!selectedState || !selectedCityName}
                     >

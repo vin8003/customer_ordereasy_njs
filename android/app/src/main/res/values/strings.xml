@@ -5,4 +5,6 @@
     <string name="package_name">win.ordereasy.customer</string>
     <string name="custom_url_scheme">win.ordereasy.customer</string>
     <string name="server_client_id">241725361064-2k6np1n9ecj2admv520596kvgker14hb.apps.googleusercontent.com</string>
+    <string name="facebook_app_id">1803672754002680</string>
+    <string name="facebook_client_token">d74247df3041b5f5a62a79b406114444</string>
 </resources>
