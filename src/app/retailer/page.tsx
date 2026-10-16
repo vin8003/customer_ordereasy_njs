@@ -19,6 +19,9 @@ import LazyProductLane from '@/app/components/LazyProductLane';
 import InfiniteProductGrid from '@/app/components/InfiniteProductGrid';
 import { processRetailerProductList } from '@/utils/productStock';
 import { resolveMediaUrl } from '@/utils/mediaUrl';
+import { visibleSearchProductBrandName } from '@/lib/searchProductBrandName';
+import { visibleProductListUnit } from '@/lib/productListUnit';
+import { visibleProductListMrp } from '@/lib/productListMrp';
 import styles from './RetailerHome.module.css';
 
 interface Category {
@@ -41,6 +44,7 @@ export interface Product {
     stock_quantity: number;
     track_inventory: boolean;
     unit?: string;
+    brand_name?: string | null;
     minimum_order_quantity?: number;
     maximum_order_quantity?: number | null;
 }
@@ -403,25 +407,38 @@ function RetailerHome() {
                                     <div className={styles.noSuggestions}>Searching…</div>
                                 ) : suggestions.length > 0 ? (
                                     <>
-                                        {suggestions.map((product) => (
-                                            <div
-                                                key={product.id}
-                                                className={styles.suggestionItem}
-                                                onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
-                                            >
-                                                <div className={styles.suggestionImage}>
-                                                    <ProductImage src={product.image} alt={product.name} />
-                                                </div>
-                                                <div className={styles.suggestionInfo}>
-                                                    <div className={styles.suggestionName}>{product.name}</div>
-                                                    <div className={styles.suggestionMeta}>
-                                                        <span className={styles.suggestionPrice}>₹{product.price}</span>
-                                                        {product.unit && <span>· {product.unit}</span>}
+                                        {suggestions.map((product) => {
+                                            const brandName = visibleSearchProductBrandName(product);
+                                            const unit = visibleProductListUnit(product);
+                                            const listMrp = visibleProductListMrp(product);
+                                            // processRetailerProductList falls mrp back to price; strike it only when it is higher.
+                                            const showMrp = listMrp !== null && Number(listMrp) > Number(product.price);
+                                            return (
+                                                <div
+                                                    key={product.id}
+                                                    className={styles.suggestionItem}
+                                                    onClick={() => router.push(`/retailer/product?retailerId=${retailerId}&productId=${product.id}`)}
+                                                >
+                                                    <div className={styles.suggestionImage}>
+                                                        <ProductImage src={product.image} alt={product.name} />
                                                     </div>
+                                                    <div className={styles.suggestionInfo}>
+                                                        <div className={styles.suggestionName}>{product.name}</div>
+                                                        {brandName ? (
+                                                            <div className={styles.suggestionBrand}>{brandName}</div>
+                                                        ) : null}
+                                                        <div className={styles.suggestionMeta}>
+                                                            <span className={styles.suggestionPrice}>₹{product.price}</span>
+                                                            {showMrp ? (
+                                                                <span className={styles.suggestionMrp}>₹{listMrp}</span>
+                                                            ) : null}
+                                                            {unit && <span>· {unit}</span>}
+                                                        </div>
+                                                    </div>
+                                                    <ChevronRight size={16} className={styles.suggestionChevron} />
                                                 </div>
-                                                <ChevronRight size={16} className={styles.suggestionChevron} />
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                         <button type="submit" className={styles.suggestionAll}>
                                             <Search size={14} /> See all results for &ldquo;{searchQuery.trim()}&rdquo;
                                         </button>

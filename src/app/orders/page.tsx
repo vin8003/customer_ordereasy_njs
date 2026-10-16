@@ -25,9 +25,12 @@ interface Order {
     is_returned?: boolean;
     fulfillment_slot_start?: string | null;
     fulfillment_slot_end?: string | null;
+    delivery_fee?: string | number | null;
+    discount_amount?: string | number | null;
 }
 
 import { formatFulfillmentWindow } from '@/lib/fulfillmentSlots';
+import { getOrderListMoneyLines } from '@/lib/orderListMoneyLines';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 
 export default function OrdersPage() {
@@ -149,6 +152,11 @@ export default function OrdersPage() {
                                         <s>₹{order.total_amount}</s>
                                     )}
                                 </span>
+                                {getOrderListMoneyLines(order).map((line) => (
+                                    <span key={line.key} className={styles.amountLabel}>
+                                        {line.label} {line.amountDisplay}
+                                    </span>
+                                ))}
                             </div>
                             <span className={styles.viewDetails}>
                                 View details <ChevronRight size={16} />

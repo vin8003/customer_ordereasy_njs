@@ -340,6 +340,21 @@
     color: var(--ink);
 }
 
+.suggestionBrand {
+    margin-top: 1px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--ink-3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.suggestionMrp {
+    color: var(--ink-4);
+    text-decoration: line-through;
+}
+
 .suggestionChevron {
     color: var(--ink-4);
     flex-shrink: 0;

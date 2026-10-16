@@ -13,6 +13,16 @@ import AddToCartButton from '@/app/components/AddToCartButton';
 import { ProductCard } from '@/app/components/ProductCard';
 import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
 import { filterInStockProducts, isOutOfStock } from '@/utils/productStock';
+import {
+    formatVisibleBarcode,
+    type OptionalBarcode,
+} from '@/lib/productDetailBarcode';
+import { formatVisibleHsnCode, type OptionalHsnCode } from '@/lib/productHsnCode';
+import { getVisibleCategoryName } from '@/lib/productCategoryName';
+import {
+    getVisibleProductTags,
+    type OptionalProductTags,
+} from '@/lib/productDetailTags';
 import styles from './ProductDetail.module.css';
 
 interface Product {
@@ -31,6 +41,10 @@ interface Product {
     savings?: number;
     discount_percentage?: number;
     track_inventory: boolean;
+    barcode?: OptionalBarcode;
+    tags?: OptionalProductTags;
+    hsn_code?: OptionalHsnCode;
+    category_name?: string | null;
     offers?: any[]; // flexible for now
     group_variants?: {
         id: number;
@@ -167,6 +181,11 @@ function ProductDetail() {
 
 
 
+    const visibleBarcode = formatVisibleBarcode(product.barcode);
+    const visibleHsnCode = formatVisibleHsnCode(product.hsn_code);
+    const visibleCategoryName = getVisibleCategoryName(product.category_name);
+    const visibleTags = getVisibleProductTags(product.tags);
+
     const isOffline = !!retailerStatus && !retailerStatus.offersDelivery && !retailerStatus.offersPickup;
     const productOutOfStock = product.track_inventory && product.stock_quantity === 0;
 
@@ -214,6 +233,21 @@ function ProductDetail() {
                 <div className={styles.details}>
                     {product.unit && <div className={styles.unitTag}>{product.unit}</div>}
                     <h1 className={styles.title}>{product.name}</h1>
+                    {visibleCategoryName ? (
+                        <p className={styles.categoryName}>{visibleCategoryName}</p>
+                    ) : null}
+                    {visibleBarcode ? (
+                        <p className={styles.barcode}>{visibleBarcode}</p>
+                    ) : null}
+                    {visibleTags.length > 0 ? (
+                        <ul className={styles.tagChips} aria-label="Product tags">
+                            {visibleTags.map((tag, index) => (
+                                <li key={`${tag}-${index}`} className={styles.tagChip}>
+                                    {tag}
+                                </li>
+                            ))}
+                        </ul>
+                    ) : null}
 
                     {isOffline && (
                         <div className={styles.offlineNotice}>
@@ -319,6 +353,9 @@ function ProductDetail() {
                         <p className={styles.description}>
                             {product.description || "No description available for this product."}
                         </p>
+                        {visibleHsnCode ? (
+                            <p className={styles.hsnCode}>HSN {visibleHsnCode}</p>
+                        ) : null}
                         {product.product_group && (
                             <div className={styles.groupTag}>
                                 {product.product_group}
