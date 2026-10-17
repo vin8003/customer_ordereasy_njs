@@ -14,6 +14,9 @@ import { formatChipCurrency, mergeRetailerChipFields } from '@/utils/retailerChi
 import { resolveMediaUrl } from '@/utils/mediaUrl';
 import styles from './Retailers.module.css';
 
+const RETAILER_BASE_URL = (process.env.NEXT_PUBLIC_RETAILER_PORTAL_URL || 'https://retailer.ordereasy.win').replace(/\/$/, '');
+const RETAILER_LOGIN_URL = `${RETAILER_BASE_URL}/login`;
+
 interface Retailer {
     id: number;
     shop_name: string;
@@ -385,7 +388,7 @@ export default function RetailersPage() {
                         <p>Apni Dukaan Ko Online Banaiye</p>
                     </div>
                     <a
-                        href="https://forms.gle/5e8PdMXTqVfK6os17"
+                        href={RETAILER_LOGIN_URL}
                         target="_blank"
                         rel="noopener noreferrer"
                         className={styles.partnerBannerLink}
