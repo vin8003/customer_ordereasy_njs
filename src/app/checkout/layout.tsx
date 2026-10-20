@@ -27,11 +27,13 @@ export default function CheckoutLayout({
         getServerMountedSnapshot
     );
 
-    if (!mounted) {
-        return null;
-    }
-
-    if (isLocalDummyCheckoutPreview(window.location.hostname, window.location.search)) {
+    // The dummy preview is dead in production builds, so production renders the
+    // real checkout on the server too instead of a blank page until mount.
+    if (
+        process.env.NODE_ENV !== 'production'
+        && mounted
+        && isLocalDummyCheckoutPreview(window.location.hostname, window.location.search)
+    ) {
         return <>{children}</>;
     }
 

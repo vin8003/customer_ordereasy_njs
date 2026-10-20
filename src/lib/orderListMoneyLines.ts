@@ -45,7 +45,9 @@ export function isPresentNonZeroAmount(value: OptionalOrderMoneyField): boolean 
 }
 
 function rupeeAmount(source: string): string {
-    return `₹${source.replace(/^[+-]/, '')}`;
+    // Two decimals, like the order detail fee rows (orderFeeLines), so one payload
+    // reads the same on the list and the detail screen.
+    return `₹${Math.abs(Number(source)).toFixed(2)}`;
 }
 
 function formatDeliveryFeeDisplay(source: string): string {

@@ -67,7 +67,7 @@ describe('getOrderListMoneyLines — OE-322 list display', () => {
             { key: 'delivery_fee', label: 'Delivery Fee', amountDisplay: '₹40.00' },
         ]);
         assert.deepEqual(getOrderListMoneyLines({ delivery_fee: 25 }), [
-            { key: 'delivery_fee', label: 'Delivery Fee', amountDisplay: '₹25' },
+            { key: 'delivery_fee', label: 'Delivery Fee', amountDisplay: '₹25.00' },
         ]);
     });
 
@@ -96,7 +96,7 @@ describe('getOrderListMoneyLines — OE-322 list display', () => {
     it('omits a garbage field while still showing the valid sibling field', () => {
         assert.deepEqual(
             getOrderListMoneyLines({ delivery_fee: 'not-a-fee', discount_amount: '8' }),
-            [{ key: 'discount_amount', label: 'Discount', amountDisplay: '-₹8' }]
+            [{ key: 'discount_amount', label: 'Discount', amountDisplay: '-₹8.00' }]
         );
     });
 });
