@@ -12,7 +12,7 @@ import { WishlistIcon } from '@/app/components/WishlistIcon';
 import AddToCartButton from '@/app/components/AddToCartButton';
 import { ProductCard } from '@/app/components/ProductCard';
 import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
-import { filterInStockProducts, isOutOfStock } from '@/utils/productStock';
+import { filterInStockProducts, isOutOfStock, withVariantStock } from '@/utils/productStock';
 import {
     formatVisibleBarcode,
     type OptionalBarcode,
@@ -60,6 +60,7 @@ interface Product {
         maximum_order_quantity?: number | null;
         track_inventory?: boolean;
         stock_quantity?: number;
+        quantity?: number | null;
     }[];
 }
 
@@ -111,11 +112,9 @@ function ProductDetail() {
                 discount_percentage: Number(data.discount_percentage),
                 offers: data.offers || [], // Assuming offers might be in response, else empty
                 group_variants: filterInStockProducts(
-                    (data.group_variants || []).map((variant: NonNullable<Product['group_variants']>[number]) => ({
-                        ...variant,
-                        stock_quantity: variant.stock_quantity ?? 0,
-                        track_inventory: variant.track_inventory ?? true,
-                    }))
+                    (data.group_variants || []).map(
+                        (variant: NonNullable<Product['group_variants']>[number]) => withVariantStock(variant)
+                    )
                 ),
             });
 
