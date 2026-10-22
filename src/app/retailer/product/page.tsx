@@ -19,6 +19,7 @@ import {
 } from '@/lib/productDetailBarcode';
 import { formatVisibleHsnCode, type OptionalHsnCode } from '@/lib/productHsnCode';
 import { getVisibleCategoryName } from '@/lib/productCategoryName';
+import { visibleProductBrandName } from '@/lib/productBrandName';
 import {
     getVisibleProductTags,
     type OptionalProductTags,
@@ -28,6 +29,7 @@ import styles from './ProductDetail.module.css';
 interface Product {
     id: number;
     name: string;
+    brand_name?: string | null;
     description: string;
     price: number; // Selling Price
     mrp: number;   // Original Price / MRP
@@ -169,6 +171,7 @@ function ProductDetail() {
     }
 
     // Use backend values if available, else calculate
+    const visibleBrandName = visibleProductBrandName(product);
     const hasDiscount = product.mrp > product.price;
     const discountPercent = product.discount_percentage
         ? Math.round(product.discount_percentage)
@@ -233,6 +236,9 @@ function ProductDetail() {
                 <div className={styles.details}>
                     {product.unit && <div className={styles.unitTag}>{product.unit}</div>}
                     <h1 className={styles.title}>{product.name}</h1>
+                    {visibleBrandName ? (
+                        <p className={styles.brandName}>{visibleBrandName}</p>
+                    ) : null}
                     {visibleCategoryName ? (
                         <p className={styles.categoryName}>{visibleCategoryName}</p>
                     ) : null}
