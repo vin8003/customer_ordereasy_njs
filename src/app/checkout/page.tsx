@@ -11,7 +11,7 @@ import PageHeader from '@/app/components/PageHeader';
 import styles from './Checkout.module.css';
 import PhoneVerification from '@/app/components/auth/PhoneVerification';
 import { hasValidAddressCoordinates, parseCoordinate } from '@/utils/addressLocation';
-import { buildPlaceOrderPayload } from '@/utils/placeOrder';
+import { buildPlaceOrderPayload, isCouponRefusal } from '@/utils/placeOrder';
 import CouponSection, { AppliedCoupon } from '@/app/components/CouponSection';
 import FulfillmentSlotPicker from '@/app/components/FulfillmentSlotPicker';
 import { FulfillmentSlot, formatSlotWindow, isSlotBookingError, isSlotChoiceMissing } from '@/lib/fulfillmentSlots';
@@ -389,6 +389,8 @@ export default function CheckoutPage() {
             // A slot that filled up meanwhile must be picked again, not resent.
             if (isSlotBookingError(error)) setSelectedSlot(null);
             setSlotRefreshKey(k => k + 1);
+            // Reload the totals so the page shows why the coupon no longer applies and the price without it.
+            if (isCouponRefusal(error)) loadCartSummary(retailerId);
             const responseData =
                 error &&
                 typeof error === 'object' &&

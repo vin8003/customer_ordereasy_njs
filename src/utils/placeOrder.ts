@@ -51,3 +51,9 @@ export function buildPlaceOrderPayload(input: PlaceOrderInput): PlaceOrderPayloa
 
     return payload;
 }
+
+/** The API refused the coupon while placing the order (used up, expired, minimum not met). */
+export function isCouponRefusal(error: unknown): boolean {
+    const data = (error as { response?: { data?: { coupon_code?: unknown } } } | null)?.response?.data;
+    return Boolean(data?.coupon_code);
+}
