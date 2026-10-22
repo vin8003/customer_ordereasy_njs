@@ -623,7 +623,12 @@ export const apiService = {
 
     // Orders
     placeOrder: async (data: any) => {
-        const response = await api.post('orders/place/', data);
+        const response = await api.post('orders/place/', data).catch((error) => {
+            // A refused order can mean the cart's coupon or stock changed meanwhile,
+            // so the next cart read must come from the API, not the cache.
+            Object.keys(CACHE).forEach(k => { if (k.startsWith('cart_')) delete CACHE[k]; });
+            throw error;
+        });
         delete CACHE['orders_history'];
         delete CACHE['orders_current'];
         // Also clear cart
