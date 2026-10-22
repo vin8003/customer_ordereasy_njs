@@ -102,3 +102,17 @@ export const RESCHEDULABLE_ORDER_STATUSES = new Set([
     'packed',
     'out_for_delivery',
 ]);
+
+/**
+ * Checkout needs a slot only when the shop has open slots (OE-240). While the picker
+ * is loading or failed (null) or nothing is open, checkout is not blocked.
+ */
+export function isSlotChoiceMissing(selectedSlot: FulfillmentSlot | null, openSlotCount: number | null): boolean {
+    return !selectedSlot && openSlotCount !== null && openSlotCount > 0;
+}
+
+/** True when place-order was refused for the chosen slot (for example it filled up meanwhile). */
+export function isSlotBookingError(error: unknown): boolean {
+    const data = (error as { response?: { data?: { fulfillment_slot_start?: unknown } } } | null)?.response?.data;
+    return Boolean(data?.fulfillment_slot_start);
+}

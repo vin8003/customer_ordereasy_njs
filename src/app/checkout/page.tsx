@@ -14,7 +14,7 @@ import { hasValidAddressCoordinates, parseCoordinate } from '@/utils/addressLoca
 import { buildPlaceOrderPayload } from '@/utils/placeOrder';
 import CouponSection, { AppliedCoupon } from '@/app/components/CouponSection';
 import FulfillmentSlotPicker from '@/app/components/FulfillmentSlotPicker';
-import { FulfillmentSlot, formatSlotWindow } from '@/lib/fulfillmentSlots';
+import { FulfillmentSlot, formatSlotWindow, isSlotBookingError, isSlotChoiceMissing } from '@/lib/fulfillmentSlots';
 import { visibleCheckoutLineBrandName } from '@/lib/checkoutLineBrandName';
 
 interface Address {
@@ -119,6 +119,12 @@ export default function CheckoutPage() {
     useEffect(() => {
         calculateDeliveryFee();
     }, [deliveryMode, retailerSettings, cartTotal]);
+
+    // Pickup and delivery have separate slots, so a mode or shop change needs a new pick.
+    useEffect(() => {
+        setSelectedSlot(null);
+        setOpenSlotCount(null);
+    }, [deliveryMode, retailerId]);
 
     const loadData = async () => {
         const storedId = localStorage.getItem('current_retailer_id');
@@ -339,6 +345,11 @@ export default function CheckoutPage() {
             return;
         }
 
+        if (isSlotChoiceMissing(selectedSlot, openSlotCount)) {
+            toast.error('Please select a pickup/delivery time slot.');
+            return;
+        }
+
         if (paymentMethod === 'upi' && !upiAvailable) {
             toast.error('UPI is not available for this shop. Please choose Cash on Delivery or Pickup.');
             return;
@@ -375,6 +386,8 @@ export default function CheckoutPage() {
             const isUPI = paymentMethod === 'upi';
             router.push(`/orders/detail?id=${response.id}${isUPI ? '&payment=true' : ''}`);
         } catch (error: unknown) {
+            // A slot that filled up meanwhile must be picked again, not resent.
+            if (isSlotBookingError(error)) setSelectedSlot(null);
             setSlotRefreshKey(k => k + 1);
             const responseData =
                 error &&
