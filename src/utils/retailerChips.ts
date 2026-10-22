@@ -26,26 +26,25 @@ export function mergeRetailerChipFields<T extends RetailerChipFields>(
     listItem: T,
     details?: RetailerChipFields | null
 ): T {
-    const d = details || {};
+    const d: RetailerChipFields = details || {};
+    const l: RetailerChipFields = listItem;
+    // Shop-detail values (including their aliases) win over list values.
     const isOpen = parseOptionalBoolean(
         d.is_currently_open ?? d.is_open ?? d.currently_open ??
-        listItem.is_currently_open ?? listItem.is_open ?? listItem.currently_open
+        l.is_currently_open ?? l.is_open ?? l.currently_open
     );
     const minOrder = parseMoney(
         d.minimum_order_amount ?? d.min_order_amount ??
-        listItem.minimum_order_amount ?? listItem.min_order_amount
+        l.minimum_order_amount ?? l.min_order_amount
     );
     const deliveryCharge = parseMoney(
-        d.delivery_charge ?? d.delivery_fee ??
-        listItem.delivery_charge ?? listItem.delivery_fee
+        d.delivery_charge ?? d.delivery_fee ?? l.delivery_charge ?? l.delivery_fee
     );
-    const freeAbove = parseMoney(
-        d.free_delivery_threshold ?? listItem.free_delivery_threshold
-    );
+    const freeAbove = parseMoney(d.free_delivery_threshold ?? l.free_delivery_threshold);
 
     return {
         ...listItem,
-        ...d,
+        ...(details || {}),
         is_currently_open: isOpen,
         minimum_order_amount: minOrder,
         delivery_charge: deliveryCharge,
