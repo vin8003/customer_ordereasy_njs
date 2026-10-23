@@ -1,5 +1,6 @@
 import axios from 'axios';
 import toast from '@/lib/toast';
+import { clearOrdersHistory, ordersHistoryKey } from '@/lib/ordersHistoryCache';
 import { Capacitor } from '@capacitor/core';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production'
@@ -613,7 +614,7 @@ export const apiService = {
             fulfillment_slot_start: fulfillmentSlotStart,
         });
         delete CACHE[`order_${orderId}`];
-        delete CACHE['orders_history'];
+        clearOrdersHistory(CACHE);
         delete CACHE['orders_current'];
         Object.keys(CACHE).forEach((k) => {
             if (k.startsWith('fulfillment_slots_')) delete CACHE[k];
@@ -629,7 +630,7 @@ export const apiService = {
             Object.keys(CACHE).forEach(k => { if (k.startsWith('cart_')) delete CACHE[k]; });
             throw error;
         });
-        delete CACHE['orders_history'];
+        clearOrdersHistory(CACHE);
         delete CACHE['orders_current'];
         // Also clear cart
         Object.keys(CACHE).forEach(k => { if (k.startsWith('cart_')) delete CACHE[k]; });
@@ -661,7 +662,9 @@ export const apiService = {
     },
 
     getOrders: async (force: boolean = false, page: number = 1) => {
-        const key = `orders_history_p${page}`;
+        // A forced refresh means an order changed, so the later pages cached before it are stale too.
+        if (force && page === 1) clearOrdersHistory(CACHE);
+        const key = ordersHistoryKey(page);
         return fetchWithDedupe(key, async () => {
             const response = await api.get('orders/history/', { params: { page } });
             return response.data;
@@ -728,7 +731,7 @@ export const apiService = {
     confirmOrderModification: async (orderId: number | string, action: 'accept' | 'reject') => {
         const response = await api.post(`orders/${orderId}/confirm_modification/`, { action });
         delete CACHE[`order_${orderId}`];
-        delete CACHE['orders_history'];
+        clearOrdersHistory(CACHE);
         delete CACHE['orders_current'];
         // Clear all loyalty cache to be sure
         delete CACHE['loyalty_all'];
@@ -746,7 +749,7 @@ export const apiService = {
     cancelOrder: async (orderId: number | string, reason: string = '') => {
         const response = await api.post(`orders/${orderId}/cancel/`, { reason });
         delete CACHE[`order_${orderId}`];
-        delete CACHE['orders_history'];
+        clearOrdersHistory(CACHE);
         delete CACHE['orders_current'];
         // Clear all loyalty cache to be sure
         delete CACHE['loyalty_all'];
@@ -774,7 +777,7 @@ export const apiService = {
     createOrderFeedback: async (orderId: number | string, data: any) => {
         const response = await api.post(`orders/${orderId}/feedback/`, data);
         delete CACHE[`order_${orderId}`];
-        delete CACHE['orders_history'];
+        clearOrdersHistory(CACHE);
         return response.data;
     },
 

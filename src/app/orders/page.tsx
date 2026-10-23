@@ -41,9 +41,11 @@ export default function OrdersPage() {
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
+    const [loadMoreFailed, setLoadMoreFailed] = useState(false);
     const observerTarget = useRef<HTMLDivElement>(null);
 
     const loadOrders = useCallback(async (pageNum: number = 1, force: boolean = false) => {
+        setLoadMoreFailed(false);
         if (pageNum === 1) {
             setIsLoading(force ? false : true);
         } else {
@@ -54,11 +56,18 @@ export default function OrdersPage() {
             const results: Order[] = Array.isArray(data) ? data : data?.results || [];
             const nextUrl = data && typeof data === 'object' ? data.next : null;
 
-            setOrders(prev => (pageNum === 1 ? results : [...prev, ...results]));
+            setOrders(prev => {
+                if (pageNum === 1) return results;
+                // A new order shifts the pages, so the first rows of this page can already be listed.
+                const listed = new Set(prev.map(order => order.id));
+                return [...prev, ...results.filter(order => !listed.has(order.id))];
+            });
             setHasMore(Boolean(nextUrl));
             setPage(pageNum);
         } catch (error) {
             console.error('Failed to load orders:', error);
+            // The sentinel stays on screen, so without this it would ask for the same page again at once.
+            if (pageNum > 1) setLoadMoreFailed(true);
         } finally {
             setIsLoading(false);
             setIsLoadingMore(false);
@@ -83,7 +92,7 @@ export default function OrdersPage() {
 
         const observer = new IntersectionObserver(
             entries => {
-                if (entries[0].isIntersecting && hasMore && !isLoading && !isLoadingMore) {
+                if (entries[0].isIntersecting && hasMore && !isLoading && !isLoadingMore && !loadMoreFailed) {
                     loadOrders(page + 1);
                 }
             },
@@ -92,7 +101,7 @@ export default function OrdersPage() {
 
         observer.observe(target);
         return () => observer.unobserve(target);
-    }, [hasMore, isLoading, isLoadingMore, page, loadOrders]);
+    }, [hasMore, isLoading, isLoadingMore, loadMoreFailed, page, loadOrders]);
 
     const getStatusTone = (status: string) => {
         switch (status.toLowerCase()) {
@@ -203,6 +212,15 @@ export default function OrdersPage() {
                                 <Loader2 size={16} className="animate-spin" />
                                 <span>Loading more orders...</span>
                             </div>
+                        )}
+                        {loadMoreFailed && (
+                            <button
+                                type="button"
+                                onClick={() => loadOrders(page + 1)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', fontSize: '0.875rem', textDecoration: 'underline' }}
+                            >
+                                Could not load more orders. Tap to retry
+                            </button>
                         )}
                     </div>
                 )}
