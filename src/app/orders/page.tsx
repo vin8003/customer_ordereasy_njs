@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Package, ChevronRight, Clock, Star, Store } from 'lucide-react';
+import { Package, ChevronRight, Clock, Star, Store, Loader2 } from 'lucide-react';
 import { apiService } from '@/services/api';
 import PageHeader from '@/app/components/PageHeader';
 import { EmptyState } from '@/app/components/EmptyState';
@@ -38,30 +38,61 @@ export default function OrdersPage() {
     const { handleBack } = useAppNavigation();
     const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const observerTarget = useRef<HTMLDivElement>(null);
+
+    const loadOrders = useCallback(async (pageNum: number = 1, force: boolean = false) => {
+        if (pageNum === 1) {
+            setIsLoading(force ? false : true);
+        } else {
+            setIsLoadingMore(true);
+        }
+        try {
+            const data = await apiService.getOrders(force, pageNum);
+            const results: Order[] = Array.isArray(data) ? data : data?.results || [];
+            const nextUrl = data && typeof data === 'object' ? data.next : null;
+
+            setOrders(prev => (pageNum === 1 ? results : [...prev, ...results]));
+            setHasMore(Boolean(nextUrl));
+            setPage(pageNum);
+        } catch (error) {
+            console.error('Failed to load orders:', error);
+        } finally {
+            setIsLoading(false);
+            setIsLoadingMore(false);
+        }
+    }, []);
 
     useEffect(() => {
-        loadOrders();
+        loadOrders(1);
 
         const handleFcmUpdate = () => {
             console.log('Orders page refreshing due to FCM update');
-            loadOrders(true);
+            loadOrders(1, true);
         };
 
         window.addEventListener('fcm_order_update', handleFcmUpdate);
         return () => window.removeEventListener('fcm_order_update', handleFcmUpdate);
-    }, []);
+    }, [loadOrders]);
 
-    const loadOrders = async (force: boolean = false) => {
-        setIsLoading(force ? false : true); // Show loading only for initial load, not for foreground refreshes
-        try {
-            const data = await apiService.getOrders(force);
-            setOrders(Array.isArray(data) ? data : data.results || []);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    useEffect(() => {
+        const target = observerTarget.current;
+        if (!target) return;
+
+        const observer = new IntersectionObserver(
+            entries => {
+                if (entries[0].isIntersecting && hasMore && !isLoading && !isLoadingMore) {
+                    loadOrders(page + 1);
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        observer.observe(target);
+        return () => observer.unobserve(target);
+    }, [hasMore, isLoading, isLoadingMore, page, loadOrders]);
 
     const getStatusTone = (status: string) => {
         switch (status.toLowerCase()) {
@@ -164,6 +195,17 @@ export default function OrdersPage() {
                         </div>
                     </button>
                 ))}
+
+                {orders.length > 0 && hasMore && (
+                    <div ref={observerTarget} style={{ display: 'flex', justifyContent: 'center', padding: '16px' }}>
+                        {isLoadingMore && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--ink-3)', fontSize: '0.875rem' }}>
+                                <Loader2 size={16} className="animate-spin" />
+                                <span>Loading more orders...</span>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

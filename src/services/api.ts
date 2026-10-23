@@ -660,10 +660,10 @@ export const apiService = {
         });
     },
 
-    getOrders: async (force: boolean = false) => {
-        const key = 'orders_history';
+    getOrders: async (force: boolean = false, page: number = 1) => {
+        const key = `orders_history_p${page}`;
         return fetchWithDedupe(key, async () => {
-            const response = await api.get('orders/history/');
+            const response = await api.get('orders/history/', { params: { page } });
             return response.data;
         }, force);
     },
