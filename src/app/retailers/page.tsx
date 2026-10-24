@@ -12,6 +12,8 @@ import { cityId } from '@/config/india-locations';
 import { getPersistedLocation, hasConfirmedLocation } from '@/utils/location';
 import { formatChipCurrency, mergeRetailerChipFields } from '@/utils/retailerChips';
 import { resolveMediaUrl } from '@/utils/mediaUrl';
+import { buildRetailerDiscoveryParams, deliveryFeeChip } from '@/lib/retailerDiscovery';
+import { formatDistanceKm } from '@/lib/deliveryQuote';
 import styles from './Retailers.module.css';
 
 const RETAILER_BASE_URL = (process.env.NEXT_PUBLIC_RETAILER_PORTAL_URL || 'https://retailer.ordereasy.win').replace(/\/$/, '');
@@ -33,6 +35,8 @@ interface Retailer {
     minimum_order_amount?: number | string;
     delivery_charge?: number | string;
     free_delivery_threshold?: number | string;
+    delivery_fee_mode?: 'flat' | 'distance';
+    delivery_fee_estimate?: string | null;
 }
 
 interface OperationalCity {
@@ -58,15 +62,13 @@ export default function RetailersPage() {
         setGreeting(h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening');
     }, []);
 
-    const fetchRetailers = useCallback(async (city: City) => {
+    const fetchRetailers = useCallback(async (city: City & { lat?: number; lng?: number }) => {
         setIsLoading(true);
         setError('');
         setOperationalCities([]);
         try {
-            const params: Record<string, string> = {
-                city: city.name,
-                state: city.state,
-            };
+            // With a GPS pin, shops are listed by their delivery radius.
+            const params = buildRetailerDiscoveryParams(city);
             const data = await apiService.getRetailers(params);
             const results = (data.results || []).map((row: Retailer) => mergeRetailerChipFields(row));
             setRetailers(results);
@@ -340,6 +342,7 @@ export default function RetailersPage() {
                                                     <span className={styles.metaItem}>
                                                         <MapPin size={12} />
                                                         {retailer.city}, {retailer.state}
+                                                        {formatDistanceKm(retailer.distance) && ` · ${formatDistanceKm(retailer.distance)}`}
                                                     </span>
                                                 </div>
                                             </div>
@@ -359,13 +362,21 @@ export default function RetailersPage() {
                                                         Min {formatChipCurrency(retailer.minimum_order_amount)}
                                                     </span>
                                                 )}
-                                                {retailer.delivery_charge === 0 && (
-                                                    <span className={styles.chipFree}>Free delivery</span>
-                                                )}
-                                                {formatChipCurrency(retailer.delivery_charge) && (
-                                                    <span className={styles.chipInfo}>
-                                                        Delivery {formatChipCurrency(retailer.delivery_charge)}
+                                                {deliveryFeeChip(retailer) ? (
+                                                    <span className={deliveryFeeChip(retailer) === 'Free delivery' ? styles.chipFree : styles.chipInfo}>
+                                                        {deliveryFeeChip(retailer)}
                                                     </span>
+                                                ) : (
+                                                    <>
+                                                        {retailer.delivery_charge === 0 && (
+                                                            <span className={styles.chipFree}>Free delivery</span>
+                                                        )}
+                                                        {formatChipCurrency(retailer.delivery_charge) && (
+                                                            <span className={styles.chipInfo}>
+                                                                Delivery {formatChipCurrency(retailer.delivery_charge)}
+                                                            </span>
+                                                        )}
+                                                    </>
                                                 )}
                                                 {formatChipCurrency(retailer.free_delivery_threshold) && (
                                                     <span className={styles.chipInfo}>
