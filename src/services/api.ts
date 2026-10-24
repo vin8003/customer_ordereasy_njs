@@ -1,6 +1,7 @@
 import axios from 'axios';
 import toast from '@/lib/toast';
 import { clearOrdersHistory, ordersHistoryKey } from '@/lib/ordersHistoryCache';
+import { ordersFilterParams, type OrdersFilters } from '@/lib/ordersFilters';
 import { Capacitor } from '@capacitor/core';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production'
@@ -670,12 +671,12 @@ export const apiService = {
         });
     },
 
-    getOrders: async (force: boolean = false, page: number = 1) => {
+    getOrders: async (force: boolean = false, page: number = 1, filters: Partial<OrdersFilters> = {}) => {
         // A forced refresh means an order changed, so the later pages cached before it are stale too.
         if (force && page === 1) clearOrdersHistory(CACHE);
-        const key = ordersHistoryKey(page);
+        const key = ordersHistoryKey(page, filters);
         return fetchWithDedupe(key, async () => {
-            const response = await api.get('orders/history/', { params: { page } });
+            const response = await api.get('orders/history/', { params: { page, ...ordersFilterParams(filters) } });
             return response.data;
         }, force);
     },
