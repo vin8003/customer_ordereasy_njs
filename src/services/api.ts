@@ -300,6 +300,15 @@ export const apiService = {
         return response.data;
     },
 
+    /** Delivery fee and serviceability for a saved address (or lat/lng) at this shop. */
+    getDeliveryQuote: async (
+        retailerId: string | number,
+        params: { address_id?: number; lat?: number; lng?: number; order_total?: number }
+    ) => {
+        const response = await api.get(`retailers/${retailerId}/delivery-quote/`, { params });
+        return response.data;
+    },
+
     getRetailerDetails: async (retailerId: string) => {
         const key = `retailer_${retailerId}`;
         return fetchWithDedupe(key, async () => {

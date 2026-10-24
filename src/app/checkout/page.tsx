@@ -16,6 +16,7 @@ import CouponSection, { AppliedCoupon } from '@/app/components/CouponSection';
 import FulfillmentSlotPicker from '@/app/components/FulfillmentSlotPicker';
 import { FulfillmentSlot, formatSlotWindow, isSlotBookingError, isSlotChoiceMissing } from '@/lib/fulfillmentSlots';
 import { visibleCheckoutLineBrandName } from '@/lib/checkoutLineBrandName';
+import { DeliveryQuote, flatDeliveryFee, formatDistanceKm, parseDeliveryQuote } from '@/lib/deliveryQuote';
 
 interface Address {
     id: number;
@@ -61,6 +62,8 @@ export default function CheckoutPage() {
     const [deliveryMode, setDeliveryMode] = useState<'delivery' | 'pickup'>('delivery');
     const [specialInstructions, setSpecialInstructions] = useState('');
     const [deliveryFee, setDeliveryFee] = useState(0); // Initialize with 0, will be set dynamically
+    // Server quote for the chosen address (distance tiers + radius); null until it arrives.
+    const [deliveryQuote, setDeliveryQuote] = useState<DeliveryQuote | null>(null);
     const [selectedSlot, setSelectedSlot] = useState<FulfillmentSlot | null>(null);
     const [slotRefreshKey, setSlotRefreshKey] = useState(0);
     const [openSlotCount, setOpenSlotCount] = useState<number | null>(null);
@@ -118,7 +121,28 @@ export default function CheckoutPage() {
 
     useEffect(() => {
         calculateDeliveryFee();
-    }, [deliveryMode, retailerSettings, cartTotal]);
+    }, [deliveryMode, retailerSettings, cartTotal, deliveryQuote]);
+
+    // Ask the backend what delivery to the chosen address costs; it prices placed orders the same way.
+    useEffect(() => {
+        if (deliveryMode !== 'delivery' || !retailerId || !selectedAddressId) {
+            setDeliveryQuote(null);
+            return;
+        }
+        let cancelled = false;
+        apiService
+            .getDeliveryQuote(retailerId, { address_id: selectedAddressId, order_total: cartTotal })
+            .then((data) => {
+                if (!cancelled) setDeliveryQuote(parseDeliveryQuote(data));
+            })
+            .catch(() => {
+                // Quote unavailable (old backend, network): fall back to the flat fee shown before.
+                if (!cancelled) setDeliveryQuote(null);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [deliveryMode, retailerId, selectedAddressId, cartTotal]);
 
     // Pickup and delivery have separate slots, so a mode or shop change needs a new pick.
     useEffect(() => {
@@ -187,14 +211,11 @@ export default function CheckoutPage() {
 
         if (paymentMethod === 'cash_pickup') setPaymentMethod('cod');
 
-        let fee = retailerSettings.deliveryCharge;
-
-        // Check free delivery threshold
-        if (retailerSettings.freeDeliveryThreshold > 0 && cartTotal >= retailerSettings.freeDeliveryThreshold) {
-            fee = 0;
-        }
-
-        setDeliveryFee(fee);
+        setDeliveryFee(
+            deliveryQuote
+                ? deliveryQuote.fee
+                : flatDeliveryFee(retailerSettings, cartTotal)
+        );
     };
 
     const checkUserVerification = async () => {
@@ -301,6 +322,7 @@ export default function CheckoutPage() {
     const minOrder = retailerSettings?.minimumOrderAmount ?? 0;
     const belowMinOrder = minOrder > 0 && cartTotal < minOrder;
     const minOrderGap = belowMinOrder ? minOrder - cartTotal : 0;
+    const outsideDeliveryArea = deliveryMode === 'delivery' && !!deliveryQuote && !deliveryQuote.deliverable;
     const upiAvailable = retailerSettings?.acceptsUpi !== false && !!retailerSettings?.retailerUpiId;
 
     useEffect(() => {
@@ -323,6 +345,11 @@ export default function CheckoutPage() {
 
         if (deliveryMode === 'delivery' && !selectedAddressId) {
             toast.error("Please select a delivery address.");
+            return;
+        }
+
+        if (deliveryMode === 'delivery' && deliveryQuote && !deliveryQuote.deliverable) {
+            toast.error(deliveryQuote.reason || 'This shop does not deliver to the selected address.');
             return;
         }
 
@@ -765,9 +792,18 @@ export default function CheckoutPage() {
                             </span>
                         </div>
                     )}
+                    {deliveryMode === 'delivery' && deliveryQuote && !deliveryQuote.deliverable && (
+                        <div className={`${styles.summaryRow} ${styles.warnRow}`}>
+                            <span>{deliveryQuote.reason || 'This shop does not deliver to the selected address.'}</span>
+                            <span />
+                        </div>
+                    )}
                     {deliveryFee > 0 && (
                         <div className={styles.summaryRow}>
-                            <span>Delivery Fee</span>
+                            <span>
+                                Delivery Fee
+                                {deliveryQuote?.distanceKm != null && ` (${formatDistanceKm(deliveryQuote.distanceKm)})`}
+                            </span>
                             <span>₹{deliveryFee.toFixed(2)}</span>
                         </div>
                     )}
@@ -788,11 +824,13 @@ export default function CheckoutPage() {
                         className={styles.desktopPlace}
                         onClick={handlePlaceOrder}
                         isLoading={isLoading}
-                        disabled={belowMinOrder}
+                        disabled={belowMinOrder || outsideDeliveryArea}
                     >
                         {belowMinOrder
                             ? `Add ₹${minOrderGap.toFixed(0)} more to order`
-                            : `Place Order (₹${payableTotal.toFixed(2)})`}
+                            : outsideDeliveryArea
+                                ? 'Outside delivery area'
+                                : `Place Order (₹${payableTotal.toFixed(2)})`}
                     </Button>
                     <p className={styles.secureNote}><ShieldCheck size={13} /> Your order goes directly to the store</p>
                 </section>
@@ -809,11 +847,13 @@ export default function CheckoutPage() {
                     className={styles.footerBtn}
                     onClick={handlePlaceOrder}
                     isLoading={isLoading}
-                    disabled={belowMinOrder}
+                    disabled={belowMinOrder || outsideDeliveryArea}
                 >
                     {belowMinOrder
                         ? `Add ₹${minOrderGap.toFixed(0)} more`
-                        : 'Place Order'}
+                        : outsideDeliveryArea
+                            ? 'Outside delivery area'
+                            : 'Place Order'}
                 </Button>
             </div>
         </div>

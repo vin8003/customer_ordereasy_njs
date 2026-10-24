@@ -193,6 +193,7 @@ export default function CartPage() {
         minimumOrderAmount: number;
         deliveryCharge: number;
         freeDeliveryThreshold: number;
+        distanceFees?: boolean;
     } | null>(null);
     const isGuest = !apiService.isAuthenticated();
 
@@ -219,6 +220,7 @@ export default function CartPage() {
                     minimumOrderAmount: parseFloat(retailerData.minimum_order_amount || '0'),
                     deliveryCharge: parseFloat(retailerData.delivery_charge || '0'),
                     freeDeliveryThreshold: parseFloat(retailerData.free_delivery_threshold || '0'),
+                    distanceFees: retailerData.delivery_fee_mode === 'distance',
                 });
             } catch (e) {
                 console.error('Failed to load retailer settings for cart', e);
@@ -502,7 +504,18 @@ export default function CartPage() {
                                 </span>
                             </div>
                         )}
-                        {retailerSettings && retailerSettings.deliveryCharge > 0 && (
+                        {retailerSettings && retailerSettings.distanceFees && (
+                            <div className={`${styles.billRow} ${styles.billMuted}`}>
+                                <span className="inline-flex items-center gap-1.5"><Bike size={14} /> Delivery</span>
+                                <span>
+                                    by distance, at checkout
+                                    {retailerSettings.freeDeliveryThreshold > 0
+                                        ? ` · free above ₹${retailerSettings.freeDeliveryThreshold.toFixed(0)}`
+                                        : ''}
+                                </span>
+                            </div>
+                        )}
+                        {retailerSettings && !retailerSettings.distanceFees && retailerSettings.deliveryCharge > 0 && (
                             <div className={`${styles.billRow} ${styles.billMuted}`}>
                                 <span className="inline-flex items-center gap-1.5"><Bike size={14} /> Delivery</span>
                                 <span>
