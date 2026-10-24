@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Package, ChevronRight, Clock, Star, Store, Loader2 } from 'lucide-react';
+import { Package, ChevronRight, Clock, Star, Store, Loader2, Search, X } from 'lucide-react';
 import { apiService } from '@/services/api';
 import PageHeader from '@/app/components/PageHeader';
 import { EmptyState } from '@/app/components/EmptyState';
@@ -32,6 +32,12 @@ interface Order {
 import { formatFulfillmentWindow } from '@/lib/fulfillmentSlots';
 import { getOrderListMoneyLines } from '@/lib/orderListMoneyLines';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
+import {
+    EMPTY_ORDERS_FILTERS,
+    ORDER_STATUS_FILTERS,
+    hasOrdersFilters,
+    type OrdersFilters,
+} from '@/lib/ordersFilters';
 
 export default function OrdersPage() {
     const router = useRouter();
@@ -43,8 +49,13 @@ export default function OrdersPage() {
     const [hasMore, setHasMore] = useState(true);
     const [loadMoreFailed, setLoadMoreFailed] = useState(false);
     const observerTarget = useRef<HTMLDivElement>(null);
+    const [filters, setFilters] = useState<OrdersFilters>(EMPTY_ORDERS_FILTERS);
+    const [searchInput, setSearchInput] = useState('');
+    const filtersRef = useRef(filters);
+    filtersRef.current = filters;
 
     const loadOrders = useCallback(async (pageNum: number = 1, force: boolean = false) => {
+        const requested = filtersRef.current;
         setLoadMoreFailed(false);
         if (pageNum === 1) {
             setIsLoading(force ? false : true);
@@ -52,7 +63,9 @@ export default function OrdersPage() {
             setIsLoadingMore(true);
         }
         try {
-            const data = await apiService.getOrders(force, pageNum);
+            const data = await apiService.getOrders(force, pageNum, requested);
+            // The filters changed while this page was loading, so its rows are no longer wanted.
+            if (requested !== filtersRef.current) return;
             const results: Order[] = Array.isArray(data) ? data : data?.results || [];
             const nextUrl = data && typeof data === 'object' ? data.next : null;
 
@@ -74,6 +87,14 @@ export default function OrdersPage() {
         }
     }, []);
 
+    // Search waits for a pause in typing, so each keystroke does not ask the server.
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setFilters(prev => (prev.search === searchInput.trim() ? prev : { ...prev, search: searchInput.trim() }));
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [searchInput]);
+
     useEffect(() => {
         loadOrders(1);
 
@@ -84,7 +105,7 @@ export default function OrdersPage() {
 
         window.addEventListener('fcm_order_update', handleFcmUpdate);
         return () => window.removeEventListener('fcm_order_update', handleFcmUpdate);
-    }, [loadOrders]);
+    }, [loadOrders, filters]);
 
     useEffect(() => {
         const target = observerTarget.current;
@@ -117,14 +138,77 @@ export default function OrdersPage() {
 
     return (
         <div className={styles.container}>
-            <PageHeader title="My Orders" subtitle={orders.length > 0 ? `${orders.length} orders` : undefined} onBack={handleBack} />
+            <PageHeader title="My Orders" subtitle={orders.length > 0 ? `${orders.length} orders${hasMore ? '+' : ''}` : undefined} onBack={handleBack} />
 
             <div className={styles.list}>
+                <div className={styles.filters}>
+                    <label className={styles.searchBox}>
+                        <Search size={16} />
+                        <input
+                            type="search"
+                            value={searchInput}
+                            onChange={e => setSearchInput(e.target.value)}
+                            placeholder="Search by order number"
+                            aria-label="Search orders by order number"
+                        />
+                    </label>
+                    <div className={styles.chips} role="group" aria-label="Filter by status">
+                        {ORDER_STATUS_FILTERS.map(option => (
+                            <button
+                                type="button"
+                                key={option.value}
+                                className={`${styles.chip} ${filters.status === option.value ? styles.chipActive : ''}`}
+                                aria-pressed={filters.status === option.value}
+                                onClick={() => setFilters(prev => ({ ...prev, status: option.value }))}
+                            >
+                                {option.label}
+                            </button>
+                        ))}
+                    </div>
+                    <div className={styles.dates}>
+                        <label>
+                            <span>From</span>
+                            <input
+                                type="date"
+                                value={filters.startDate}
+                                max={filters.endDate || undefined}
+                                onChange={e => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
+                            />
+                        </label>
+                        <label>
+                            <span>To</span>
+                            <input
+                                type="date"
+                                value={filters.endDate}
+                                min={filters.startDate || undefined}
+                                onChange={e => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
+                            />
+                        </label>
+                        {hasOrdersFilters({ ...filters, search: searchInput }) && (
+                            <button
+                                type="button"
+                                className={styles.clearFilters}
+                                onClick={() => { setSearchInput(''); setFilters(EMPTY_ORDERS_FILTERS); }}
+                            >
+                                <X size={14} /> Clear
+                            </button>
+                        )}
+                    </div>
+                </div>
+
                 {isLoading && orders.length === 0 && (
                     [0, 1, 2].map((i) => <div key={i} className={`oe-skeleton ${styles.skeleton}`} />)
                 )}
 
-                {orders.length === 0 && !isLoading && (
+                {orders.length === 0 && !isLoading && hasOrdersFilters(filters) && (
+                    <EmptyState
+                        icon={Search}
+                        title="No matching orders"
+                        description="Try a different status, date range or order number."
+                    />
+                )}
+
+                {orders.length === 0 && !isLoading && !hasOrdersFilters(filters) && (
                     <EmptyState
                         icon={Package}
                         title="No orders yet"
