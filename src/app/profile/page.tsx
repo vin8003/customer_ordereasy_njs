@@ -8,6 +8,7 @@ import { User, Settings, LogOut, Package, MapPin, ChevronRight, Gift, HelpCircle
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import HelpModal from '@/app/components/HelpModal';
+import { visibleAccountReferralCode } from '@/lib/accountReferralCode';
 import styles from './Profile.module.css';
 
 export default function ProfilePage() {
@@ -119,6 +120,8 @@ export default function ProfilePage() {
             : currentRetailerPoints.points)
         : totalCurrencyValue.toFixed(2);
 
+    const referralCode = visibleAccountReferralCode(profile);
+
     return (
         <div className={styles.container}>
             <header className={styles.header}>
@@ -165,6 +168,13 @@ export default function ProfilePage() {
 
                 <div className={styles.section}>
                     <h2 className={styles.sectionTitle}>My Account</h2>
+
+                    {referralCode ? (
+                        <div className={styles.accountReferralRow}>
+                            <span>Referral code</span>
+                            <span>{referralCode}</span>
+                        </div>
+                    ) : null}
 
                     <Link href="/profile/edit" className={styles.menuItem}>
                         <span className={styles.menuIcon}><Settings size={18} /></span>

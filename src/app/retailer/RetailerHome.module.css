@@ -308,6 +308,24 @@
     text-overflow: ellipsis;
 }
 
+.suggestionBrand {
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+}
+
+.suggestionUnit {
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 500;
+    line-height: 1.3;
+    margin: 2px 0 0;
+}
+
 .suggestionMeta {
     margin-top: 2px;
     display: flex;
@@ -320,6 +338,21 @@
 .suggestionPrice {
     font-weight: 750;
     color: var(--ink);
+}
+
+.suggestionBrand {
+    margin-top: 1px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--ink-3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.suggestionMrp {
+    color: var(--ink-4);
+    text-decoration: line-through;
 }
 
 .suggestionChevron {
@@ -341,6 +374,14 @@
     font-size: 0.8125rem;
     font-weight: 700;
     text-align: left;
+}
+
+.suggestionMrp {
+    font-size: 12px;
+    font-weight: 500;
+    color: #94a3b8;
+    text-decoration: line-through;
+    white-space: nowrap;
 }
 
 .noSuggestions {

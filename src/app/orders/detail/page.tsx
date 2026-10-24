@@ -4,13 +4,47 @@ import LoadingScreen from '@/app/components/LoadingScreen';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { MapPin, Phone, Package, Clock, CheckCircle, XCircle, AlertCircle, Star, MessageCircle, Loader2, Store, Bike, Wallet, StickyNote, Sparkles, Check, CreditCard } from 'lucide-react';
+import {
+    MapPin,
+    Phone,
+    Package,
+    Clock,
+    CheckCircle,
+    XCircle,
+    AlertCircle,
+    Star,
+    MessageCircle,
+    Loader2,
+    Store,
+    Bike,
+    Wallet,
+    StickyNote,
+    Sparkles,
+    Check,
+    CreditCard,
+    KeyRound
+} from 'lucide-react';
 import { apiService } from '@/services/api';
 import { Button } from '@/app/components/ui/Button';
 import PageHeader from '@/app/components/PageHeader';
 import { ProductImage } from '@/app/components/ProductImage';
 import UpiPaymentPanel from '@/app/components/UpiPaymentPanel';
 import { getOrderTaxSummary } from '@/lib/orderTaxSummary';
+import FulfillmentSlotPicker from '@/app/components/FulfillmentSlotPicker';
+import OrderFulfillmentHighlight from '@/app/components/OrderFulfillmentHighlight';
+import {
+    FulfillmentSlot,
+    OrderDeliveryInfo,
+    RESCHEDULABLE_ORDER_STATUSES,
+    formatFulfillmentWindow
+} from '@/lib/fulfillmentSlots';
+import { getOrderStatusDisplay } from '@/lib/orderFulfillmentDisplay';
+import { isDeliveryFailure } from '@/lib/deliveryFailure';
+import { OrderStatusLogEntry } from '@/lib/orderStatusTimeline';
+import { getOrderFeeDisplayLines, type OptionalMoneyAmount } from '@/lib/orderFeeLines';
+import { getVisibleOrderNotes } from '@/lib/orderNotes';
+import { getVisiblePointsEarned, type OptionalPointsEarned } from '@/lib/orderPointsEarned';
+import { getVisiblePickupCode } from '@/lib/orderPickupCode';
 import styles from './OrderDetails.module.css';
 
 interface OrderItem {
@@ -32,16 +66,28 @@ interface OrderDetail {
     retailer_address: string;
     status: string;
     subtotal: string;
-    delivery_fee: string;
-    discount_amount: string;
+    delivery_fee?: OptionalMoneyAmount;
+    discount_amount?: OptionalMoneyAmount;
     discount_from_points: string;
+    points_earned?: OptionalPointsEarned;
     taxable_amount?: string;
     tax_amount?: string;
     total_amount: string;
     refund_amount?: string;
     net_amount?: string;
     delivery_mode: string;
+    retailer?: number;
+    fulfillment_slot_start?: string | null;
+    fulfillment_slot_end?: string | null;
+    pickup_code?: string | null;
+    pickup_ready_at?: string | null;
+    packed_at?: string | null;
+    out_for_delivery_at?: string | null;
+    delivered_at?: string | null;
+    status_logs?: OrderStatusLogEntry[] | null;
+    delivery_info?: OrderDeliveryInfo | null;
     payment_mode: string;
+    notes?: string | null;
     special_instructions: string;
     delivery_address_text: string;
     items: OrderItem[];
@@ -52,6 +98,8 @@ interface OrderDetail {
     estimated_ready_time?: string;
     expected_processing_start?: string;
     cancelled_by?: string;
+    cancelled_at?: string | null;
+    cancellation_reason?: string | null;
     retailer_upi_id?: string;
     retailer_upi_qr_code?: string;
     payment_reference_id?: string;
@@ -59,7 +107,6 @@ interface OrderDetail {
     payment_edit_count?: number;
     is_payment_locked?: boolean;
     coupon_code?: string | null;
-    points_earned?: number;
 }
 
 function OrderDetails() {
@@ -80,6 +127,12 @@ function OrderDetails() {
     const [referenceId, setReferenceId] = useState('');
     const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
     const [isEditingPayment, setIsEditingPayment] = useState(false);
+
+    // Fulfillment slot reschedule (OE-240)
+    const [showReschedule, setShowReschedule] = useState(false);
+    const [rescheduleSlot, setRescheduleSlot] = useState<FulfillmentSlot | null>(null);
+    const [slotRefreshKey, setSlotRefreshKey] = useState(0);
+    const [isRescheduling, setIsRescheduling] = useState(false);
 
     useEffect(() => {
         if (orderId) {
@@ -102,8 +155,6 @@ function OrderDetails() {
     }, [orderId]);
 
     const loadOrderDetails = async (force: boolean = false) => {
-        setIsLoading(force && !order ? true : !order); // Only show overlay loading if we don't have order data or explicitly loading first time
-        // Actually, let's keep it simple:
         if (!order) setIsLoading(true);
 
         try {
@@ -127,10 +178,30 @@ function OrderDetails() {
             loadOrderDetails(true);
         } catch (error) {
             console.error(error);
-            // global error interceptor handles this
-            console.error(error);
         } finally {
             setIsActionLoading(false);
+        }
+    };
+
+    const handleRescheduleSlot = async () => {
+        if (!order || !rescheduleSlot) return;
+        setIsRescheduling(true);
+        try {
+            await apiService.rescheduleFulfillmentSlot(order.id, rescheduleSlot.slot_start);
+            setShowReschedule(false);
+            setRescheduleSlot(null);
+            loadOrderDetails(true);
+            toast.success('Pickup/delivery time updated.');
+        } catch (error) {
+            console.error(error);
+            const slotError = (error as { response?: { data?: { fulfillment_slot_start?: unknown } } })
+                ?.response?.data?.fulfillment_slot_start;
+            if (slotError) {
+                setRescheduleSlot(null);
+                setSlotRefreshKey((k) => k + 1);
+            }
+        } finally {
+            setIsRescheduling(false);
         }
     };
 
@@ -141,8 +212,6 @@ function OrderDetails() {
             await apiService.confirmOrderModification(order.id, action);
             loadOrderDetails(true);
         } catch (error) {
-            console.error(error);
-            // global error interceptor handles this
             console.error(error);
         } finally {
             setIsActionLoading(false);
@@ -162,11 +231,9 @@ function OrderDetails() {
                 comment: comment
             });
             setShowRatingModal(false);
-            // Refresh order details to show "You rated this order" state
             loadOrderDetails(true);
         } catch (error) {
             console.error('Rating failed:', error);
-            // global error interceptor handles this
         } finally {
             setIsRatingSubmitting(false);
         }
@@ -174,14 +241,13 @@ function OrderDetails() {
 
     const handleSubmitPayment = async () => {
         if (!order) return;
-        
+
         const cleanRefId = referenceId.trim();
         if (!cleanRefId) {
             toast.error("Please enter a transaction ID");
             return;
         }
 
-        // 12-digit numeric validation
         if (!/^\d{12}$/.test(cleanRefId)) {
             toast.error("Invalid ID format. Please enter exactly 12 digits from your UPI app.");
             return;
@@ -205,15 +271,15 @@ function OrderDetails() {
 
     const getPaymentStatusInfo = (status: string) => {
         switch (status) {
-            case 'pending_payment': 
+            case 'pending_payment':
                 return { label: 'Pending Payment', color: 'text-[var(--amber-700)]', icon: <Clock size={16} /> };
-            case 'pending_verification': 
+            case 'pending_verification':
                 return { label: 'Pending Verification', color: 'text-[var(--brand-600)]', icon: <Loader2 size={16} className="animate-spin" /> };
-            case 'verified': 
+            case 'verified':
                 return { label: 'Verified', color: 'text-[var(--fresh-700)]', icon: <CheckCircle size={16} /> };
-            case 'failed': 
+            case 'failed':
                 return { label: 'Verification Failed', color: 'text-[var(--rose-600)]', icon: <XCircle size={16} /> };
-            default: 
+            default:
                 return { label: status, color: 'text-[var(--ink-3)]', icon: <Clock size={16} /> };
         }
     };
@@ -240,8 +306,14 @@ function OrderDetails() {
         );
     }
 
+    const deliveryFailed = isDeliveryFailure(order);
+    const statusDisplay = getOrderStatusDisplay(order.status, order.delivery_mode, deliveryFailed);
+    const visibleNotes = getVisibleOrderNotes(order);
+    const visiblePointsEarned = getVisiblePointsEarned(order);
+    const visiblePickupCode = getVisiblePickupCode(order);
     const statusInfo = getStatusInfo(order.status);
     const taxSummary = getOrderTaxSummary(order);
+    const fulfillmentWindow = formatFulfillmentWindow(order.fulfillment_slot_start, order.fulfillment_slot_end);
 
     const statusKey = order.status.toLowerCase();
     const trackerSteps = [
@@ -277,9 +349,17 @@ function OrderDetails() {
                     <div className={styles.statusTop}>
                         <span className={styles.statusIcon}>{statusInfo.icon}</span>
                         <div className="min-w-0">
-                            <div className={styles.statusLabel}>Order {order.status.replace(/_/g, ' ')}</div>
-                            {statusKey === 'cancelled' && order.cancelled_by && (
-                                <div className={styles.statusSub}>By {order.cancelled_by}</div>
+                            <div className={styles.statusLabel}>{statusDisplay.label}</div>
+                            {deliveryFailed ? (
+                                order.cancellation_reason && (
+                                    <div className={styles.statusSub}>
+                                        {order.cancellation_reason}
+                                    </div>
+                                )
+                            ) : (
+                                statusKey === 'cancelled' && order.cancelled_by && (
+                                    <div className={styles.statusSub}>By {order.cancelled_by}</div>
+                                )
                             )}
                             <div className={styles.statusValue}>#{order.order_number} · {order.retailer_name}</div>
                         </div>
@@ -302,6 +382,17 @@ function OrderDetails() {
                     )}
                 </div>
 
+                {/* Fulfillment highlight (pickup code & courier dispatch) */}
+                <div className="mb-4">
+                    <OrderFulfillmentHighlight
+                        status={order.status}
+                        delivery_mode={order.delivery_mode}
+                        pickup_code={visiblePickupCode || order.pickup_code}
+                        pickup_ready_at={order.pickup_ready_at}
+                        delivery_info={order.delivery_info}
+                    />
+                </div>
+
                 {/* UPI Payment Section */}
                 {order.payment_mode === 'upi' && order.status !== 'cancelled' && (
                     <div className={styles.upipaymentSection}>
@@ -311,7 +402,7 @@ function OrderDetails() {
                             </div>
                             <h3 className={styles.upipaymentTitle}>UPI Payment Details</h3>
                         </div>
-                        
+
                         {(!order.payment_reference_id || isEditingPayment) ? (
                             <>
                                 <p className={styles.upipaymentDescription}>
@@ -330,7 +421,7 @@ function OrderDetails() {
 
                                 <div className={styles.formGroup}>
                                     <label>Transaction ID / Reference Number</label>
-                                    <input 
+                                    <input
                                         type="text"
                                         className={styles.inputField}
                                         placeholder="Enter 12-digit UPI Ref No."
@@ -343,9 +434,9 @@ function OrderDetails() {
                                         </p>
                                     )}
                                     <div className="flex gap-2">
-                                        <Button 
-                                            variant="primary" 
-                                            fullWidth 
+                                        <Button
+                                            variant="primary"
+                                            fullWidth
                                             onClick={handleSubmitPayment}
                                             isLoading={isSubmittingPayment}
                                             disabled={isSubmittingPayment || !referenceId.trim()}
@@ -353,8 +444,8 @@ function OrderDetails() {
                                             {order.payment_reference_id ? 'Update Details' : 'Submit Details'}
                                         </Button>
                                         {isEditingPayment && (
-                                            <Button 
-                                                variant="outline" 
+                                            <Button
+                                                variant="outline"
                                                 onClick={() => setIsEditingPayment(false)}
                                                 disabled={isSubmittingPayment}
                                             >
@@ -375,9 +466,9 @@ function OrderDetails() {
                                             <span className={styles.upiIdLabel}>Submitted Trans. ID</span>
                                             <div className={styles.paymentRef}>{order.payment_reference_id}</div>
                                         </div>
-                                        
+
                                         {!order.is_payment_locked && (order.payment_edit_count || 0) < 3 && (
-                                            <button 
+                                            <button
                                                 onClick={() => {
                                                     setReferenceId(order.payment_reference_id || '');
                                                     setIsEditingPayment(true);
@@ -396,14 +487,14 @@ function OrderDetails() {
                                             {getPaymentStatusInfo(order.payment_status || '').label}
                                         </div>
                                     </div>
-                                    
+
                                     {order.payment_status === 'failed' && (
                                         <p className={styles.paymentFailed}>
                                             Verification failed. Please check your transaction ID and edit if incorrect.
                                         </p>
                                     )}
                                 </div>
-                                
+
                                 {order.is_payment_locked && (
                                     <p className={styles.paymentLocked}>
                                         Payment verified and locked. No further edits allowed.
@@ -520,16 +611,14 @@ function OrderDetails() {
                             <span>Subtotal</span>
                             <span>₹{order.subtotal}</span>
                         </div>
-                        <div className={styles.summaryRow}>
-                            <span>Delivery Fee ({order.delivery_mode})</span>
-                            <span>₹{order.delivery_fee}</span>
-                        </div>
-                        {parseFloat(order.discount_amount) > 0 && (
-                            <div className={styles.summaryRow}>
-                                <span>Discount</span>
-                                <span className={styles.discount}>-₹{order.discount_amount}</span>
+                        {getOrderFeeDisplayLines(order, { deliveryMode: order.delivery_mode }).map((line) => (
+                            <div key={line.key} className={styles.mutedFeeRow}>
+                                <span>{line.label}</span>
+                                <span className={line.isDiscount ? styles.discount : undefined}>
+                                    {line.isFree ? 'Free' : line.isDiscount ? `-₹${line.amount}` : `₹${line.amount}`}
+                                </span>
                             </div>
-                        )}
+                        ))}
                         {order.coupon_code && (
                             <div className={styles.summaryRow}>
                                 <span>Coupon Applied</span>
@@ -538,9 +627,9 @@ function OrderDetails() {
                                 </span>
                             </div>
                         )}
-                        {order.points_earned && order.points_earned > 0 ? (
+                        {visiblePointsEarned ? (
                             <div className={styles.cashbackNote}>
-                                <Sparkles size={14} /> <span><strong>+{order.points_earned} Cashback Points</strong> {order.status === 'delivered' ? 'credited' : 'will be credited upon delivery'}!</span>
+                                <Sparkles size={14} /> <span><strong>+{visiblePointsEarned} Cashback Points</strong> {order.status === 'delivered' ? 'credited' : 'will be credited upon delivery'}!</span>
                             </div>
                         ) : null}
                         {parseFloat(order.discount_from_points) > 0 && (
@@ -590,6 +679,26 @@ function OrderDetails() {
                                 <span className={`${styles.infoValue} capitalize`}>{order.delivery_mode}</span>
                             </div>
                         </div>
+                        {visiblePickupCode && (
+                            <div className={styles.infoRow}>
+                                <span className={styles.infoIcon}><KeyRound size={16} /></span>
+                                <div>
+                                    <span className={styles.infoLabel}>Pickup code</span>
+                                    <span className="font-mono font-bold text-base tracking-wider text-[var(--brand-700)]">{visiblePickupCode}</span>
+                                </div>
+                            </div>
+                        )}
+                        {fulfillmentWindow && (
+                            <div className={styles.infoRow}>
+                                <span className={styles.infoIcon}><Clock size={16} /></span>
+                                <div>
+                                    <span className={styles.infoLabel}>
+                                        {order.delivery_mode === 'pickup' ? 'Scheduled Pickup Slot' : 'Scheduled Delivery Slot'}
+                                    </span>
+                                    <span className={styles.infoValue}>{fulfillmentWindow}</span>
+                                </div>
+                            </div>
+                        )}
                         <div className={styles.infoRow}>
                             <span className={styles.infoIcon}><Wallet size={16} /></span>
                             <div>
@@ -609,10 +718,56 @@ function OrderDetails() {
                     </div>
                 </section>
 
-                {order.special_instructions && (
+                {order.retailer && order.fulfillment_slot_start && RESCHEDULABLE_ORDER_STATUSES.has(order.status.toLowerCase()) && (
+                    <section className={styles.section}>
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className={styles.sectionHeading} style={{ margin: 0 }}>Change Time Slot</h3>
+                            {!showReschedule && (
+                                <Button variant="outline" className="text-xs h-8" onClick={() => setShowReschedule(true)}>
+                                    Reschedule
+                                </Button>
+                            )}
+                        </div>
+                        {showReschedule && (
+                            <div className="mt-3">
+                                <FulfillmentSlotPicker
+                                    retailerId={String(order.retailer)}
+                                    deliveryMode={order.delivery_mode as 'pickup' | 'delivery'}
+                                    selectedSlotStart={rescheduleSlot?.slot_start ?? null}
+                                    onSelect={setRescheduleSlot}
+                                    days={7}
+                                    refreshKey={slotRefreshKey}
+                                />
+                                <div className="flex gap-2 mt-4">
+                                    <Button
+                                        variant="outline"
+                                        className="flex-1"
+                                        onClick={() => {
+                                            setShowReschedule(false);
+                                            setRescheduleSlot(null);
+                                        }}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        variant="primary"
+                                        className="flex-1"
+                                        disabled={!rescheduleSlot}
+                                        isLoading={isRescheduling}
+                                        onClick={handleRescheduleSlot}
+                                    >
+                                        Confirm New Time
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                    </section>
+                )}
+
+                {(visibleNotes || order.special_instructions) && (
                     <section className={styles.section}>
                         <h3 className={styles.sectionHeading}><StickyNote size={14} /> Notes</h3>
-                        <div className={styles.instructionsBox}>{order.special_instructions}</div>
+                        <div className={styles.instructionsBox}>{visibleNotes ?? order.special_instructions}</div>
                     </section>
                 )}
 

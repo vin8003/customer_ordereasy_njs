@@ -17,6 +17,7 @@ import { useCartContext } from '@/context/CartContext';
 import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
 import { resolveStockQuantity } from '@/utils/productStock';
 import CouponSection, { AppliedCoupon } from '@/app/components/CouponSection';
+import { visibleCartLineBrandName } from '@/lib/cartLineBrandName';
 import styles from './Cart.module.css';
 
 interface CartItem {
@@ -29,6 +30,7 @@ interface CartItem {
     stock_quantity: number;
     minimum_order_quantity: number;
     maximum_order_quantity: number | null;
+    brand_name?: string | null;
 }
 
 const CartItemRow = ({ item, updateQuantity, removeItem, toggleWishlist, isWishlisted }: {
@@ -77,6 +79,7 @@ const CartItemRow = ({ item, updateQuantity, removeItem, toggleWishlist, isWishl
     const isStockMaxReached = item.quantity >= item.stock_quantity;
 
     const atMax = isStockMaxReached || (!!item.maximum_order_quantity && item.quantity >= item.maximum_order_quantity);
+    const brandName = visibleCartLineBrandName(item);
 
     return (
         <div className={styles.cartItem}>
@@ -89,7 +92,10 @@ const CartItemRow = ({ item, updateQuantity, removeItem, toggleWishlist, isWishl
             </div>
             <div className={styles.itemInfo}>
                 <div className={styles.itemTop}>
-                    <h3>{item.product_name}</h3>
+                    <div>
+                        <h3>{item.product_name}</h3>
+                        {brandName ? <p className={styles.brandName}>{brandName}</p> : null}
+                    </div>
                     <div className={styles.itemActions}>
                         <button
                             type="button"

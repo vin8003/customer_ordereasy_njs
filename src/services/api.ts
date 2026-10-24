@@ -1,5 +1,6 @@
 import axios from 'axios';
 import toast from '@/lib/toast';
+import { clearOrdersHistory, ordersHistoryKey } from '@/lib/ordersHistoryCache';
 import { Capacitor } from '@capacitor/core';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production'
@@ -589,10 +590,47 @@ export const apiService = {
         return response.data;
     },
 
+    // Fulfillment slots (OE-240 / RCP OE-243, PR #82)
+    // Mounts: GET /api/retailers/{id}/fulfillment-slots/
+    //        POST /api/orders/place/  PATCH /api/orders/{id}/fulfillment-slot/
+    // List endpoints expose fulfillment_slot_* only; pickup_code / delivery_info need detail.
+    getFulfillmentSlots: async (
+        retailerId: string | number,
+        params: { delivery_mode: 'pickup' | 'delivery'; days?: number },
+        force: boolean = false
+    ) => {
+        const days = params.days ?? 7;
+        const key = `fulfillment_slots_${retailerId}_${params.delivery_mode}_${days}`;
+        return fetchWithDedupe(key, async () => {
+            const response = await api.get(`retailers/${retailerId}/fulfillment-slots/`, {
+                params: { delivery_mode: params.delivery_mode, days },
+            });
+            return response.data;
+        }, force);
+    },
+
+    rescheduleFulfillmentSlot: async (orderId: number | string, fulfillmentSlotStart: string) => {
+        const response = await api.patch(`orders/${orderId}/fulfillment-slot/`, {
+            fulfillment_slot_start: fulfillmentSlotStart,
+        });
+        delete CACHE[`order_${orderId}`];
+        clearOrdersHistory(CACHE);
+        delete CACHE['orders_current'];
+        Object.keys(CACHE).forEach((k) => {
+            if (k.startsWith('fulfillment_slots_')) delete CACHE[k];
+        });
+        return response.data;
+    },
+
     // Orders
     placeOrder: async (data: any) => {
-        const response = await api.post('orders/place/', data);
-        delete CACHE['orders_history'];
+        const response = await api.post('orders/place/', data).catch((error) => {
+            // A refused order can mean the cart's coupon or stock changed meanwhile,
+            // so the next cart read must come from the API, not the cache.
+            Object.keys(CACHE).forEach(k => { if (k.startsWith('cart_')) delete CACHE[k]; });
+            throw error;
+        });
+        clearOrdersHistory(CACHE);
         delete CACHE['orders_current'];
         // Also clear cart
         Object.keys(CACHE).forEach(k => { if (k.startsWith('cart_')) delete CACHE[k]; });
@@ -600,6 +638,9 @@ export const apiService = {
         delete CACHE['loyalty_all'];
         delete CACHE['credit_all'];
         if (data.retailer_id) delete CACHE[`loyalty_${data.retailer_id}`];
+        Object.keys(CACHE).forEach((k) => {
+            if (k.startsWith('fulfillment_slots_')) delete CACHE[k];
+        });
         return response.data;
     },
 
@@ -620,10 +661,12 @@ export const apiService = {
         });
     },
 
-    getOrders: async (force: boolean = false) => {
-        const key = 'orders_history';
+    getOrders: async (force: boolean = false, page: number = 1) => {
+        // A forced refresh means an order changed, so the later pages cached before it are stale too.
+        if (force && page === 1) clearOrdersHistory(CACHE);
+        const key = ordersHistoryKey(page);
         return fetchWithDedupe(key, async () => {
-            const response = await api.get('orders/history/');
+            const response = await api.get('orders/history/', { params: { page } });
             return response.data;
         }, force);
     },
@@ -688,7 +731,7 @@ export const apiService = {
     confirmOrderModification: async (orderId: number | string, action: 'accept' | 'reject') => {
         const response = await api.post(`orders/${orderId}/confirm_modification/`, { action });
         delete CACHE[`order_${orderId}`];
-        delete CACHE['orders_history'];
+        clearOrdersHistory(CACHE);
         delete CACHE['orders_current'];
         // Clear all loyalty cache to be sure
         delete CACHE['loyalty_all'];
@@ -706,7 +749,7 @@ export const apiService = {
     cancelOrder: async (orderId: number | string, reason: string = '') => {
         const response = await api.post(`orders/${orderId}/cancel/`, { reason });
         delete CACHE[`order_${orderId}`];
-        delete CACHE['orders_history'];
+        clearOrdersHistory(CACHE);
         delete CACHE['orders_current'];
         // Clear all loyalty cache to be sure
         delete CACHE['loyalty_all'];
@@ -734,7 +777,7 @@ export const apiService = {
     createOrderFeedback: async (orderId: number | string, data: any) => {
         const response = await api.post(`orders/${orderId}/feedback/`, data);
         delete CACHE[`order_${orderId}`];
-        delete CACHE['orders_history'];
+        clearOrdersHistory(CACHE);
         return response.data;
     },
 
@@ -763,6 +806,16 @@ export const getErrorMessage = (error: any): string => {
     if (error.response && error.response.data) {
         const data = error.response.data;
 
+        // HTML response from server (e.g. Django debug 404/500 page)
+        if (typeof data === 'string') {
+            if (data.trim().startsWith('<') || data.includes('<!DOCTYPE') || data.includes('<html')) {
+                return error.response.status === 404
+                    ? "Requested resource not found (404)"
+                    : `Server error (${error.response.status})`;
+            }
+            return data;
+        }
+
         // 1. { "error": "message" }
         if (data.error && typeof data.error === 'string') return data.error;
 
@@ -772,16 +825,18 @@ export const getErrorMessage = (error: any): string => {
         // 3. { "field": ["error"] } or { "non_field_errors": ["error"] }
         // We join all error messages
         const messages: string[] = [];
-        Object.keys(data).forEach(key => {
-            const value = data[key];
-            if (Array.isArray(value)) {
-                // If key is non_field_errors, just show validation msg. Else show "Field: msg"
-                const prefix = (key === 'non_field_errors' || key === 'error') ? '' : `${key}: `;
-                messages.push(`${prefix}${value.join(', ')}`);
-            } else if (typeof value === 'string') {
-                messages.push(value);
-            }
-        });
+        if (typeof data === 'object') {
+            Object.keys(data).forEach(key => {
+                const value = data[key];
+                if (Array.isArray(value)) {
+                    // If key is non_field_errors, just show validation msg. Else show "Field: msg"
+                    const prefix = (key === 'non_field_errors' || key === 'error') ? '' : `${key}: `;
+                    messages.push(`${prefix}${value.join(', ')}`);
+                } else if (typeof value === 'string') {
+                    messages.push(value);
+                }
+            });
+        }
 
         if (messages.length > 0) return messages.join('\n');
     }

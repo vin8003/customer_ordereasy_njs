@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Package, ChevronRight, Clock, Star, Store } from 'lucide-react';
+import { Package, ChevronRight, Clock, Star, Store, Loader2 } from 'lucide-react';
 import { apiService } from '@/services/api';
 import PageHeader from '@/app/components/PageHeader';
 import { EmptyState } from '@/app/components/EmptyState';
@@ -23,8 +23,14 @@ interface Order {
     net_amount?: string;
     refund_amount?: string;
     is_returned?: boolean;
+    fulfillment_slot_start?: string | null;
+    fulfillment_slot_end?: string | null;
+    delivery_fee?: string | number | null;
+    discount_amount?: string | number | null;
 }
 
+import { formatFulfillmentWindow } from '@/lib/fulfillmentSlots';
+import { getOrderListMoneyLines } from '@/lib/orderListMoneyLines';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 
 export default function OrdersPage() {
@@ -32,30 +38,70 @@ export default function OrdersPage() {
     const { handleBack } = useAppNavigation();
     const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadMoreFailed, setLoadMoreFailed] = useState(false);
+    const observerTarget = useRef<HTMLDivElement>(null);
+
+    const loadOrders = useCallback(async (pageNum: number = 1, force: boolean = false) => {
+        setLoadMoreFailed(false);
+        if (pageNum === 1) {
+            setIsLoading(force ? false : true);
+        } else {
+            setIsLoadingMore(true);
+        }
+        try {
+            const data = await apiService.getOrders(force, pageNum);
+            const results: Order[] = Array.isArray(data) ? data : data?.results || [];
+            const nextUrl = data && typeof data === 'object' ? data.next : null;
+
+            setOrders(prev => {
+                if (pageNum === 1) return results;
+                // A new order shifts the pages, so the first rows of this page can already be listed.
+                const listed = new Set(prev.map(order => order.id));
+                return [...prev, ...results.filter(order => !listed.has(order.id))];
+            });
+            setHasMore(Boolean(nextUrl));
+            setPage(pageNum);
+        } catch (error) {
+            console.error('Failed to load orders:', error);
+            // The sentinel stays on screen, so without this it would ask for the same page again at once.
+            if (pageNum > 1) setLoadMoreFailed(true);
+        } finally {
+            setIsLoading(false);
+            setIsLoadingMore(false);
+        }
+    }, []);
 
     useEffect(() => {
-        loadOrders();
+        loadOrders(1);
 
         const handleFcmUpdate = () => {
             console.log('Orders page refreshing due to FCM update');
-            loadOrders(true);
+            loadOrders(1, true);
         };
 
         window.addEventListener('fcm_order_update', handleFcmUpdate);
         return () => window.removeEventListener('fcm_order_update', handleFcmUpdate);
-    }, []);
+    }, [loadOrders]);
 
-    const loadOrders = async (force: boolean = false) => {
-        setIsLoading(force ? false : true); // Show loading only for initial load, not for foreground refreshes
-        try {
-            const data = await apiService.getOrders(force);
-            setOrders(Array.isArray(data) ? data : data.results || []);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    useEffect(() => {
+        const target = observerTarget.current;
+        if (!target) return;
+
+        const observer = new IntersectionObserver(
+            entries => {
+                if (entries[0].isIntersecting && hasMore && !isLoading && !isLoadingMore && !loadMoreFailed) {
+                    loadOrders(page + 1);
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        observer.observe(target);
+        return () => observer.unobserve(target);
+    }, [hasMore, isLoading, isLoadingMore, loadMoreFailed, page, loadOrders]);
 
     const getStatusTone = (status: string) => {
         switch (status.toLowerCase()) {
@@ -108,8 +154,14 @@ export default function OrdersPage() {
                             </span>
                         </div>
 
-                        {(order.expected_processing_start && order.status.toLowerCase() === 'pending') || order.is_returned || order.feedback ? (
+                        {(order.expected_processing_start && order.status.toLowerCase() === 'pending') || order.is_returned || order.feedback || order.fulfillment_slot_start ? (
                             <div className={styles.tags}>
+                                {order.fulfillment_slot_start && (
+                                    <span className={styles.tagWarn}>
+                                        <Clock size={12} />
+                                        {formatFulfillmentWindow(order.fulfillment_slot_start, order.fulfillment_slot_end)}
+                                    </span>
+                                )}
                                 {order.expected_processing_start && order.status.toLowerCase() === 'pending' && (
                                     <span className={styles.tagWarn}>
                                         <Clock size={12} />
@@ -140,6 +192,11 @@ export default function OrdersPage() {
                                         <s>₹{order.total_amount}</s>
                                     )}
                                 </span>
+                                {getOrderListMoneyLines(order).map((line) => (
+                                    <span key={line.key} className={styles.amountLabel}>
+                                        {line.label} {line.amountDisplay}
+                                    </span>
+                                ))}
                             </div>
                             <span className={styles.viewDetails}>
                                 View details <ChevronRight size={16} />
@@ -147,6 +204,26 @@ export default function OrdersPage() {
                         </div>
                     </button>
                 ))}
+
+                {orders.length > 0 && hasMore && (
+                    <div ref={observerTarget} style={{ display: 'flex', justifyContent: 'center', padding: '16px' }}>
+                        {isLoadingMore && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--ink-3)', fontSize: '0.875rem' }}>
+                                <Loader2 size={16} className="animate-spin" />
+                                <span>Loading more orders...</span>
+                            </div>
+                        )}
+                        {loadMoreFailed && (
+                            <button
+                                type="button"
+                                onClick={() => loadOrders(page + 1)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', fontSize: '0.875rem', textDecoration: 'underline' }}
+                            >
+                                Could not load more orders. Tap to retry
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

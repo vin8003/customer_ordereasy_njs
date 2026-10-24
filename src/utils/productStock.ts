@@ -32,6 +32,17 @@ export function getProductStockQuantity(product: StockAwareProduct): number {
     return Number.isFinite(qty) ? qty : 0;
 }
 
+/** Product-detail group variants carry the API's `quantity`; cards read `stock_quantity`. */
+export function withVariantStock<T extends StockAwareProduct>(
+    variant: T
+): T & { stock_quantity: number; track_inventory: boolean } {
+    return {
+        ...variant,
+        stock_quantity: getProductStockQuantity(variant),
+        track_inventory: variant.track_inventory ?? true,
+    };
+}
+
 /** Hide out-of-stock catalog items (same rule for guests and logged-in users). */
 export function filterInStockProducts<T extends StockAwareProduct>(products: T[]): T[] {
     return products.filter(

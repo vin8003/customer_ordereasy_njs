@@ -289,6 +289,46 @@
     white-space: pre-line;
 }
 
+.brandName,
+.categoryName,
+.barcode,
+.hsnCode {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--ink-4);
+    margin: -4px 0 10px;
+}
+
+.barcode {
+    letter-spacing: 0.02em;
+}
+
+.hsnCode {
+    margin: 10px 0 0;
+}
+
+.tagChips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    list-style: none;
+    margin: -2px 0 12px;
+    padding: 0;
+}
+
+.tagChip {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: var(--r-pill);
+    background: var(--surface-3);
+    color: var(--ink-2);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
 .groupTag {
     display: inline-flex;
     margin-top: 12px;

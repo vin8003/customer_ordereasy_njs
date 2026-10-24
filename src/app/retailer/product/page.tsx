@@ -12,12 +12,24 @@ import { WishlistIcon } from '@/app/components/WishlistIcon';
 import AddToCartButton from '@/app/components/AddToCartButton';
 import { ProductCard } from '@/app/components/ProductCard';
 import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
-import { filterInStockProducts, isOutOfStock } from '@/utils/productStock';
+import { filterInStockProducts, isOutOfStock, withVariantStock } from '@/utils/productStock';
+import {
+    formatVisibleBarcode,
+    type OptionalBarcode,
+} from '@/lib/productDetailBarcode';
+import { formatVisibleHsnCode, type OptionalHsnCode } from '@/lib/productHsnCode';
+import { getVisibleCategoryName } from '@/lib/productCategoryName';
+import { visibleProductBrandName } from '@/lib/productBrandName';
+import {
+    getVisibleProductTags,
+    type OptionalProductTags,
+} from '@/lib/productDetailTags';
 import styles from './ProductDetail.module.css';
 
 interface Product {
     id: number;
     name: string;
+    brand_name?: string | null;
     description: string;
     price: number; // Selling Price
     mrp: number;   // Original Price / MRP
@@ -31,6 +43,10 @@ interface Product {
     savings?: number;
     discount_percentage?: number;
     track_inventory: boolean;
+    barcode?: OptionalBarcode;
+    tags?: OptionalProductTags;
+    hsn_code?: OptionalHsnCode;
+    category_name?: string | null;
     offers?: any[]; // flexible for now
     group_variants?: {
         id: number;
@@ -44,6 +60,7 @@ interface Product {
         maximum_order_quantity?: number | null;
         track_inventory?: boolean;
         stock_quantity?: number;
+        quantity?: number | null;
     }[];
 }
 
@@ -95,11 +112,9 @@ function ProductDetail() {
                 discount_percentage: Number(data.discount_percentage),
                 offers: data.offers || [], // Assuming offers might be in response, else empty
                 group_variants: filterInStockProducts(
-                    (data.group_variants || []).map((variant: NonNullable<Product['group_variants']>[number]) => ({
-                        ...variant,
-                        stock_quantity: variant.stock_quantity ?? 0,
-                        track_inventory: variant.track_inventory ?? true,
-                    }))
+                    (data.group_variants || []).map(
+                        (variant: NonNullable<Product['group_variants']>[number]) => withVariantStock(variant)
+                    )
                 ),
             });
 
@@ -155,6 +170,7 @@ function ProductDetail() {
     }
 
     // Use backend values if available, else calculate
+    const visibleBrandName = visibleProductBrandName(product);
     const hasDiscount = product.mrp > product.price;
     const discountPercent = product.discount_percentage
         ? Math.round(product.discount_percentage)
@@ -166,6 +182,11 @@ function ProductDetail() {
 
 
 
+
+    const visibleBarcode = formatVisibleBarcode(product.barcode);
+    const visibleHsnCode = formatVisibleHsnCode(product.hsn_code);
+    const visibleCategoryName = getVisibleCategoryName(product.category_name);
+    const visibleTags = getVisibleProductTags(product.tags);
 
     const isOffline = !!retailerStatus && !retailerStatus.offersDelivery && !retailerStatus.offersPickup;
     const productOutOfStock = product.track_inventory && product.stock_quantity === 0;
@@ -214,6 +235,24 @@ function ProductDetail() {
                 <div className={styles.details}>
                     {product.unit && <div className={styles.unitTag}>{product.unit}</div>}
                     <h1 className={styles.title}>{product.name}</h1>
+                    {visibleBrandName ? (
+                        <p className={styles.brandName}>{visibleBrandName}</p>
+                    ) : null}
+                    {visibleCategoryName ? (
+                        <p className={styles.categoryName}>{visibleCategoryName}</p>
+                    ) : null}
+                    {visibleBarcode ? (
+                        <p className={styles.barcode}>{visibleBarcode}</p>
+                    ) : null}
+                    {visibleTags.length > 0 ? (
+                        <ul className={styles.tagChips} aria-label="Product tags">
+                            {visibleTags.map((tag, index) => (
+                                <li key={`${tag}-${index}`} className={styles.tagChip}>
+                                    {tag}
+                                </li>
+                            ))}
+                        </ul>
+                    ) : null}
 
                     {isOffline && (
                         <div className={styles.offlineNotice}>
@@ -319,6 +358,9 @@ function ProductDetail() {
                         <p className={styles.description}>
                             {product.description || "No description available for this product."}
                         </p>
+                        {visibleHsnCode ? (
+                            <p className={styles.hsnCode}>HSN {visibleHsnCode}</p>
+                        ) : null}
                         {product.product_group && (
                             <div className={styles.groupTag}>
                                 {product.product_group}

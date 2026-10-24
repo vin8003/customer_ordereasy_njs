@@ -11,8 +11,11 @@ import PageHeader from '@/app/components/PageHeader';
 import styles from './Checkout.module.css';
 import PhoneVerification from '@/app/components/auth/PhoneVerification';
 import { hasValidAddressCoordinates, parseCoordinate } from '@/utils/addressLocation';
-import { buildPlaceOrderPayload } from '@/utils/placeOrder';
+import { buildPlaceOrderPayload, isCouponRefusal } from '@/utils/placeOrder';
 import CouponSection, { AppliedCoupon } from '@/app/components/CouponSection';
+import FulfillmentSlotPicker from '@/app/components/FulfillmentSlotPicker';
+import { FulfillmentSlot, formatSlotWindow, isSlotBookingError, isSlotChoiceMissing } from '@/lib/fulfillmentSlots';
+import { visibleCheckoutLineBrandName } from '@/lib/checkoutLineBrandName';
 
 interface Address {
     id: number;
@@ -37,6 +40,7 @@ interface CheckoutCartItem {
     product_name: string;
     product_price: number | string;
     quantity: number;
+    brand_name?: string | null;
 }
 
 export default function CheckoutPage() {
@@ -57,6 +61,9 @@ export default function CheckoutPage() {
     const [deliveryMode, setDeliveryMode] = useState<'delivery' | 'pickup'>('delivery');
     const [specialInstructions, setSpecialInstructions] = useState('');
     const [deliveryFee, setDeliveryFee] = useState(0); // Initialize with 0, will be set dynamically
+    const [selectedSlot, setSelectedSlot] = useState<FulfillmentSlot | null>(null);
+    const [slotRefreshKey, setSlotRefreshKey] = useState(0);
+    const [openSlotCount, setOpenSlotCount] = useState<number | null>(null);
 
     // Retailer Settings
     const [retailerSettings, setRetailerSettings] = useState<{
@@ -112,6 +119,12 @@ export default function CheckoutPage() {
     useEffect(() => {
         calculateDeliveryFee();
     }, [deliveryMode, retailerSettings, cartTotal]);
+
+    // Pickup and delivery have separate slots, so a mode or shop change needs a new pick.
+    useEffect(() => {
+        setSelectedSlot(null);
+        setOpenSlotCount(null);
+    }, [deliveryMode, retailerId]);
 
     const loadData = async () => {
         const storedId = localStorage.getItem('current_retailer_id');
@@ -332,6 +345,11 @@ export default function CheckoutPage() {
             return;
         }
 
+        if (isSlotChoiceMissing(selectedSlot, openSlotCount)) {
+            toast.error('Please select a pickup/delivery time slot.');
+            return;
+        }
+
         if (paymentMethod === 'upi' && !upiAvailable) {
             toast.error('UPI is not available for this shop. Please choose Cash on Delivery or Pickup.');
             return;
@@ -353,6 +371,7 @@ export default function CheckoutPage() {
                 specialInstructions,
                 useRewardPoints,
                 couponCode: appliedCoupon?.code || null,
+                fulfillmentSlotStart: selectedSlot?.slot_start ?? null,
             });
         } catch (payloadError) {
             toast.error(payloadError instanceof Error ? payloadError.message : 'Could not prepare order.');
@@ -367,6 +386,11 @@ export default function CheckoutPage() {
             const isUPI = paymentMethod === 'upi';
             router.push(`/orders/detail?id=${response.id}${isUPI ? '&payment=true' : ''}`);
         } catch (error: unknown) {
+            // A slot that filled up meanwhile must be picked again, not resent.
+            if (isSlotBookingError(error)) setSelectedSlot(null);
+            setSlotRefreshKey(k => k + 1);
+            // Reload the totals so the page shows why the coupon no longer applies and the price without it.
+            if (isCouponRefusal(error)) loadCartSummary(retailerId);
             const responseData =
                 error &&
                 typeof error === 'object' &&
@@ -460,6 +484,26 @@ export default function CheckoutPage() {
                             : 'Collect from the shop. No delivery fee. Pay cash at pickup if you chose Cash on Pickup.'}
                     </p>
                 </section>
+
+                {/* Fulfillment Slot Picker */}
+                {retailerId && retailerSettings && (retailerSettings.offersDelivery || retailerSettings.offersPickup) && (
+                    <section className={styles.section}>
+                        <h2 className={styles.sectionTitle}>
+                            <span className={styles.sectionIcon}><Clock size={16} /></span>
+                            {deliveryMode === 'pickup' ? 'Pickup time slot' : 'Delivery time slot'}
+                        </h2>
+                        <FulfillmentSlotPicker
+                            retailerId={retailerId}
+                            deliveryMode={deliveryMode}
+                            selectedSlotStart={selectedSlot?.slot_start ?? null}
+                            selectedSlot={selectedSlot}
+                            onSelect={setSelectedSlot}
+                            days={7}
+                            refreshKey={slotRefreshKey}
+                            onLoaded={({ openSlots }) => setOpenSlotCount(openSlots)}
+                        />
+                    </section>
+                )}
 
                 {/* Address Selection */}
                 {deliveryMode === 'delivery' && (
@@ -647,13 +691,23 @@ export default function CheckoutPage() {
                         <span className={styles.optional}>{cartItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0)} items</span>
                     </h2>
                     <div className={styles.itemsList}>
-                        {cartItems.map((item) => (
-                            <div key={item.id || item.product} className={styles.itemRow}>
-                                <span className={styles.itemQty}>{item.quantity}×</span>
-                                <span className={styles.itemName}>{item.product_name}</span>
-                                <span className={styles.itemPrice}>₹{(Number(item.product_price) * item.quantity).toFixed(2)}</span>
-                            </div>
-                        ))}
+                        {cartItems.map((item) => {
+                            const brandName = visibleCheckoutLineBrandName(item);
+                            return (
+                                <div key={item.id || item.product} className={styles.itemRow}>
+                                    <span className={styles.itemQty}>{item.quantity}×</span>
+                                    <div className="flex-1 min-w-0 pr-2">
+                                        <span className={styles.itemName}>{item.product_name}</span>
+                                        {brandName && (
+                                            <span className="text-[11px] text-gray-500 block truncate">
+                                                {brandName}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <span className={styles.itemPrice}>₹{(Number(item.product_price) * item.quantity).toFixed(2)}</span>
+                                </div>
+                            );
+                        })}
                     </div>
                 </section>
 
