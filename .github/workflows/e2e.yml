@@ -12,4 +12,5 @@ jobs:
     uses: vin8003/RetailerCustomerPlatform/.github/workflows/e2e.yml@main
     with:
       customer_ref: ${{ github.event.pull_request.head.sha || github.sha }}
-    secrets: inherit
+    secrets:
+      E2E_REPO_TOKEN: ${{ secrets.E2E_REPO_TOKEN }}
