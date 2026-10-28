@@ -559,6 +559,7 @@ export default function CartPage() {
                         <Button
                             fullWidth
                             size="lg"
+                            data-testid="cart-checkout"
                             className={styles.desktopCta}
                             disabled={belowMinOrder}
                             onClick={handleCheckout}

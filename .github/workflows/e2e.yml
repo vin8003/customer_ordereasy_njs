@@ -1,0 +1,15 @@
+name: e2e
+
+# Runs the shared Playwright journeys (RetailerCustomerPlatform/e2e) against this PR's code.
+# The suite, seed and stack setup live in RetailerCustomerPlatform; this file only passes our ref.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  e2e:
+    uses: vin8003/RetailerCustomerPlatform/.github/workflows/e2e.yml@main
+    with:
+      customer_ref: ${{ github.event.pull_request.head.sha || github.sha }}
+    secrets: inherit

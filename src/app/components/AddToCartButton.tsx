@@ -127,6 +127,7 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
             <button
                 type="button"
                 className={`${styles.addButton} ${variant === 'block' ? styles.block : ''} ${className || ''} ${isOffline ? styles.disabled : ''}`}
+                data-testid={`add-to-cart-${productId}`}
                 onClick={handleAdd}
                 disabled={loading || isOffline}
                 aria-label="Add to cart"
@@ -161,10 +162,11 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
             >
                 <Minus size={15} strokeWidth={3} />
             </button>
-            <span className={styles.quantity} aria-live="polite">{quantity}</span>
+            <span data-testid={`cart-qty-${productId}`} className={styles.quantity} aria-live="polite">{quantity}</span>
             <button
                 type="button"
                 className={`${styles.controlBtn} ${atMax ? styles.disabledBtn : ''}`}
+                data-testid={`cart-increment-${productId}`}
                 onClick={handleIncrement}
                 disabled={loading}
                 aria-label="Increase quantity"

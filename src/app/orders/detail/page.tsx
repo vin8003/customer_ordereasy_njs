@@ -349,7 +349,7 @@ function OrderDetails() {
                     <div className={styles.statusTop}>
                         <span className={styles.statusIcon}>{statusInfo.icon}</span>
                         <div className="min-w-0">
-                            <div className={styles.statusLabel}>{statusDisplay.label}</div>
+                            <div data-testid="order-status-label" className={styles.statusLabel}>{statusDisplay.label}</div>
                             {deliveryFailed ? (
                                 order.cancellation_reason && (
                                     <div className={styles.statusSub}>
@@ -652,7 +652,7 @@ function OrderDetails() {
                         )}
                         <div className={styles.totalRow}>
                             <span>{parseFloat(order.refund_amount || '0') > 0 ? 'Original Total' : 'Total Amount'}</span>
-                            <span className={parseFloat(order.refund_amount || '0') > 0 ? styles.struck : ''}>₹{order.total_amount}</span>
+                            <span data-testid="order-total" className={parseFloat(order.refund_amount || '0') > 0 ? styles.struck : ''}>₹{order.total_amount}</span>
                         </div>
                         {parseFloat(order.refund_amount || '0') > 0 && (
                             <>
@@ -695,7 +695,7 @@ function OrderDetails() {
                                     <span className={styles.infoLabel}>
                                         {order.delivery_mode === 'pickup' ? 'Scheduled Pickup Slot' : 'Scheduled Delivery Slot'}
                                     </span>
-                                    <span className={styles.infoValue}>{fulfillmentWindow}</span>
+                                    <span data-testid="order-slot" className={styles.infoValue}>{fulfillmentWindow}</span>
                                 </div>
                             </div>
                         )}

@@ -270,6 +270,7 @@ export default function FulfillmentSlotPicker({
         <>
             {/* Compact Trigger Card on Checkout Screen */}
             <div
+                data-testid="slot-picker-open"
                 role="button"
                 tabIndex={0}
                 onClick={handleOpenDrawer}
@@ -306,7 +307,7 @@ export default function FulfillmentSlotPicker({
                                 </span>
                             )}
                         </div>
-                        <div className="text-sm font-bold text-gray-900 truncate mt-0.5">
+                        <div data-testid="slot-summary" className="text-sm font-bold text-gray-900 truncate mt-0.5">
                             {activeSlot ? formatSlotSummary(activeSlot) : 'Choose preferred time slot'}
                         </div>
                         <div className="text-[11px] text-gray-500 truncate">
@@ -377,6 +378,7 @@ export default function FulfillmentSlotPicker({
                                         return (
                                             <button
                                                 key={dayKey}
+                                                data-testid={`slot-day-${dayKey}`}
                                                 type="button"
                                                 onClick={() => setSelectedDayKey(dayKey)}
                                                 className={`flex flex-col items-center justify-center min-w-[80px] px-3.5 py-2.5 rounded-2xl border text-center transition-all shrink-0 relative cursor-pointer ${
@@ -437,6 +439,8 @@ export default function FulfillmentSlotPicker({
                                                         return (
                                                             <button
                                                                 key={slot.slot_start}
+                                                                data-testid="slot-option"
+                                                                data-slot-start={slot.slot_start_local}
                                                                 type="button"
                                                                 onClick={() => setPendingSlot(isSelected ? null : slot)}
                                                                 className={`flex items-center justify-between p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
@@ -496,6 +500,7 @@ export default function FulfillmentSlotPicker({
                                 )}
                                 <button
                                     type="button"
+                                    data-testid="slot-confirm"
                                     onClick={handleConfirm}
                                     disabled={!pendingSlot}
                                     className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600 text-white font-bold text-sm shadow-xs transition-all cursor-pointer disabled:cursor-not-allowed"

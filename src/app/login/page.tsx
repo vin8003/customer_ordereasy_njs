@@ -316,6 +316,7 @@ function LoginContent() {
 
                             <Input
                                 label="Phone Number"
+                                data-testid="customer-login-phone"
                                 placeholder="Enter 10 digit number"
                                 value={phone}
                                 onChange={(e) => setPhone(e.target.value)}
@@ -327,6 +328,7 @@ function LoginContent() {
 
                             <Input
                                 label="Password"
+                                data-testid="customer-login-password"
                                 placeholder="Enter your password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -341,6 +343,7 @@ function LoginContent() {
                             </div>
 
                             <Button
+                                data-testid="customer-login-submit"
                                 type="submit"
                                 isLoading={isLoading}
                                 fullWidth

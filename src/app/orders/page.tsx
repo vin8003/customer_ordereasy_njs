@@ -157,6 +157,7 @@ export default function OrdersPage() {
                             <button
                                 type="button"
                                 key={option.value}
+                                data-testid={`orders-filter-${option.value || 'all'}`}
                                 className={`${styles.chip} ${filters.status === option.value ? styles.chipActive : ''}`}
                                 aria-pressed={filters.status === option.value}
                                 onClick={() => setFilters(prev => ({ ...prev, status: option.value }))}
@@ -222,6 +223,8 @@ export default function OrdersPage() {
                     <button
                         type="button"
                         key={order.id}
+                        data-testid="order-card"
+                        data-order-id={order.id}
                         className={styles.card}
                         onClick={() => router.push(`/orders/detail?id=${order.id}`)}
                     >
@@ -233,7 +236,7 @@ export default function OrdersPage() {
                                     #{order.order_number} · {formatDate(order.created_at)}
                                 </p>
                             </div>
-                            <span className={`${styles.status} ${getStatusTone(order.status)}`}>
+                            <span data-testid="order-card-status" className={`${styles.status} ${getStatusTone(order.status)}`}>
                                 {order.status.replace(/_/g, ' ')}
                             </span>
                         </div>
