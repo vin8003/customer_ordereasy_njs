@@ -31,6 +31,7 @@ interface Order {
 
 import { formatFulfillmentWindow } from '@/lib/fulfillmentSlots';
 import { getOrderListMoneyLines } from '@/lib/orderListMoneyLines';
+import { formatOrderStatusLabel } from '@/lib/orderFulfillmentDisplay';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 import {
     EMPTY_ORDERS_FILTERS,
@@ -237,7 +238,9 @@ export default function OrdersPage() {
                                 </p>
                             </div>
                             <span data-testid="order-card-status" className={`${styles.status} ${getStatusTone(order.status)}`}>
-                                {order.status.replace(/_/g, ' ')}
+                                {order.status.toLowerCase() === 'waiting_for_customer_approval'
+                                    ? formatOrderStatusLabel(order.status)
+                                    : order.status.replace(/_/g, ' ')}
                             </span>
                         </div>
 
