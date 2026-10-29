@@ -31,6 +31,11 @@ describe('formatOrderStatusLabel — failed delivery (OE-281)', () => {
         assert.equal(formatOrderStatusLabel('out_for_delivery', 'delivery'), 'Out for delivery');
         assert.equal(formatOrderStatusLabel('delivered', 'delivery'), 'Delivered');
     });
+
+    it('gives the approval wait a human label, not the enum (OE-372)', () => {
+        assert.equal(formatOrderStatusLabel('waiting_for_customer_approval'), 'Needs your approval');
+        assert.equal(formatOrderStatusLabel('WAITING_FOR_CUSTOMER_APPROVAL'), 'Needs your approval');
+    });
 });
 
 describe('getOrderStatusDisplay — failed delivery (OE-281)', () => {
