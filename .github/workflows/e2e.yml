@@ -9,10 +9,10 @@ on:
 
 jobs:
   e2e:
-    uses: vin8003/RetailerCustomerPlatform/.github/workflows/e2e.yml@fab93dce04519a81c8b1727ee992db4572453d2b
+    uses: vin8003/RetailerCustomerPlatform/.github/workflows/e2e.yml@9a7f2a7db4c1b04e0dde109f174430abbeb53143
     with:
       area: customer
-      rcp_ref: fab93dce04519a81c8b1727ee992db4572453d2b
+      rcp_ref: 9a7f2a7db4c1b04e0dde109f174430abbeb53143
       customer_ref: ${{ github.event.pull_request.head.sha || github.sha }}
     secrets:
       E2E_REPO_TOKEN: ${{ secrets.E2E_REPO_TOKEN }}
