@@ -557,6 +557,7 @@ export default function CheckoutPage() {
                                     return (
                                     <div
                                         key={addr.id}
+                                        data-testid={`checkout-address-${addr.id}`}
                                         role="radio"
                                         aria-checked={isSelected}
                                         tabIndex={0}
@@ -616,6 +617,7 @@ export default function CheckoutPage() {
                         <div className={styles.paymentOptions}>
                             {retailerSettings?.acceptsCod !== false && (
                                 <div
+                                    data-testid="checkout-pay-cod"
                                     role="radio"
                                     tabIndex={0}
                                     aria-checked={['cod', 'cash_pickup'].includes(paymentMethod)}
@@ -815,12 +817,13 @@ export default function CheckoutPage() {
                     )}
                     <div className={styles.totalRow}>
                         <span>Total Amount</span>
-                        <span>₹{payableTotal.toFixed(2)}</span>
+                        <span data-testid="checkout-total">₹{payableTotal.toFixed(2)}</span>
                     </div>
 
                     <Button
                         fullWidth
                         size="lg"
+                        data-testid="checkout-place-order"
                         className={styles.desktopPlace}
                         onClick={handlePlaceOrder}
                         isLoading={isLoading}
