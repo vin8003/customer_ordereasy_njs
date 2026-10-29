@@ -795,7 +795,7 @@ export default function CheckoutPage() {
                         </div>
                     )}
                     {deliveryMode === 'delivery' && deliveryQuote && !deliveryQuote.deliverable && (
-                        <div className={`${styles.summaryRow} ${styles.warnRow}`}>
+                        <div data-testid="checkout-delivery-unavailable" className={`${styles.summaryRow} ${styles.warnRow}`}>
                             <span>{deliveryQuote.reason || 'This shop does not deliver to the selected address.'}</span>
                             <span />
                         </div>
@@ -806,7 +806,7 @@ export default function CheckoutPage() {
                                 Delivery Fee
                                 {deliveryQuote?.distanceKm != null && ` (${formatDistanceKm(deliveryQuote.distanceKm)})`}
                             </span>
-                            <span>₹{deliveryFee.toFixed(2)}</span>
+                            <span data-testid="checkout-delivery-fee">₹{deliveryFee.toFixed(2)}</span>
                         </div>
                     )}
                     {discountFromPoints > 0 && (
