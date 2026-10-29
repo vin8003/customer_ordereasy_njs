@@ -312,7 +312,7 @@ function LoginContent() {
                 ) : (
                     <>
                         <form onSubmit={handleLogin} className={styles.form}>
-                            {error && <div className={styles.errorAlert}>{error}</div>}
+                            {error && <div data-testid="customer-login-error" className={styles.errorAlert}>{error}</div>}
 
                             <Input
                                 label="Phone Number"

@@ -130,7 +130,7 @@ export default function ProfilePage() {
                         {initials}
                     </div>
                     <div className={styles.identity}>
-                        <h1 className={styles.name}>{profile.first_name} {profile.last_name}</h1>
+                        <h1 data-testid="profile-name" className={styles.name}>{profile.first_name} {profile.last_name}</h1>
                         {profile.email && <p className={styles.contact}><Mail size={13} /> {profile.email}</p>}
                         {profile.phone_number && <p className={styles.contact}><Phone size={13} /> {profile.phone_number}</p>}
                     </div>
@@ -257,7 +257,7 @@ export default function ProfilePage() {
                     )}
                 </div>
 
-                <button type="button" className={styles.logoutBtn} onClick={handleLogout}>
+                <button data-testid="profile-logout" type="button" className={styles.logoutBtn} onClick={handleLogout}>
                     <LogOut size={18} />
                     Log out
                 </button>

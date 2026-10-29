@@ -60,6 +60,7 @@ export default function EditProfilePage() {
             <form className={styles.form} onSubmit={handleSubmit}>
                 <div className={styles.field}>
                     <Input
+                        data-testid="profile-first-name"
                         label="First Name"
                         name="first_name"
                         value={formData.first_name}
@@ -68,6 +69,7 @@ export default function EditProfilePage() {
                 </div>
                 <div className={styles.field}>
                     <Input
+                        data-testid="profile-last-name"
                         label="Last Name"
                         name="last_name"
                         value={formData.last_name}
@@ -85,7 +87,7 @@ export default function EditProfilePage() {
                 </div>
                 {/* Phone is usually read-only or requires OTP */}
 
-                <Button type="submit" size="lg" isLoading={isLoading} fullWidth>
+                <Button data-testid="profile-save" type="submit" size="lg" isLoading={isLoading} fullWidth>
                     Save Changes
                 </Button>
             </form>

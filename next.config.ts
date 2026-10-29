@@ -7,10 +7,6 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'images.ordereasy.win',
-      },
-      {
-        protocol: 'https',
         hostname: '**', // Allow all for now during development/migration
       },
     ],

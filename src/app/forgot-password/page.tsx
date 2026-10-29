@@ -87,11 +87,12 @@ export default function ForgotPasswordPage() {
 
                 {step === 1 ? (
                     <form onSubmit={handleRequestOTP} className={styles.form}>
-                        {error && <div className={styles.errorAlert}>{error}</div>}
-                        {success && <div className={styles.successAlert}>{success}</div>}
+                        {error && <div data-testid="customer-forgot-error" className={styles.errorAlert}>{error}</div>}
+                        {success && <div data-testid="customer-forgot-success" className={styles.successAlert}>{success}</div>}
 
                         <Input
                             label="Email Address"
+                            data-testid="customer-forgot-email"
                             placeholder="Enter your registered email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
@@ -101,6 +102,7 @@ export default function ForgotPasswordPage() {
                         />
 
                         <Button
+                            data-testid="customer-forgot-send"
                             type="submit"
                             isLoading={isLoading}
                             fullWidth
@@ -111,11 +113,12 @@ export default function ForgotPasswordPage() {
                     </form>
                 ) : (
                     <form onSubmit={handleResetPassword} className={styles.form}>
-                        {error && <div className={styles.errorAlert}>{error}</div>}
-                        {success && <div className={styles.successAlert}>{success}</div>}
+                        {error && <div data-testid="customer-forgot-error" className={styles.errorAlert}>{error}</div>}
+                        {success && <div data-testid="customer-forgot-success" className={styles.successAlert}>{success}</div>}
 
                         <Input
                             label="OTP Code"
+                            data-testid="customer-reset-otp"
                             placeholder="Enter 6-digit OTP"
                             value={otp}
                             onChange={(e) => setOtp(e.target.value)}
@@ -127,6 +130,7 @@ export default function ForgotPasswordPage() {
 
                         <Input
                             label="New Password"
+                            data-testid="customer-reset-password"
                             placeholder="Create a new password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
@@ -137,6 +141,7 @@ export default function ForgotPasswordPage() {
 
                         <Input
                             label="Confirm New Password"
+                            data-testid="customer-reset-confirm"
                             placeholder="Confirm your new password"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
@@ -146,6 +151,7 @@ export default function ForgotPasswordPage() {
                         />
 
                         <Button
+                            data-testid="customer-reset-submit"
                             type="submit"
                             isLoading={isLoading}
                             fullWidth
