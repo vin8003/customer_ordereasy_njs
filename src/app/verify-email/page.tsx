@@ -137,11 +137,12 @@ function VerifyEmailContent() {
                 </div>
 
                 <form onSubmit={handleVerify} className={styles.form}>
-                    {error && <div className={styles.errorAlert}>{error}</div>}
-                    {success && <div className={styles.successAlert}>{success}</div>}
+                    {error && <div data-testid="verify-email-error" className={styles.errorAlert}>{error}</div>}
+                    {success && <div data-testid="verify-email-success" className={styles.successAlert}>{success}</div>}
 
                     <Input
                         label="OTP Code"
+                        data-testid="verify-email-otp"
                         placeholder="000000"
                         value={otp}
                         onChange={(e) => setOtp(e.target.value)}
@@ -152,6 +153,7 @@ function VerifyEmailContent() {
                     />
 
                     <Button
+                        data-testid="verify-email-submit"
                         type="submit"
                         isLoading={isLoading}
                         fullWidth

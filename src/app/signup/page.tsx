@@ -312,10 +312,11 @@ export default function SignupPage() {
                 ) : (
                     <>
                         <form onSubmit={handleSignup} className={styles.form}>
-                            {error && <div className={styles.errorAlert}>{error}</div>}
+                            {error && <div data-testid="customer-signup-error" className={styles.errorAlert}>{error}</div>}
 
                             <Input
                                 label="Email"
+                                data-testid="customer-signup-email"
                                 placeholder="Enter your email"
                                 name="email"
                                 value={formData.email}
@@ -327,6 +328,7 @@ export default function SignupPage() {
 
                             <Input
                                 label="Phone Number"
+                                data-testid="customer-signup-phone"
                                 placeholder="Enter 10 digit number"
                                 name="phone"
                                 value={formData.phone}
@@ -339,6 +341,7 @@ export default function SignupPage() {
 
                             <Input
                                 label="Password"
+                                data-testid="customer-signup-password"
                                 placeholder="Create a password"
                                 name="password"
                                 value={formData.password}
@@ -350,6 +353,7 @@ export default function SignupPage() {
 
                             <Input
                                 label="Confirm Password"
+                                data-testid="customer-signup-confirm"
                                 placeholder="Confirm your password"
                                 name="confirmPassword"
                                 value={formData.confirmPassword}
@@ -360,6 +364,7 @@ export default function SignupPage() {
                             />
 
                             <Button
+                                data-testid="customer-signup-submit"
                                 type="submit"
                                 isLoading={isLoading}
                                 fullWidth

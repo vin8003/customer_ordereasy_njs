@@ -3,9 +3,10 @@ import toast from '@/lib/toast';
 import { clearOrdersHistory, ordersHistoryKey } from '@/lib/ordersHistoryCache';
 import { ordersFilterParams, type OrdersFilters } from '@/lib/ordersFilters';
 import { Capacitor } from '@capacitor/core';
+import { API_ORIGIN } from '@/utils/mediaUrl';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production'
-    ? 'https://api.ordereasy.win/api/'
+    ? `${API_ORIGIN}/api/`
     : (process.env.NEXT_PUBLIC_API_URL || 'https://api.ordereasy.win/api/');
 
 const api = axios.create({
