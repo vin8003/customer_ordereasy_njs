@@ -17,6 +17,7 @@ import { ProductCard } from '@/app/components/ProductCard';
 import { Button } from '@/app/components/ui/Button';
 import LazyProductLane from '@/app/components/LazyProductLane';
 import InfiniteProductGrid from '@/app/components/InfiniteProductGrid';
+import { ReportButton } from '@/app/components/ReportButton';
 import { processRetailerProductList } from '@/utils/productStock';
 import { resolveMediaUrl } from '@/utils/mediaUrl';
 import { visibleSearchProductBrandName } from '@/lib/searchProductBrandName';
@@ -485,6 +486,7 @@ function RetailerHome() {
                             {selectedCity?.name ? ` · Delivering to ${selectedCity.name}${selectedCity?.pincode ? ` (${selectedCity.pincode})` : ''}` : ''}
                         </span>
                     </button>
+                    {retailerId && <ReportButton retailerId={retailerId} />}
 
                     {!retailer.is_currently_open && (
                         <div className={styles.noticeInfo}>

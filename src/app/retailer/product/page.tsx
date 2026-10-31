@@ -12,6 +12,7 @@ import { WishlistIcon } from '@/app/components/WishlistIcon';
 import AddToCartButton from '@/app/components/AddToCartButton';
 import { ProductCard } from '@/app/components/ProductCard';
 import { FrequentlyBoughtTogether } from '@/app/components/FrequentlyBoughtTogether';
+import { ReportButton } from '@/app/components/ReportButton';
 import { filterInStockProducts, isOutOfStock, withVariantStock } from '@/utils/productStock';
 import {
     formatVisibleBarcode,
@@ -367,6 +368,9 @@ function ProductDetail() {
                             </div>
                         )}
                     </div>
+                    {retailerId && product.id ? (
+                        <ReportButton retailerId={retailerId} productId={product.id} />
+                    ) : null}
                 </div>
             </div>
 
