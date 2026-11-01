@@ -28,4 +28,12 @@ describe('customer report wiring', () => {
         assert.match(src, /apiService\.isAuthenticated\(\)/);
         assert.match(src, /\/login\?redirect=/);
     });
+
+    it('moves focus into the sheet, locks page scroll and restores both on close', () => {
+        const src = read('src/app/components/ReportButton.tsx');
+        assert.match(src, /sheet\.current\?\.focus\(\)/);
+        assert.match(src, /document\.body\.style\.overflow = 'hidden'/);
+        assert.match(src, /document\.body\.style\.overflow = previousOverflow/);
+        assert.match(src, /trigger\?\.focus\(\)/);
+    });
 });

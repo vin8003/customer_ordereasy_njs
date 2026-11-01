@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Flag, X } from 'lucide-react';
 import toast from '@/lib/toast';
@@ -33,11 +33,23 @@ export function ReportButton({ retailerId, productId, label }: Props) {
     const [error, setError] = useState<string | null>(null);
     const [sending, setSending] = useState(false);
 
+    const sheet = useRef<HTMLDivElement>(null);
+    const opener = useRef<HTMLButtonElement>(null);
+
     useEffect(() => {
         if (!open) return;
         const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
         window.addEventListener('keydown', onKey);
-        return () => window.removeEventListener('keydown', onKey);
+        // Keep the page behind the sheet from scrolling, and move focus into the sheet.
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        sheet.current?.focus();
+        const trigger = opener.current;
+        return () => {
+            window.removeEventListener('keydown', onKey);
+            document.body.style.overflow = previousOverflow;
+            trigger?.focus();
+        };
     }, [open]);
 
     const start = () => {
@@ -74,12 +86,14 @@ export function ReportButton({ retailerId, productId, label }: Props) {
 
     return (
         <>
-            <button type="button" className={styles.trigger} onClick={start} data-testid={`report-${target}`}>
+            <button ref={opener} type="button" className={styles.trigger} onClick={start} data-testid={`report-${target}`}>
                 <Flag size={13} /> {label || (target === 'product' ? 'Report this product' : 'Report this shop')}
             </button>
             {open && (
                 <div className={styles.backdrop} onClick={() => !sending && setOpen(false)} data-testid="report-sheet">
                     <div
+                        ref={sheet}
+                        tabIndex={-1}
                         className={styles.sheet}
                         role="dialog"
                         aria-modal="true"
