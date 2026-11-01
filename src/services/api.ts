@@ -105,8 +105,9 @@ api.interceptors.response.use((response) => {
         }
     }
 
-    // Global Error Toasting
-    if (typeof window !== 'undefined' && error.response && error.response.status >= 400 && error.response.status !== 401) {
+    // Global Error Toasting (a caller that shows its own message sets skipErrorToast)
+    if (typeof window !== 'undefined' && error.response && error.response.status >= 400 && error.response.status !== 401
+        && !(originalRequest as { skipErrorToast?: boolean } | undefined)?.skipErrorToast) {
         toast.error(getErrorMessage(error));
     }
 
@@ -529,6 +530,17 @@ export const apiService = {
             const response = await api.get('customer/wishlist/');
             return response.data;
         });
+    },
+
+    /** Report a shop, or one of its products with product_id. The team reviews it; nothing is hidden automatically. */
+    reportRetailer: async (
+        retailerId: number | string,
+        payload: { reason: string; text: string; product_id?: number },
+    ) => {
+        const response = await api.post(`retailer/${retailerId}/report/`, payload, {
+            skipErrorToast: true,
+        } as Parameters<typeof api.post>[2]);
+        return response.data as { id: number; created: boolean; message: string };
     },
 
     addToWishlist: async (productId: number) => {
