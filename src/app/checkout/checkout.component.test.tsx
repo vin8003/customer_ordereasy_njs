@@ -40,7 +40,11 @@ const placeButton = () => screen.getByTestId("checkout-place-order") as HTMLButt
 async function renderLoaded() {
     render(<CheckoutPage />);
     await waitFor(() => expect(placeButton().textContent).toMatch(/Place Order|more to order|Outside/));
-    await new Promise((r) => setTimeout(r, 0));
+    // Wait for the loaded state itself: saved addresses listed, and the verify dialog for an unverified mobile.
+    await waitFor(() => {
+        for (const a of api.addresses) expect(screen.getByText(new RegExp(String(a.address_line1)))).toBeTruthy();
+        if (!api.profile.is_phone_verified) expect(screen.getByText("verify-phone-dialog")).toBeTruthy();
+    });
 }
 
 beforeEach(() => {
