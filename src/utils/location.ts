@@ -1,6 +1,7 @@
 import { Geolocation } from '@capacitor/geolocation';
 import { Capacitor } from '@capacitor/core';
 import { AVAILABLE_CITIES, City } from '@/config/cities';
+import { cityId, matchState } from '@/config/india-locations';
 
 export const STORAGE_CITY = 'selected_city';
 export const STORAGE_PINCODE = 'selected_pincode';
@@ -9,7 +10,13 @@ export interface StoredLocation extends City {
     lat?: number;
     lng?: number;
     address?: string;
-    source?: 'gps' | 'manual';
+    source?: 'gps' | 'manual' | 'address' | 'pin';
+    /** Saved address this location came from (shop map location sheet). */
+    addressId?: number;
+    /** Short name for the location bar, e.g. the address title. */
+    label?: string;
+    /** Picked in the shop map's location sheet; never replaced automatically. */
+    explicit?: boolean;
 }
 
 export interface GeoAddress {
@@ -47,6 +54,40 @@ export function persistLocation(loc: StoredLocation) {
         localStorage.setItem(STORAGE_PINCODE, loc.pincode);
     }
     window.dispatchEvent(new Event('storage'));
+}
+
+/**
+ * A point on the map (GPS fix or a dropped pin) as a stored location. The city
+ * comes from the reverse-geocoded address; when that is unavailable the point
+ * keeps `fallback`'s city so shop discovery still has one.
+ */
+export function locationFromPoint(
+    lat: number,
+    lng: number,
+    geo: GeoAddress | null | undefined,
+    fallback: StoredLocation | null,
+    extra: Pick<StoredLocation, 'source' | 'label' | 'explicit'>
+): StoredLocation | null {
+    let city: City | null = null;
+    if (geo?.city) {
+        const state = matchState(geo.state) || geo.state;
+        city = matchAvailableCity(geo.city, state, geo.pincode)
+            || (state ? { id: cityId(geo.city, state), name: geo.city, state } : null);
+    }
+    const sameAsFallback = !!city && !!fallback && city.id === fallback.id;
+    if (!city && fallback) city = { id: fallback.id, name: fallback.name, state: fallback.state };
+    if (!city) return null;
+    const pincode = geo?.pincode || (sameAsFallback || !geo?.city ? fallback?.pincode : '') || city.pincode || '';
+    return {
+        id: city.id,
+        name: city.name,
+        state: city.state,
+        ...(pincode ? { pincode } : {}),
+        lat,
+        lng,
+        ...(geo?.address ? { address: geo.address } : {}),
+        ...extra,
+    };
 }
 
 export function persistManualCity(city: City) {
